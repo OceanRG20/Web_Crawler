@@ -1,0 +1,26 @@
+columns:
+  - record_id
+  - Name
+  - Address
+  - Phone
+  - URL
+  - Industries
+  - Products/Services
+  - Facility Size
+  - Employees
+  - Jobs
+  - Year Established
+  - Year Evidence URL
+  - Year Evidence Snippet
+  - Owner
+  - Owner Status
+  - Owner Evidence URL
+  - Equipment
+  - Target Phrases
+  - Disqualifiers
+  - Score
+  - Qualified
+  - Source URLs
+  - First Seen
+  - Last Seen
+  - Errors
