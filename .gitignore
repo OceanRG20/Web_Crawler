@@ -1,7 +1,8 @@
 __pycache__/
 *.pyc
 venv/
-logs/
 output/output.csv
 output/snapshots/
 evidence/
+service_account.json
+.env

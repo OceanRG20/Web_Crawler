@@ -2,3 +2,6 @@ requests
 beautifulsoup4
 lxml
 PyYAML
+gspread
+oauth2client
+python-dotenv

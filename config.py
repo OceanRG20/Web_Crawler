@@ -15,3 +15,18 @@ DISCOVERY_KEYWORDS = [
 # Evidence saving
 SAVE_HTML = False   # set True to save raw HTML to evidence/{domain}/pages
 SAVE_META = True    # save evidence/{domain}/meta.json (discovered URLs, errors)
+
+
+# --- Google Sheets: env-driven toggle ---
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+SHEETS_ENABLED = os.getenv("SHEETS_ENABLED", "false").lower() == "true"
+GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "")
+WORKSHEET_NAME  = os.getenv("WORKSHEET_NAME", "Output")
+SERVICE_ACCOUNT_JSON = os.getenv("SERVICE_ACCOUNT_JSON", "service_account.json")
+
+# Fail the run if Sheets breaks? default: False (keep crawling + CSV)
+import os
+FAIL_ON_SHEETS_ERROR = os.getenv("FAIL_ON_SHEETS_ERROR", "false").lower() == "true"

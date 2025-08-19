@@ -1,6 +1,4 @@
-import os
-import re
-import yaml
+import os, re, yaml
 
 _DICTS = {"equipment": [], "target_phrases": [], "disqualifiers": []}
 
@@ -17,8 +15,7 @@ def _load():
 _load()
 
 def detect_equipment(text: str) -> set:
-    hits = set()
-    txt = text or ""
+    hits = set(); txt = text or ""
     for brand in _DICTS["equipment"]:
         if re.search(rf"\b{re.escape(brand)}\b", txt, re.I):
             hits.add(brand.title())

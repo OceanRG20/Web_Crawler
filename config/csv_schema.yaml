@@ -1,25 +1,31 @@
 columns:
-  - record_id
-  - Name
-  - Address
+  - Company Name
+  - Target Status
+  - Public Website Homepage URL
+  - Domain
+  - Source
+  - Street Address
+  - City
+  - State
+  - Zipcode
   - Phone
-  - URL
-  - Industries
-  - Products/Services
-  - Facility Size
-  - Employees
+  - Industries served
+  - Products and services offered
+  - Specific references from text search
+  - Square footage (facility)
+  - Number of employees
+  - Estimated Revenues
+  - Years of operation
+  - Ownership
+  - Equipment
+  - CNC 3-axis
+  - CNC 5-axis
+  - Spares/Repairs
+  - Family business
   - Jobs
-  - Year Established
   - Year Evidence URL
   - Year Evidence Snippet
-  - Owner
-  - Owner Status
   - Owner Evidence URL
-  - Equipment
-  - Target Phrases
-  - Disqualifiers
-  - Score
-  - Qualified
   - Source URLs
   - First Seen
   - Last Seen

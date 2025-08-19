@@ -1,8 +1,4 @@
-import os
-import time
-import urllib.parse
-import requests
-
+import os, time, urllib.parse, requests
 from config import USER_AGENT, TIMEOUT, RETRIES, SLEEP, SAVE_HTML
 
 HEADERS = {"User-Agent": USER_AGENT}
