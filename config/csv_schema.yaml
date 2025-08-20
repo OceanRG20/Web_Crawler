@@ -29,4 +29,5 @@ columns:
   - Source URLs
   - First Seen
   - Last Seen
-  - Errors
+  - Last Update
+  - Notes (Approach/Contacts/Info)
