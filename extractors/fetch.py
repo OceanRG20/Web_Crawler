@@ -1,13 +1,19 @@
-import os, time, urllib.parse, requests
+import os
+import time
+import urllib.parse
+import requests
 from config import USER_AGENT, TIMEOUT, RETRIES, SLEEP, SAVE_HTML
 
 HEADERS = {"User-Agent": USER_AGENT}
 
 def http_get(url: str) -> str:
+    """
+    Simple fetcher with retries; returns HTML text or ''.
+    """
     for attempt in range(1, RETRIES + 1):
         try:
             r = requests.get(url, headers=HEADERS, timeout=TIMEOUT, allow_redirects=True)
-            if r.status_code == 200 and "text/html" in r.headers.get("Content-Type",""):
+            if r.status_code == 200 and "text/html" in (r.headers.get("Content-Type", "")).lower():
                 return r.text
         except Exception:
             pass

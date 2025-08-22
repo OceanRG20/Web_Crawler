@@ -6,3 +6,4 @@ output/snapshots/
 evidence/
 service_account.json
 .env
+test
