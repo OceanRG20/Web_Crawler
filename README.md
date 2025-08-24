@@ -1,12 +1,28 @@
-# MVP Crawler → Google Sheets (3 URLs)
+# Web Crawler – AMBA/Custom Sources
 
-## Setup
+A lightweight Python crawler for extracting company data (name, phone, address, industries, services, employees, etc.) from target websites.  
+It outputs results to **CSV** and (optionally) to **Google Sheets**.
 
-1. Create a Google Sheet and copy its ID.
-2. Create a Service Account in Google Cloud, download the JSON, save as `service_account.json`.
-3. Share the Sheet with the service account email (Editor).
-4. Fill `.env`:
-   - GOOGLE_SHEET_ID=...
-   - WORKSHEET_NAME=Output
-   - SERVICE_ACCOUNT_JSON=service_account.json
-5. Install deps:
+---
+
+## 📂 Project Structure
+
+├── crawler.py # Main runner
+├── config/
+│ ├── urls.txt # Input list of websites
+│ ├── csv_schema.yaml # Defines CSV columns
+│ └── service_account.json# (Optional) Google Sheets service account
+├── extractors/ # HTML/text parsers
+├── utils/ # CSV + Sheets utilities
+├── output/ # Results (CSV + snapshots)
+│ └── snapshots/ # Timestamped backups
+└── evidence/ # (Optional) Saved HTML/metadata
+
+## ⚙️ Requirements
+
+- Python **3.8+**
+- Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
