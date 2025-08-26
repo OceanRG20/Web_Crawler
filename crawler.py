@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
+# CSV + raw_export.txt (deduplicated, organized raw blocks) — NO Google Sheets
+
 import os, re, time, yaml, argparse
 from datetime import datetime
+from difflib import SequenceMatcher
 
 from config import (
     SLEEP, SAVE_HTML, SAVE_META,
-    SHEETS_ENABLED, GOOGLE_SHEET_ID, WORKSHEET_NAME, SERVICE_ACCOUNT_JSON,
-    FAIL_ON_SHEETS_ERROR
 )
 from utils.csv_utils import write_csv
-if SHEETS_ENABLED:
-    from utils.sheet_utils import open_sheet, upsert_record
 
-# ----------------- extractors -----------------
+# -------- extractors --------
 from extractors.fetch import http_get, normalize_domain, maybe_save_html
 from extractors.discovery import discover
 from extractors.parse_text import clean_text, find_phone, find_address_us
@@ -20,11 +19,12 @@ from extractors.fields_fuzzy import year_established, owner_and_status
 from extractors.signals import detect_equipment, detect_phrases
 from extractors.jobs import extract_jobs
 
+
 # =========================
 # CLI / IO utilities
 # =========================
 def _parse_args():
-    p = argparse.ArgumentParser(description="Lightweight web crawler → CSV + combined TXT")
+    p = argparse.ArgumentParser(description="Crawler → CSV + raw TXT (deduped)")
     p.add_argument("--source", default="", help="Label for Source column (e.g., AMBA, ThomasNet, Manual)")
     return p.parse_args()
 
@@ -69,10 +69,10 @@ def _write_csv_backup(rows, cols):
         pass
     print(f"[OK] CSV saved: {out_path} (snapshot created).")
 
+
 # =========================
-# Helpers
+# Helper Normalizers
 # =========================
-# Split US address into parts (Street, City, State, Zip)
 _ADDR_PARTS_RE = re.compile(
     r"(?P<street>\d{2,6}\s+[A-Za-z0-9 .'-]+),\s*"
     r"(?P<city>[A-Za-z .'-]+),?\s*"
@@ -88,45 +88,12 @@ def split_address(text: str):
         return "","","",""
     return m.group("street"), m.group("city"), m.group("state"), m.group("zip")
 
-def detect_yesno_flags(text: str):
-    t = (text or "").lower()
-    cnc3   = "Y" if ("3 axis" in t or "3-axis" in t or "3axis" in t) else ""
-    cnc5   = "Y" if ("5 axis" in t or "5-axis" in t or "5axis" in t) else ""
-    spares = "Y" if ("spares" in t or "spare parts" in t or "repair" in t or "repairs" in t) else ""
-    family = "Y" if ("family owned" in t or "family-owned" in t or "family business" in t) else ""
-    return cnc3, cnc5, spares, family
-
-def years_of_operation_from_evidence(year_str: str):
-    if not year_str:
-        return ""
-    m = re.search(r"\b(18\d{2}|19\d{2}|20[0-2]\d)\b", year_str)
-    if m:
-        yr = int(m.group(1))
-        now = datetime.utcnow().year
-        if 1850 <= yr <= now:
-            return str(now - yr)
-    return ""
-
-def estimated_revenues(emp_str: str):
-    try:
-        n = int(re.sub(r"[^\d]", "", emp_str or ""))
-        return f"${n*200_000:,} (est)"
-    except Exception:
-        return ""
-
-def target_status(equip_hits, target_hits, disq_hits, had_error):
-    if had_error:
-        return "X"
-    if target_hits or equip_hits:
-        return "CY"
-    if disq_hits:
-        return "CN"
-    return "C?"
-
 def _normalize_phone_str(p: str) -> str:
     if not p:
         return ""
     digits = re.sub(r"\D", "", p)
+    if len(digits) == 11 and digits.startswith("1"):
+        digits = digits[1:]
     if len(digits) == 10:
         return f"({digits[:3]}) {digits[3:6]}-{digits[6:]}"
     return p.strip()
@@ -141,47 +108,166 @@ def _normalize_zip(z: str) -> str:
     m = re.search(r"\b(\d{5})\b", s)
     if m:
         return m.group(1)
-    m = re.search(r"\b(\d{4})\b", s)    # left pad rare 4‑digit captures
+    m = re.search(r"\b(\d{4})\b", s)
     if m:
         return m.group(1).rjust(5, "0")
     return ""
 
+
 # =========================
-# TXT Export Helper (combined)
+# Founding year / employees
 # =========================
-def _write_combined_txt(all_blocks: list):
-    out_path = os.path.join("output", "all_rows.txt")
+_YEAR_RE = re.compile(r"\b(since|est\.?|founded|established)\s*(in\s*)?(\d{4})\b", re.I)
+_EMP_RE  = re.compile(r"\b(\d{1,4})\s*(employees|staff|team members|associates)\b", re.I)
+
+def years_of_operation_from_text(text: str) -> str:
+    m = _YEAR_RE.search(text or "")
+    if not m: 
+        return ""
+    yr = int(m.group(3))
+    now = datetime.utcnow().year
+    if 1850 <= yr <= now:
+        return str(now - yr)
+    return ""
+
+def extract_employee_count(text: str) -> str:
+    m = _EMP_RE.search(text or "")
+    if not m:
+        return ""
+    return m.group(1)
+
+def estimated_revenues(emp_str: str):
     try:
-        with open(out_path, "w", encoding="utf-8") as f:
-            f.write("\n\n".join(all_blocks))
-        print(f"[OK] Combined TXT saved: {out_path}")
-    except Exception as e:
-        print(f"[WARN] Could not write combined TXT: {e}")
+        n = int(re.sub(r"[^\d]", "", emp_str or ""))  # $200k / employee
+        return f"${n*200_000:,} (est)"
+    except Exception:
+        return ""
+
+
+# =========================
+# Target Status
+# =========================
+def target_status(equip_hits, target_hits, disq_hits, had_error):
+    if had_error:
+        return "X"
+    # weight positive signals stronger than generic equipment
+    strong_targets = {"lsr", "liquid silicone rubber", "medical device", "class 101", "implantable", "drug delivery"}
+    has_strong = any(t.lower() in strong_targets for t in target_hits)
+    if has_strong or equip_hits:
+        if disq_hits:
+            # if both, lean unknown → C?
+            return "C?"
+        return "CY"
+    if disq_hits:
+        return "CN"
+    return "C?"
+
+
+# =========================
+# De-duplication utilities for RAW text
+# =========================
+_NOISE_PAT = re.compile(
+    r"(privacy|terms|cookies|copyright|all rights reserved|subscribe|"
+    r"login|sign in|create account|follow us|menu|home|sitemap|"
+    r"©\s?\d{4}|^\d{1,2}:\d{2}\s?(am|pm)\b)",
+    re.I
+)
+
+def _clean_lines_to_sentences(text: str) -> list:
+    """Split into sentences or short lines; drop obvious noise."""
+    # normalize whitespace
+    t = re.sub(r"\s+", " ", text or " ").strip()
+    # slice into pseudo-sentences (keep things readable)
+    # split on . ; : | bullets, while preserving important commas
+    parts = re.split(r"(?<=[\.\!\?])\s+|[\|\u2022•]+", t)
+    out = []
+    for p in parts:
+        p = p.strip()
+        if not p:
+            continue
+        # kill short crumbs & pure noise
+        if len(p) < 25:
+            # allow short lines only if they look like contact facts
+            if not re.search(r"\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}|\b[A-Z]{2}\s?\d{5}\b", p):
+                continue
+        if _NOISE_PAT.search(p):
+            continue
+        out.append(p)
+    return out
+
+def _is_similar(a: str, b: str, thresh: float = 0.92) -> bool:
+    return SequenceMatcher(None, a.lower(), b.lower()).ratio() >= thresh
+
+def dedupe_sentences(sentences: list, similarity=0.92, max_sentences=120):
+    """Keep first occurrence; drop exact & near-duplicate sentences."""
+    kept = []
+    for s in sentences:
+        if any(_is_similar(s, k, similarity) for k in kept):
+            continue
+        kept.append(s)
+        if len(kept) >= max_sentences:
+            break
+    return kept
+
+def build_raw_block(rec: dict, raw_text: str, row_idx: int) -> str:
+    """Client-style block: header lines + deduped, readable text."""
+    lines = []
+    lines.append(f"Row {row_idx}:  {rec.get('Company Name','')}".rstrip())
+    lines.append(rec.get("Public Website Homepage URL",""))
+    if rec.get("Domain"):
+        lines.append(rec["Domain"])
+
+    # Address
+    street = rec.get("Street Address","").strip()
+    city = rec.get("City","").strip()
+    state = rec.get("State","").strip()
+    zc = rec.get("Zipcode","").strip()
+    if street:
+        lines.append(street)
+    city_line = " ".join([x for x in [f"{city}," if city else "", state, zc] if x]).strip()
+    if city_line:
+        lines.append(city_line)
+
+    # Phone
+    if rec.get("Phone"):
+        lines.append(f"Phone:  {rec['Phone']}")
+
+    # Deduplicate & organize raw text
+    if raw_text:
+        sentences = _clean_lines_to_sentences(raw_text)
+        sentences = dedupe_sentences(sentences, similarity=0.93, max_sentences=140)
+        if sentences:
+            lines.append("")
+            lines.extend(sentences)
+
+    return "\n".join(lines).rstrip() + "\n\n"
+
 
 # =========================
 # Per-company pipeline
 # =========================
-def process_company(home_url: str, cols: list, source_hint: str = "") -> dict:
+def process_company(home_url: str, cols: list, source_hint: str = ""):
+    """Return (rec, raw_concat_text) after crawling & text merging."""
     start_url = home_url if home_url.startswith("http") else f"https://{home_url}"
     domain = normalize_domain(start_url)
 
     print(f"[INFO] Processing: {start_url}  (Source: {source_hint or '—'})")
     pages = discover(start_url)
-    # guarantee home page first if discovery didn't include it
     if start_url not in pages:
         pages = [start_url] + pages
 
     equip_hits, target_hits, disq_hits = set(), set(), set()
     had_error = False
+    raw_text_parts = []  # collect raw site text
 
     now_ts = datetime.now().strftime("%m/%d/%Y %H:%M")
     rec = {c: "" for c in cols}
     rec.update({
         "Company Name": "",
-        "Target Status": "C",
+        "Target Status": "",
         "Public Website Homepage URL": start_url,
         "Domain": domain,
-        "Source": source_hint,
+        "Source": source_hint or "",
         "Street Address": "", "City": "", "State": "", "Zipcode": "",
         "Phone": "",
         "Industries served": "",
@@ -209,14 +295,15 @@ def process_company(home_url: str, cols: list, source_hint: str = "") -> dict:
             had_error = True
             continue
 
-        print(f"[INFO]   [{idx}/{len(pages)}] Fetched OK: {url}")
-
         if SAVE_HTML:
             maybe_save_html(domain, url, html)
 
         text = clean_text(html)
 
-        # Core identity/contacts
+        # accumulate raw text
+        raw_text_parts.append(text)
+
+        # Company / phone
         if not rec["Company Name"]:
             rec["Company Name"] = company_name(html, text)
         if not rec["Phone"]:
@@ -238,31 +325,41 @@ def process_company(home_url: str, cols: list, source_hint: str = "") -> dict:
         if not rec["Products and services offered"]:
             rec["Products and services offered"] = services(url, text)
 
-        # Year evidence → years of operation
+        # Year evidence → years of operation (fallback from fuzzy extractor)
         if not rec["Years of operation"]:
-            val, _snip = year_established(text, html)
-            if val:
-                rec["Years of operation"] = years_of_operation_from_evidence(val)
+            # prefer fuzzy function if it returns a year string
+            y_val, _snip = year_established(text, html)
+            yrs = ""
+            if y_val:
+                # y_val might be a year string like "1985"
+                try:
+                    y = int(re.search(r"\b(18\d{2}|19\d{2}|20[0-2]\d)\b", y_val).group(0))
+                    yrs = str(datetime.utcnow().year - y)
+                except Exception:
+                    pass
+            if not yrs:
+                yrs = years_of_operation_from_text(text)
+            rec["Years of operation"] = yrs
 
-        # Facility & employees & revenue
-        if not rec["Square footage (facility)"]:
-            rec["Square footage (facility)"] = facility_sqft(text)
+        # Employees + revenue
         if not rec["Number of employees"]:
-            rec["Number of employees"] = employees(text)
-            rec["Estimated Revenues"] = estimated_revenues(rec["Number of employees"])
+            # prefer dedicated extractor; then regex fallback
+            emp = employees(text) or extract_employee_count(text)
+            rec["Number of employees"] = emp
+            rec["Estimated Revenues"] = estimated_revenues(emp)
 
         # Ownership / family
         if not rec["Ownership"] or not rec["Family business"]:
             owner, own_text, is_family = owner_and_status(text)
-            if owner or own_text:
-                parts = []
-                if own_text: parts.append(own_text)
-                if owner: parts.append(f"Owner: {owner}")
+            parts = []
+            if own_text: parts.append(own_text)
+            if owner: parts.append(f"Owner: {owner}")
+            if parts and not rec["Ownership"]:
                 rec["Ownership"] = ", ".join(parts)
             if is_family and not rec["Family business"]:
                 rec["Family business"] = "Y"
 
-        # Signals → target/disqualifiers
+        # Signals
         e_hits = detect_equipment(text)
         equip_hits |= e_hits
         t_hits, d_hits = detect_phrases(text)
@@ -275,19 +372,24 @@ def process_company(home_url: str, cols: list, source_hint: str = "") -> dict:
             if jobs:
                 rec["Jobs"] = jobs
 
-        # Binary flags (also inferred from generic text)
-        cnc3, cnc5, spares, family = detect_yesno_flags(text)
-        rec["CNC 3-axis"]      = rec["CNC 3-axis"] or cnc3
-        rec["CNC 5-axis"]      = rec["CNC 5-axis"] or cnc5
-        rec["Spares/Repairs"]  = rec["Spares/Repairs"] or spares
-        rec["Family business"] = rec["Family business"] or family
+        # Binary flags inferred
+        t_lower = (text or "").lower()
+        if not rec["CNC 3-axis"] and re.search(r"\b(3[-\s]?axis|3 axis)\b", t_lower):
+            rec["CNC 3-axis"] = "Y"
+        if not rec["CNC 5-axis"] and re.search(r"\b(5[-\s]?axis|5 axis)\b", t_lower):
+            rec["CNC 5-axis"] = "Y"
+        if not rec["Spares/Repairs"] and re.search(r"\b(spares|spare parts|repair|repairs|maintenance)\b", t_lower):
+            rec["Spares/Repairs"] = "Y"
 
+    # Summaries
     rec["Equipment"] = ", ".join(sorted(equip_hits))
     rec["Specific references from text search"] = ", ".join(sorted(target_hits))
-    rec["Target Status"] = target_status(equip_hits, target_hits, disq_hits, had_error)
+    rec["Target Status"] = target_status(equip_hits, target_hits, disq_hits, had_error)  # <-- always set
 
-    print(f"[INFO] Done: {start_url} → Status={rec['Target Status']}")
-    return rec
+    # raw text (for dedupe/organize)
+    raw_concat = " ".join(raw_text_parts)
+    return rec, raw_concat
+
 
 # =========================
 # Main
@@ -298,26 +400,19 @@ def main():
     cols = _read_schema()
     url_pairs = _read_urls()
 
-    ws = None
-    if SHEETS_ENABLED:
-        try:
-            ws = open_sheet(GOOGLE_SHEET_ID, WORKSHEET_NAME, SERVICE_ACCOUNT_JSON)
-        except Exception as e:
-            print(f"[WARN] Google Sheets unavailable: {e}")
-            if FAIL_ON_SHEETS_ERROR:
-                raise
+    # clear raw_export.txt at the start
+    raw_fp = os.path.join("output", "raw_export.txt")
+    open(raw_fp, "w", encoding="utf-8").close()
 
     rows = []
-    all_blocks = []
-    for idx, (u, src_from_file) in enumerate(url_pairs, start=1):
-        source_label = args.source or src_from_file
+    for i, (u, src_from_file) in enumerate(url_pairs, start=1):
+        source_label = args.source or src_from_file or ""
         try:
-            rec = process_company(u, cols, source_hint=source_label)
+            rec, raw_txt = process_company(u, cols, source_hint=source_label)
         except Exception as e:
-            # fail-soft row with status X
             domain = normalize_domain(u if u.startswith("http") else f"https://{u}")
             now_ts = datetime.now().strftime("%m/%d/%Y %H:%M")
-            rec = {c: "" for c in cols}
+            rec, raw_txt = ({c: "" for c in cols}, "")
             rec.update({
                 "Public Website Homepage URL": u,
                 "Domain": domain,
@@ -329,33 +424,14 @@ def main():
 
         rows.append(rec)
 
-        if ws is not None:
-            try:
-                upsert_record(ws, rec)
-            except Exception as e:
-                print(f"[WARN] Sheets upsert failed for {u}: {e}")
-                if FAIL_ON_SHEETS_ERROR:
-                    raise
-
-        # Build a clean block for the combined TXT (human-readable, not raw HTML)
-        block = [
-            f"Row {idx}: {rec.get('Company Name','')}",
-            rec.get("Public Website Homepage URL",""),
-            f"Address: {rec.get('Street Address','')} {rec.get('City','')} {rec.get('State','')} {rec.get('Zipcode','')}".strip(),
-            f"Phone: {rec.get('Phone','')}",
-            f"Industries: {rec.get('Industries served','')}",
-            f"Services: {rec.get('Products and services offered','')}",
-            f"Keywords: {rec.get('Specific references from text search','')}",
-            f"Equipment: {rec.get('Equipment','')}",
-            f"CNC 3-axis: {rec.get('CNC 3-axis','')}, CNC 5-axis: {rec.get('CNC 5-axis','')}",
-            f"Spares/Repairs: {rec.get('Spares/Repairs','')}, Family Business: {rec.get('Family business','')}",
-            f"Target Status: {rec.get('Target Status','')}",
-            "-"*40
-        ]
-        all_blocks.append("\n".join(block))
+        # Append client-style block (deduped/raw organized)
+        block = build_raw_block(rec, raw_txt, i)
+        with open(raw_fp, "a", encoding="utf-8") as f:
+            f.write(block)
 
     _write_csv_backup(rows, cols)
-    _write_combined_txt(all_blocks)
+    print("[OK] CSV + raw TXT written.")
+
 
 if __name__ == "__main__":
     main()
