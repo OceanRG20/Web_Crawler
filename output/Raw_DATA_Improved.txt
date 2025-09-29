@@ -7568,3 +7568,2645 @@ Ownership:
 Source: Grok.  
 ---
 
+Row 183  
+https://apexmachine.com/  
+apexmachine.com  
+Apex Machine Company, Inc.  
+3000 NE 12th Terrace  
+Fort Lauderdale, FL 33334-4497  
+Phone: (954) 566-1572  
+
+Company: Apex Machine Company, Inc.  
+
+About:  
+- A family-owned, engineer-to-order machine systems provider, founded in 1903; operates turnkey custom systems for handling, marking, decoration and inspection.  
+- ISO 9001 certified; designs modular systems for injection molded, stamped, extruded, and fabricated parts.  
+- Fourth-generation ownership; emphasizes long-term partnerships.  
+
+Services:  
+- Turnkey automation systems (parts feeding, handling, assembly)  
+- Printing & decoration (dry offset, pad print, flexography, digital, laser)  
+- Inspection, quality integration, robotics, control systems  
+- Spare parts, field service, system upgrades  
+
+Industries:  
+- Automotive & Transportation  
+- Medical / Pharmaceutical  
+- Consumer goods / Packaging  
+- Electronics & Electrical  
+- Household / Sports / Hardware  
+
+Employees:  
+- no data (fallback).  
+
+Revenue:  
+- no data (fallback).  
+
+Square Footage:  
+- no data (fallback).  
+
+Ownership:  
+- Family owned (4th generation).  
+
+Source: Grok.  
+
+
+---
+
+Row 184  
+https://ustool.com/  
+ustool.com  
+U.S. Industrial Tool & Supply Company (USIT)  
+201 Hindry Ave  
+Inglewood, CA 90301  
+Phone: (310) 410-4907  
+
+Company: U.S. Industrial Tool & Supply Company (USIT)  
+
+About:  
+- Operating since the 1950s; designs and supplies hot & cold dimpling machines, specialty sheet metal tools, accessory tooling.  
+- American-built, focuses on reliability, ergonomic design, custom solutions for aerospace & sheet metal sectors.  
+
+Services:  
+- Manufacture of hot & cold dimpling machines  
+- Accessory tooling (sheet metal, riveting, air tools)  
+- Custom made tool design, parts & spare tooling  
+
+Industries:  
+- Aerospace / Aircraft manufacturing  
+- Sheet metal / HVAC / duct work  
+- General metal fabrication / industrial  
+
+Employees:  
+- no data (fallback).  
+
+Revenue:  
+- no data (fallback).  
+
+Square Footage:  
+- no data (fallback).  
+
+Ownership:  
+- Privately held.  
+
+Source: Grok.  
+
+
+---
+
+Row 185  
+https://phinneytool.com/  
+phinneytool.com  
+Phinney Tool & Die Co., Inc.  
+11023 West Center St. Ext.  
+Medina, NY 14103  
+Phone: (585) 798-3000  
+
+Company: Phinney Tool & Die Co., Inc.  
+
+About:  
+- Founded 1943; U.S. tooling specialist for HVAC / heat-exchanger coil manufacturing and related applications.  
+- ISO certified; operates 25,000 sq ft plant including 4,800 sq ft assembly bay.  
+- Supplies global OEMs, with experience in fin die, press line systems, tube sheet dies.  
+
+Services:  
+- Fin dies, turbulators, tube sheet progressive dies  
+- Turnkey press lines, system installation & service  
+- Die repair, retrofitting, rebuilds  
+- Spare parts, spare tooling  
+
+Industries:  
+- HVAC / Heat exchange / Air conditioning  
+- Sheet metal / metal forming  
+- Industrial manufacturing  
+
+Employees:  
+- 10–49 (public: ThomasNet)  
+
+Revenue:  
+- $10–$25M (public: ThomasNet)  
+
+Square Footage:  
+- 25,000 sq ft (site); includes a 4,800 sq ft assembly bay.  
+
+Ownership:  
+- Brendan Whistler (President), family management.  
+
+Source: Grok.  
+
+
+---
+
+Row 186  
+https://vortool.com/  
+vortool.com  
+Vortool Manufacturing Ltd.  
+19358 96 Ave  
+Surrey, BC V4N 4C1, Canada  
+Phone: (604) 239-7218  
+
+Company: Vortool Manufacturing Ltd.  
+
+About:  
+- Over 45 years in precision tool & die and metal stamping die design/manufacturing.  
+- Uses SolidWorks for 3D CAD design; facilities include machining, heat treat, grinding.  
+- Produces custom stamping dies, repairs, and integrated tooling services.  
+
+Services:  
+- Progressive & simple stamping die design & manufacture  
+- Die repair/maintenance & rework  
+- Wire EDM, CNC machining, heat treatment, surface grinding  
+- Design consultation, jigs & fixtures, small pneumatic presses  
+
+Industries:  
+- Automotive / Transportation  
+- Appliance / consumer metal parts  
+- Industrial / General fabrication  
+- Electronics / Electrical housing  
+- OEM / stamping product lines  
+
+Employees:  
+- no data (fallback).  
+
+Revenue:  
+- no data (fallback).  
+
+Square Footage:  
+- no data (fallback).  
+
+Ownership:  
+- Private, tool & die specialist leadership.  
+
+Source: Grok.  
+
+
+---
+
+Row 187  
+https://precisionmold.com/  
+precisionmold.com  
+Precision Mold & Machining Services Inc.  
+13143 East 9 Mile Road  
+Warren, MI 48089  
+Phone: (586) 774-2330  
+
+Company: Precision Mold & Machining Services Inc.  
+
+About:  
+- Michigan-based precision machining and injection mold repair company serving aerospace, aviation, defense, automotive, and medical sectors; AS9100D / ISO 9001 certified; founded in 1984.  
+
+Services:  
+- CNC machining (3-axis & 5-axis)  
+- EDM machining  
+- Deep hole & gun drilling  
+- Titanium/nickel/aluminum alloys machining  
+- Injection mold diagnostics/maintenance/repairs  
+- Mass finishing  
+
+Industries:  
+- Aerospace  
+- Aviation  
+- Defense  
+- Automotive  
+- Medical  
+
+Employees:  
+- ~12 (public: ContactOut 2025); calc backup ≈ 12 (from revenue rule).  
+
+Revenue:  
+- ~$2.4M (calc from employees × 200,000).  
+
+Square Footage:  
+- ~4,000 (calc from revenue ÷ 600).  
+
+Ownership:  
+- Not publicly disclosed; leadership/team presented on site (e.g., team pages).  
+
+Source:  
+- Company website; AS9100D page; Services pages; LinkedIn; ContactOut; Metoree; address/phone confirmations via site and directories.  
+
+---
+
+Row 188  
+https://aalberstool.com/  
+aalberstool.com  
+Aalbers Tool & Mold Inc.  
+5390 Brendan Lane  
+Oldcastle, ON N0R 1L0  
+Phone: (519) 737-1369  
+
+Company: Aalbers Tool & Mold Inc.  
+
+About:  
+- Founded in 1982; Canadian precision mold & tool specialist offering end-to-end mold design, build, repair & maintenance.  
+- Operates a large facility with advanced CNC, mold repair, logistics, and component manufacturing capabilities.  
+- Recognized as a major Ontario moldmaker with global shipping capabilities.  
+
+Services:  
+- Mold design (CAD/FEA/mold flow)  
+- CNC machining (high-speed, large parts)  
+- Mold build & assembly  
+- Mold repair, refurbishment & support  
+- In-house components & tooling  
+- Logistics & global shipping support  
+
+Industries:  
+- Automotive  
+- Consumer Goods  
+- Industrial / OEM  
+- Medical / Packaging  
+
+Employees:  
+- 160 (site)  
+
+Revenue:  
+- ~$27.4M (Datanyze); fallback calc ~ $32M (160 employees × $200k)  
+
+Square Footage:  
+- 100,000+ (site)  
+
+Ownership:  
+- Gary Aalbers (Founder/Owner); family-managed business  
+
+Source: Grok / Company site / Datanyze / CAMM  
+
+---
+
+Row 189  
+https://kingsonmold.com/  
+kingsonmold.com  
+Kingson Mold & Machine, Inc.  
+1350 Titan Way  
+Brea, CA 92821  
+Phone: (714) 871-0221  
+
+Company: Kingson Mold & Machine, Inc.  
+
+About:  
+- Founded in 1977 by Jack & Greg Rex; now family-owned and operated by the Rex / Miller family (current leadership includes CEO Kaci Miller).  
+- Specializes in liquid silicone rubber (LSR) molds, injection, compression, and transfer molds.  
+- ISO 9001:2015 certified; strong emphasis on in-house inspections and QA.  
+
+Services:  
+- Tooling & mold design & engineering (prototype & production)  
+- Liquid silicone rubber (LSR) mold making  
+- Injection, compression, transfer molds & tooling  
+- Prototyping & mold trials / validation  
+- Turnkey tool build & pre-production prove-out  
+- Mold overhaul, maintenance, repair  
+- CNC & EDM machining, finishing & assembly support  
+
+Industries:  
+- Medical / Healthcare  
+- Aerospace  
+- Automotive  
+- Electronics / Consumer devices  
+- Industrial / Specialty rubber & silicone  
+
+Employees:  
+- 11–50 (Indeed); ~30 (public per site history)  
+
+Revenue:  
+- $5.0M–$25M (SignalHire); fallback midpoint ~ $15M  
+
+Square Footage:  
+- ~25,000 ft² (calc from revenue ÷ 600)  
+
+Ownership:  
+- Family-owned (Rex / Miller family); CEO Kaci Miller  
+
+Source: Grok / Company site / SignalHire / Indeed  
+
+---
+
+Row 190  
+https://titantooldie.com/  
+titantooldie.com  
+Titan Tool & Die Ltd (Titan Tool & Die Corporation)  
+2801 Howard Avenue  
+Windsor, Ontario, Canada N8X 3Y1  
+Phone: (519) 966-1234   
+
+Company: Titan Tool & Die Co., Inc.  
+
+About:  
+- U.S.-based tool & die company with long history in stamping and progressive die manufacturing.  
+- Provides die repair, maintenance, and prototyping for regional OEMs.  
+
+Services:  
+- Tool & die design & manufacturing  
+- Progressive & stamping dies  
+- Die repair & maintenance  
+- Prototyping & pilot tooling  
+- CNC machining support  
+
+Industries:  
+- Automotive / Metal forming  
+- Appliance / Consumer products  
+- Industrial equipment / OEM  
+
+Employees:  
+- Estimated 20–40 (based on industry size)  
+
+Revenue:  
+- ~$4M–$8M (calc from employees × $200k)  
+
+Square Footage:  
+- ~15,000–20,000 ft² (fallback calc revenue ÷ 600)  
+
+Ownership:  
+- Privately held; small U.S. family-run die shop  
+
+Source: Grok / Industry data  
+
+---
+
+Row 191  
+https://gentool.com/  
+gentool.com  
+General Tool Company (GTC)  
+101 Landy Lane  
+Cincinnati, OH 45215  
+Phone: (513) 733-5500  
+
+Company: Gen Tool, Inc.  
+
+About:  
+- U.S. tool & die manufacturer with strong presence in precision machining and mold tooling.  
+- Provides custom tool solutions for a variety of OEMs and manufacturers.  
+
+Services:  
+- Die & mold tooling design/build  
+- CNC machining support  
+- Tool repair & maintenance  
+- Engineering support & design  
+
+Industries:  
+- Automotive  
+- Consumer / Appliance  
+- Industrial  
+
+Employees:  
+- ~50–100 (inferred public sources)  
+
+Revenue:  
+- ~$10M–$20M (public industrial estimate)  
+
+Square Footage:  
+- ~20,000–30,000 ft² (calc from revenue ÷ 600)  
+
+Ownership:  
+- Privately held; long-running U.S. tool & die business, family-managed  
+
+Source: Grok / Industry sources  
+
+---
+
+Row 192  
+https://kuhntool.com/  
+kuhntool.com  
+Kuhn Tool & Die Co.  
+21371 Blooming Valley Rd.  
+Meadville, PA 16335  
+Phone: (814) 336-2123  
+
+Company: Kuhn Tool Co.  
+
+About:  
+- Precision tool & die provider; domain and records indicate long-standing family shop.  
+- Offers prototyping, repair, and die building.  
+
+Services:  
+- Die & tooling design & build  
+- CNC machining & finishing  
+- Tool maintenance & repair  
+- Prototype & low-volume tooling  
+
+Industries:  
+- Automotive  
+- Industrial / OEM  
+- Electronics / Appliance  
+
+Employees:  
+- ~25–40 (inferred range)  
+
+Revenue:  
+- ~$5M–$10M (calc from employees × $200k)  
+
+Square Footage:  
+- ~10,000–15,000 ft² (calc from revenue ÷ 600)  
+
+Ownership:  
+- Privately owned; likely family-founded and operated  
+
+Source: Grok / Industry estimates  
+
+---
+
+Row 195  
+https://mathias-die.com/  
+mathias-die.com  
+Mathias Die Company  
+Mathias Die Company (MDC)  
+391 Malden Street  
+South St. Paul, MN 55075  
+Phone: (651) 451-0105  
+
+About:  
+- ISO 9001:2015 certified; ITAR registered; veteran-owned.  
+- Specialist in steel rule dies, matched metal tooling, thin plate dies, RF sealing dies, bolster dies, and custom converting tooling.  
+- Offers contracting, engineering support, and first article inspection services.  
+
+Services:  
+- Steel rule die manufacturing & design  
+- Matched metal tooling  
+- Thin plate flexible dies & bolster dies  
+- Heated cutting/sealing dies, RF sealing dies  
+- Die cutting / stamping, laser cutting, waterjet, NC knife & router cutting, precision machining, wire EDM  
+- Part de-slugging service, jigs & fixtures  
+
+Industries:  
+- Converting / Converters  
+- Packaging & Labeling  
+- Industrial tooling  
+- Printing & Laminating  
+- Specialty die applications  
+
+Employees:  
+- no data (fallback)  
+
+Revenue:  
+- no data (fallback)  
+
+Square Footage:  
+- no data (fallback)  
+
+Ownership:  
+- Veteran-owned; family/founder operated  
+
+Source: Grok  
+
+---
+Row 196  
+https://www.versatilitytoolworks.com/  
+versatilitytool.com  
+Versatility Tool Works & Manufacturing Company, Inc.  
+11532 South Mayfield Avenue  
+Alsip, IL 60803  
+Phone: (708) 389-8909  
+
+Company: Versatility Tool Works & Manufacturing Company, Inc.  
+
+About:  
+- Founded in 1972; began as a tool & die shop and expanded into precision sheet metal fabrication, stamping, and contract assembly.  
+- Integrates engineering, tooling, fabrication, stamping, and assembly with lean manufacturing practices.  
+
+Services:  
+- Precision sheet metal fabrication (laser cutting, turret punching, press brake forming)  
+- Metal stamping (high-speed precision)  
+- Tooling & machining, progressive/complex tools & fixtures  
+- Assembly, electro-mechanical build, robotic welding  
+- Engineering support, vendor-managed inventory  
+
+Industries:  
+- Industrial / OEM  
+- Electronics / Enclosures  
+- Consumer goods  
+- Appliance / Instrumentation  
+- General fabrication  
+
+Employees:  
+- 10–49  
+
+Revenue:  
+- $1M – $5M (public business listings)  
+
+Square Footage:  
+- ~20,000 ft² (Buzzfile estimate)  
+
+Ownership:  
+- Privately held; family-founded and managed  
+
+Source: Grok  
+
+---
+
+Row 197  
+https://www.greenvilletdi.com/  
+greenvilletdi.com  
+Greenville Tool & Die, Inc.  
+Greenville, MI 48838  
+Phone: (616) 225-2183  
+
+Company: Greenville Tool & Die, Inc.  
+
+About:  
+- Established 1946; Michigan-based tool & die company specializing in progressive dies, transfer dies, and precision stamping tools.  
+- Known regionally as a supplier to the automotive sector with complete engineering-to-build capabilities.  
+
+Services:  
+- Tool & die design & repair  
+- Transfer & progressive dies  
+- CNC machining and tool tryouts  
+- Tool maintenance, retrofit & rebuild  
+
+Industries:  
+- Automotive / Transportation  
+- Heavy truck  
+- Industrial machinery  
+- OEM supply  
+
+Employees:  
+- 100+ (LinkedIn range)  
+
+Revenue:  
+- $10M – $25M (public estimates)  
+
+Square Footage:  
+- 70,000+ ft² (facility listings)  
+
+Ownership:  
+- Privately held; family-founded, multi-generation  
+
+Source: Grok  
+
+---
+
+Row 198  
+https://www.precisiontoolanddie.com/  
+precisiontoolanddie.com  
+Precision Tool & Die, Inc. (Cadrex affiliate)  
+2200 N Ash St  
+Ponca City, OK 74601  
+Phone: (580) 762-2421  
+
+Company: Precision Tool & Die, Inc. (Cadrex affiliate)  
+
+About:  
+- Founded 1978; acquired by Cadrex Manufacturing Solutions.  
+- Offers sheet metal, die building & repair, stamping, welding, and assembly services.  
+
+Services:  
+- Sheet metal fabrication & forming  
+- Metal stamping & die build/repair  
+- Welding & assembly  
+- Engineering & prototyping support  
+
+Industries:  
+- Industrial equipment  
+- HVAC / Material handling  
+- Electrical / Panels  
+- Consumer / Appliance  
+
+Employees:  
+- 50–100 (inferred from Cadrex portfolio)  
+
+Revenue:  
+- $10M+ (Cadrex consolidated range)  
+
+Square Footage:  
+- ~50,000 ft² (regional listing)  
+
+Ownership:  
+- Subsidiary of Cadrex Manufacturing Solutions  
+
+Source: Grok  
+
+---
+
+Row 199  
+https://dietechnology.com/  
+dietechnology.com  
+Die Technology Inc.  
+12925 42nd Street NE, Ste 100  
+St. Michael, MN 55376  
+Phone: (763) 424-9677  
+
+Company: Die Technology Inc.  
+
+About:  
+- Founded 1988; precision machining and die company focused on complex tooling and EDM expertise.  
+- Recognized for high-precision matched metal dies, thin features, and close tolerance machining.  
+
+Services:  
+- Progressive stamping dies, matched metal dies  
+- Wire EDM, sinker EDM, small hole EDM  
+- Jig grinding, precision milling & turning  
+- Fixtures, tooling & engineering support  
+
+Industries:  
+- Energy & Defense  
+- Medical / Healthcare  
+- Electronics  
+- General industrial  
+
+Employees:  
+- ~50 (LinkedIn data)  
+
+Revenue:  
+- $10M – $25M (industry estimate)  
+
+Square Footage:  
+- 30,000 ft² (facility record)  
+
+Ownership:  
+- Privately held; family-led  
+
+Source: Grok  
+
+---
+
+Row 200  
+https://precisiondie.com/  
+precisiondie.com  
+Precision Die & Stamping, Inc.  
+1704 W 10th Street  
+Tempe, AZ 85281  
+Phone: (480) 967-2038  
+
+Company: Precision Die & Stamping, Inc.  
+
+About:  
+- Established 1964; specializes in precision metal stamping and tooling services.  
+- Certified to ISO 9001, IATF 16949, AS9100:D; supplier to aerospace, automotive, and electronics industries.  
+
+Services:  
+- Progressive die & tooling design & build  
+- Metal stamping (short run to high volume)  
+- Tool maintenance, validation, overhaul & repair  
+- Secondary processes: deburring, heat treating, finishing  
+
+Industries:  
+- Automotive / Transportation  
+- Aerospace / Defense  
+- Electronics / Hardware  
+- Industrial / Appliance  
+
+Employees:  
+- 51–100  
+
+Revenue:  
+- $10M – $25M (public estimates)  
+
+Square Footage:  
+- 100,000 ft² (site record)  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+Row 201  
+https://www.precisiondiesystems.com/  
+precisiondiesystems.com  
+Precision Die Systems Corporation  
+2700 Olson Drive  
+Chippewa Falls, WI 54729  
+Phone: (715) 861-5704  
+
+Company: Precision Die Systems Corporation  
+
+About:  
+- Over 40 years of experience in industrial die manufacturing, specializing in precision slot dies, extrusion dies, blown film dies, and specialty coating dies.  
+- Provides die repair, custom design, extrusion systems, and roll-to-roll coating solutions for adhesives, medical, packaging, and optics sectors.  
+
+Services:  
+- Slot die & extrusion die manufacture  
+- Blown film & specialty dies  
+- Custom die design & consulting  
+- Die repair, refurbishment & service  
+- Coating systems & fluid delivery equipment  
+
+Industries:  
+- Renewable energy / photovoltaics  
+- Medical & healthcare  
+- Packaging & converting  
+- Optical films / electronics  
+- Aerospace  
+
+Employees:  
+- 50–100 (LinkedIn company size estimate)  
+
+Revenue:  
+- ~$15M–$40M (industry estimate)  
+
+Square Footage:  
+- ~30,000–50,000 ft² (facility range)  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+
+Row 202  
+https://www.precisionresource.com/  
+precisionresource.com  
+Precision Resource, Inc.  
+1675 Republic Parkway  
+Mesquite, TX 75150  
+Phone: (972) 289-0533  
+
+Company: Precision Resource, Inc.  
+
+About:  
+- Contract machining and supply chain services provider; specializes in precision stamping, machining, and logistics.  
+- Acts as a strategic supplier and integrator for OEMs needing managed manufacturing support.  
+
+Services:  
+- Precision stamping & machining  
+- Production & contract manufacturing  
+- Inventory & logistics support  
+- Component assembly  
+
+Industries:  
+- Automotive  
+- Industrial machinery  
+- Electronics / Electromechanical  
+- OEM equipment  
+
+Employees:  
+- 1000+ worldwide (multi-facility group)  
+
+Revenue:  
+- $250M+ (corporate group estimate)  
+
+Square Footage:  
+- Multi-facility (hundreds of thousands ft² across US & Canada)  
+
+Ownership:  
+- Privately held (subsidiary of The Platit Group / TCRG Holdings)  
+
+Source: Grok  
+
+---
+
+Row 203  
+https://fstool.com/  
+fstoolcorp.com  
+FS Tool Corporation  
+71 Hobbs Gate  
+Markham, ON L3R 9T9, Canada  
+Phone: (905) 475-1999  
+
+Company: FS Tool Corporation  
+
+About:  
+- Canadian cutting tool specialist with 40+ years in tooling for wood, composites, plastics, and metals.  
+- Offers application engineering, custom tools, and tool re-manufacturing.  
+
+Services:  
+- Cutting tool manufacturing for machining, wood, and composite applications  
+- Custom tool development & optimization  
+- Tool sharpening & re-manufacturing  
+- Application support & consulting  
+
+Industries:  
+- Woodworking / Cabinetry  
+- Composites / Plastics  
+- Industrial machining  
+- OEM / Furniture  
+
+Employees:  
+- ~50–100 (LinkedIn)  
+
+Revenue:  
+- ~$10M–$30M (industry estimate)  
+
+Square Footage:  
+- ~15,000–25,000 ft²  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+
+Row 204  
+https://xcelltool.com/  
+xcelltool.com  
+Xcell Tool & Engineering, Inc.  
+11975 12th Ave North  
+Plymouth, MN 55441  
+Phone: (763) 478-3366  
+
+Company: Xcell Tool & Engineering, Inc.  
+
+About:  
+- U.S. tooling company specializing in progressive dies, stamping, and prototype tooling.  
+- Provides design-to-build solutions for OEM and tier suppliers.  
+
+Services:  
+- Progressive die & stamping tooling  
+- Prototype dies & trims  
+- Tool repair & maintenance  
+- CNC machining & finishing  
+
+Industries:  
+- Automotive / Transportation  
+- Appliance / Consumer  
+- Industrial equipment  
+- Tier manufacturing  
+
+Employees:  
+- ~20–50 (business estimate)  
+
+Revenue:  
+- ~$2M–$10M (small toolmaker range)  
+
+Square Footage:  
+- ~8,000–15,000 ft²  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+
+Row 205  
+https://www.moorespecialtool.com/  
+moorespecialtool.com  
+Moore Special Tool & Engineering, Inc.  
+800 Union Avenue  
+Bridgeport, CT 06607  
+Phone: (203) 366-3224  
+
+Company: Moore Special Tool & Engineering, Inc.  
+
+About:  
+- Longstanding U.S. tool & die engineering company associated with Moore Tool in Bridgeport, CT.  
+- Specializes in custom tooling, automation solutions, and precision fixturing for industrial manufacturing.  
+
+Services:  
+- Custom special tooling & fixtures  
+- Automation tooling & jigs  
+- Prototype to production tool build  
+- Tool repair & engineering support  
+
+Industries:  
+- Automotive / Tier suppliers  
+- Industrial / OEM  
+- Assembly & automation  
+
+Employees:  
+- ~10–30 (estimated)  
+
+Revenue:  
+- ~$1M–$5M (small shop estimate)  
+
+Square Footage:  
+- ~5,000–10,000 ft² (facility portion within Moore Tool campus)  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+
+Row 206  
+https://www.iqsdirectory.com/  
+iqsdirectory.com  
+IQS Directory  
+1500 E Beltline SE  
+Grand Rapids, MI 49506  
+Phone: (616) 285-3129  
+
+Company: IQS Directory  
+
+About:  
+- Founded in 2000, IQS Directory is an industrial OEM directory connecting buyers to manufacturers and suppliers.  
+- Acts as a “search engine aggregator” to optimize manufacturer listings and drive qualified traffic.  
+
+Services:  
+- Directory listings of manufacturers, suppliers, and distributors  
+- Request-for-Quote platform for multi-vendor inquiries  
+- Marketing and SEO services for industrial firms  
+- Product category search and vertical “power pages”  
+
+Industries:  
+- Manufacturing / OEM  
+- Industrial supply chains  
+- Machine shops, tooling, components  
+
+Employees:  
+- ~11–50 (LinkedIn estimate)  
+
+Revenue:  
+- ~$5M–$25M (Owler estimate)  
+
+Square Footage:  
+- ~10,000–15,000 ft² (office estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+
+Row 207  
+https://re-strike.ca/  
+re-strike.ca  
+Re-Strike Machine & Tool Inc.  
+2884 Slough St. Unit 1 & 2  
+Mississauga, ON L4T 1G3  
+Phone: (905) 564-5747  
+
+Company: Re-Strike Machine & Tool Inc.  
+
+About:  
+- Full-service precision machining and fabrication shop in Ontario.  
+- Offers CNC milling, turning, large-scale machining, repair, welding, CAD/CAM design, and assemblies.  
+
+Services:  
+- CNC milling (horizontal, vertical)  
+- CNC turning & boring  
+- Welding, fabrication & assemblies  
+- CAD/CAM design & reverse engineering  
+- Repair & remanufacture  
+
+Industries:  
+- Automotive  
+- Aerospace  
+- Industrial machinery  
+- General OEM  
+
+Employees:  
+- ~10–20 (small shop estimate)  
+
+Revenue:  
+- ~$2M–$5M (industry range estimate)  
+
+Square Footage:  
+- ~8,000–12,000 ft² (small facility range)  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+
+Row 208  
+https://gliderguard.com/  
+gliderguard.com  
+Glider Guard Tool & Die Inc.  
+5135 Ure St, R.R. #1  
+Oldcastle (Tecumseh), ON N0R 1L0  
+Phone: (519) 737-7313  
+
+Company: Glider Guard Tool & Die Inc.  
+
+About:  
+- Established 1945; Canadian tool & die shop with over 30 years of family management.  
+- Specializes in decorative surface tooling, progressive dies, moulds, automation, and insert-moulding techniques.  
+
+Services:  
+- Die tooling & design  
+- Mould tooling & injection moulds  
+- Automation tooling & fixtures  
+- Progressive stamping dies  
+- Insert-moulding & hybrid tooling  
+- Prototyping & tryouts  
+
+Industries:  
+- Automotive / Decorative trim  
+- Appliance / Consumer  
+- Electronics / Plastics  
+- Industrial OEM  
+
+Employees:  
+- ~65 (PitchBook)  
+
+Revenue:  
+- ~$4M (Kona Equity estimate)  
+
+Square Footage:  
+- ~25,000 ft² (industry directory range)  
+
+Ownership:  
+- Family-owned / family-run  
+
+Source: Grok  
+
+---
+
+Row 209  
+https://www.mahutatool.com/  
+mahutatool.com  
+Mahuta Tool Corp.  
+N118 W19137 Bunsen Dr.  
+Germantown, WI 53022  
+Phone: (262) 502-4100  
+
+Company: Mahuta Tool Corp.  
+
+About:  
+- Full-service CNC machining, tooling, dies, fixtures, stamping and EDM provider.  
+- ISO 9001:2015 certified; supports tight tolerance and defense/aerospace manufacturing.  
+
+Services:  
+- CNC milling & turning (multi-axis)  
+- Wire EDM, die tooling & stamping  
+- Fixtures & gauges, tool & die manufacturing  
+- Prototyping, assembly, inspection  
+
+Industries:  
+- Aerospace  
+- Automotive  
+- Medical  
+- Electronics  
+- Industrial machinery  
+
+Employees:  
+- ~25 (Manta estimate)  
+
+Revenue:  
+- ~$5.14M (Manta estimate)  
+
+Square Footage:  
+- ~15,000–20,000 ft² (industry range)  
+
+Ownership:  
+- Privately held; Lynn Mahuta (owner)  
+
+Source: Grok  
+
+---
+
+Row 210  
+https://www.applegateedm.com/  
+applegateedm.com  
+Applegate EDM LLC  
+2405 Squire Place  
+Dallas, TX 75234  
+Phone: (972) 488-8997  
+
+Company: Applegate EDM LLC  
+
+About:  
+- EDM services provider in Dallas–Ft. Worth with 75+ years of operation.  
+- ISO, ITAR, and AS9100D certified; operates a 30,000 ft² facility.  
+
+Services:  
+- Wire EDM, small hole EDM, sinker EDM  
+- Robotic tool-change EDM machines  
+- EDM hole drilling, electrode production  
+- Contract EDM services & prototyping  
+
+Industries:  
+- Aerospace / Defense  
+- Automotive  
+- Electronics / Components  
+- Industrial tooling  
+
+Employees:  
+- ~50 (facility scale estimate)  
+
+Revenue:  
+- ~$10M–$20M (industry estimate)  
+
+Square Footage:  
+- 30,000 ft²  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+
+Row 211  
+https://www.etmusa.com/  
+etmusa.com  
+Expert Tool & Machine, Inc.  
+2433 Arbuckle Ct  
+Dallas, TX 75229  
+Phone: (972) 241-5353  
+
+Company: Expert Tool & Machine, Inc.  
+
+About:  
+- Precision machining, mechanical fabrication, and engineering design shop with ~20 years of quality service. :contentReference[oaicite:0]{index=0}  
+- Offers design/engineering support, fabrication, and machining in complex and challenging materials. :contentReference[oaicite:1]{index=1}  
+
+Services:  
+- CNC milling, turning, grinding  
+- Fabrication, structural and mechanical systems  
+- Welded assemblies, pipe fabrication  
+- Reverse engineering, prototyping  
+
+Industries:  
+- Industrial / OEM  
+- Food & Beverage / Processing  
+- Manufacturing machinery  
+- Structural mechanical systems  
+
+Employees:  
+- ~20–50 (inferred small shop scale)  
+
+Revenue:  
+- ~$3M–$10M (industry estimate)  
+
+Square Footage:  
+- ~15,000–25,000 ft² (facility estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+
+Row 212  
+https://www.iconmachineshop.com/  
+iconmachineshop.com  
+Icon Machine Company  
+2240 Hinton Dr  
+Irving, TX 75061  
+Phone: (972) 438-7292  
+
+Company: Icon Machine Company  
+
+About:  
+- Precision machining shop certified to AS9100D and ISO 9001:2015, making tight tolerance parts for industrial, defense, and commercial projects. :contentReference[oaicite:2]{index=2}  
+
+Services:  
+- CNC milling, CNC turning  
+- Finish machining, prototype & production  
+- Material machining (metals, plastics, exotic alloys)  
+
+Industries:  
+- Aerospace / Defense  
+- Industrial / Machinery  
+- Electronics / Electrical  
+
+Employees:  
+- ~50 (public shop scale)  
+
+Revenue:  
+- ~$5M–$15M (shop estimate)  
+
+Square Footage:  
+- ~20,000 ft² (typical for mid-sized shop)  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+Row 213  
+https://millsmachineshop.com/  
+millsmachineshop.com  
+Mills Machine Shop Operating Services, Inc.  
+11619 Bois D Arc Ln  
+Ponder, TX 76259  
+Phone: (940) 390-8655  
+
+Company: Mills Machine Shop Operating Services, Inc.  
+
+About:  
+- Full-service general and precision machining shop serving OEMs and industrial clients across North Texas; focuses on quality, repeatability, and on-time delivery.  
+
+Services:  
+- CNC machining, milling & turning  
+- Saw cutting, small batch & production runs  
+- General manufacturing support & job shop services  
+
+Industries:  
+- Industrial / OEM  
+- Machinery & equipment  
+- Components / assemblies  
+
+Employees:  
+- ~20–50 (business directory estimate)  
+
+Revenue:  
+- ~$2M–$10M (shop estimate)  
+
+Square Footage:  
+- ~10,000–20,000 ft² (facility estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+
+Row 214  
+https://www.shamrockprecision.com/  
+shamrockprecision.com  
+Shamrock Precision  
+14850 Venture Dr  
+Farmers Branch, TX 75234  
+Phone: (972) 241-4226  
+
+Company: Shamrock Precision  
+
+About:  
+- Founded in 1981; AS9100/ISO 9001 certified CNC & Swiss machining provider with operations in Texas (USA) and Johor (Malaysia). Delivers tight-tolerance parts for aerospace, defense, energy, and telecom.  
+
+Services:  
+- Swiss machining, CNC milling & turning  
+- Quality inspection, testing & documentation  
+- Project management and coordination of outside processes  
+
+Industries:  
+- Aerospace / Defense  
+- Energy / Oil & Gas  
+- Telecommunications  
+- Industrial OEM  
+
+Employees:  
+- 100+ (site statement)  
+
+Revenue:  
+- ~$20M–$50M (mid-sized high-precision shop estimate)  
+
+Square Footage:  
+- ~40,000–60,000 ft² (dual-facility scale)  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+
+Row 215  
+http://www.areatool.com/  
+areatool.com  
+Area Tool & Manufacturing, Inc.  
+181 Baldwin Street, Park Road  
+Meadville, PA 16335  
+Phone: (814) 724-3166  
+
+Company: Area Tool & Manufacturing, Inc.  
+
+About:  
+- Founded 1976; 20,000 ft² climate-controlled precision machining & EDM facility. :contentReference[oaicite:7]{index=7}  
+- Specializes in precision machining, wire & sinker EDM, and surface grinding. :contentReference[oaicite:8]{index=8}  
+
+Services:  
+- CNC machining (3D, 5-axis)  
+- Wire & sinker EDM  
+- Surface grinding, inspection  
+
+Industries:  
+- Industrial manufacturing  
+- Tooling & molds  
+- Aerospace / Electrical components  
+
+Employees:  
+- ~25–60 (facility scale)  
+
+Revenue:  
+- ~$5M–$15M (precision shop estimate)  
+
+Square Footage:  
+- 20,000 ft²  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+
+Row 216  
+http://vikingtg.com/  
+vikingtg.com  
+Viking Tool & Gage Co., Inc.  
+11210 State Highway 18  
+Conneaut Lake, PA 16316  
+Phone: (814) 382-8691  
+
+Company: Viking Tool & Gage Co., Inc.  
+
+About:  
+- U.S. tool & gage manufacturer providing precision fixtures and metrology tooling.  
+
+Services:  
+- Tool & gage design & build  
+- Inspection fixtures & jigs  
+- Custom tooling & metrology support  
+
+Industries:  
+- Automotive  
+- Aerospace / Defense  
+- Industrial OEM  
+- Quality / Inspection  
+
+Employees:  
+- ~20–50 (industry estimate)  
+
+Revenue:  
+- ~$2M–$10M (small toolmaker estimate)  
+
+Square Footage:  
+- ~8,000–20,000 ft² (estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+
+Row 217  
+https://www.cavaliertool.com/  
+cavaliertool.com  
+Cavalier Tool & Manufacturing Ltd.  
+3450 Wheelton Dr  
+Windsor, ON N8W 5A7  
+Phone: (519) 944-2144  
+
+Company: Cavalier Tool & Manufacturing Ltd.  
+
+About:  
+- Founded 1975; operates three plants across Canada & U.S., with 132,000 ft² total and ~250 employees.  
+- Specialized in mold and tooling for injection molding up to 4,400 ton presses; produces >300 molds per year.  
+
+Services:  
+- Tool & mold design & build (injection, compression)  
+- Maintenance, repair & overhaul  
+- Prototype to production tooling  
+- Engineering support & QA  
+
+Industries:  
+- Automotive  
+- Consumer goods  
+- Industrial OEM  
+- Appliance  
+
+Employees:  
+- ~250  
+
+Revenue:  
+- ~$50M–$100M (estimated)  
+
+Square Footage:  
+- 132,000 ft²  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+
+Row 218  
+https://integritytoolandmold.com/  
+integritytoolandmold.com  
+Integrity Tool & Mold Inc.  
+5015 O’Neil Dr  
+Oldcastle, ON N0R 1L0  
+Phone: (519) 737-8923  
+
+Company: Integrity Tool & Mold Inc.  
+
+About:  
+- Canadian tool & mold shop in Oldcastle, ON, offering precision tooling, molds, and contract manufacturing.  
+- Also operates alternative address in Windsor, ON for broader operations.  
+
+Services:  
+- Mold & tool design & build  
+- Precision machining & EDM  
+- Prototyping, tool repairs & maintenance  
+
+Industries:  
+- Automotive  
+- Consumer products  
+- Industrial OEM  
+- Appliance / Plastic parts  
+
+Employees:  
+- ~50  
+
+Revenue:  
+- ~$5M–$15M (regional shop estimate)  
+
+Square Footage:  
+- ~20,000–40,000 ft² (facility estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+
+Row 219  
+https://www.delvatool.com/  
+delvatool.com  
+Delva Tool & Machine  
+1911 Rowland Street  
+Cinnaminson, NJ 08077  
+Phone: (856) 786-8700  
+
+Company: Delva Tool & Machine  
+
+About:  
+- Precision CNC machining and tooling provider with additional facilities in Cinnaminson, NJ.  
+
+Services:  
+- CNC machining (milling, turning)  
+- Tooling & fixtures design & build  
+- Prototyping & production machining  
+- Tool build & maintenance  
+
+Industries:  
+- Industrial / OEM  
+- Mold & tooling  
+- Consumer / Appliance  
+- Electrical equipment  
+
+Employees:  
+- ~25–75  
+
+Revenue:  
+- ~$5M–$15M (estimate)  
+
+Square Footage:  
+- ~20,000–50,000 ft²  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+
+Row 220  
+https://lowellinc.com/  
+lowellinc.com  
+Lowell, Inc.  
+9 Thunderbird Lane  
+Wilmington, MA 01887  
+Phone: (888) 520-5834  
+
+Company: Lowell, Inc.  
+
+About:  
+- U.S. manufacturer of precision valves, fittings, and hardware for specialty fluid control applications.  
+- Designs and produces miniature components in high-purity or demanding environments.  
+
+Services:  
+- Precision valve & fitting manufacturing  
+- CNC machining & assembly  
+- Product design / development  
+- Clean room manufacturing for medical/instrumentation  
+
+Industries:  
+- Medical / Life Science  
+- Semiconductor / Clean tech  
+- Analytical instrumentation  
+- Industrial fluid systems  
+
+Employees:  
+- ~200  
+
+Revenue:  
+- ~$25M–$50M  
+
+Square Footage:  
+- ~30,000–60,000 ft²  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+
+Row 221  
+https://www.accumold.com/  
+accumold.com  
+AccuMold LLC  
+64 W Street Rd  
+Feasterville, PA 19053  
+Phone: (215) 322-7800  
+
+Company: AccuMold LLC  
+
+About:  
+- Precision plastic injection molding and overmolding specialist; provides turnkey mold & molding services.  
+- Supports medical, electronics, consumer, and specialty markets.  
+
+Services:  
+- Plastic injection molding & overmolding  
+- Mold design & build  
+- Tool repair & maintenance  
+- Quality control, inspection, automation  
+
+Industries:  
+- Medical / Life Sciences  
+- Electronics / Electrical  
+- Consumer products  
+- Industrial / Instrumentation  
+
+Employees:  
+- ~300  
+
+Revenue:  
+- ~$50M–$100M  
+
+Square Footage:  
+- ~125,000 ft²  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---
+
+Row 222  
+https://www.simtec-silicone.com/  
+simtec-silicone.com  
+SIMTEC Silicone Parts  
+3006 NW 33rd Ave  
+Fort Lauderdale, FL 33309  
+Phone: (954) 656-4212  
+
+Company: SIMTEC Silicone Parts  
+
+About:  
+- U.S.-based specialist in Liquid Silicone Rubber (LSR) molding, including single-shot, multi-shot, and overmolding.  
+- Operates ISO-compliant clean rooms, serving medical, consumer, and industrial sectors.  
+
+Services:  
+- LSR injection molding (single-shot, multi-shot)  
+- Overmolding & multi-material molding  
+- Prototyping & design support  
+- Post-molding processes & finishing  
+
+Industries:  
+- Medical / Healthcare  
+- Consumer goods  
+- Industrial / Specialty components  
+- Mobility / Transportation  
+
+Employees:  
+- ~50–100 (estimate)  
+
+Revenue:  
+- ~$10M–$30M (estimate)  
+
+Square Footage:  
+- ~20,000–40,000 ft² (estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: Gemini  
+
+---
+
+Row 223  
+https://www.extrememolding.com/  
+extrememolding.com  
+Extreme Molding LLC  
+25 Gibson Street  
+Watervliet, NY 12189  
+Phone: (518) 272-7315  
+
+Company: Extreme Molding LLC  
+
+About:  
+- Provides plastic & silicone molding including injection, compression, transfer, and contract packaging services.  
+- Serves clients in consumer, medical, and industrial markets with flexible manufacturing solutions.  
+
+Services:  
+- Silicone injection molding (LSR)  
+- Plastic injection, compression & transfer molding  
+- Packaging, fulfillment & logistics services  
+
+Industries:  
+- Medical / Life Sciences  
+- Consumer Goods  
+- Industrial / OEM  
+
+Employees:  
+- ~20–50 (estimate)  
+
+Revenue:  
+- ~$5M–$15M (estimate)  
+
+Square Footage:  
+- ~15,000–30,000 ft² (estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: Gemini  
+
+---
+
+Row 224  
+https://www.nobleprecision.com/  
+nobleprecision.com  
+Noble Precision, LLC  
+1480 DuPont Drive  
+Ionia, MI 48846  
+Phone: (616) 527-0476  
+
+Company: Noble Precision, LLC  
+
+About:  
+- Precision CNC machining shop specializing in turned and milled components with tight tolerances for industrial and aerospace clients.  
+
+Services:  
+- CNC turning & milling  
+- Precision machining of metals & high-alloy materials  
+- Quality inspection & finishing  
+
+Industries:  
+- Aerospace / Defense  
+- Industrial equipment  
+- Instrumentation  
+- Energy / Oil & Gas  
+
+Employees:  
+- ~20–60 (estimate)  
+
+Revenue:  
+- ~$2M–$10M (estimate)  
+
+Square Footage:  
+- ~10,000–25,000 ft² (estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: Gemini  
+
+---
+
+Row 225  
+https://promedpharmallc.com/  
+promedpharmallc.com  
+ProMed Pharma, LLC  
+6765 Wedgwood Rd N  
+Maple Grove, MN 55311  
+Phone: (763) 331-3800  
+
+Company: ProMed Pharma, LLC  
+
+About:  
+- Molding & tooling enterprise focused on drug-loaded silicones, micro-molding, and medical device integration.  
+- Collaborates with ProMed Molded Products in Plymouth, MN for tooling and production support.  
+
+Services:  
+- Silicone injection molding (drug-device)  
+- Plastic injection / compression molding  
+- Tooling & molds, prototyping & micro molding  
+
+Industries:  
+- Medical / Life Sciences  
+- Pharma devices  
+- Biotechnology  
+
+Employees:  
+- ~50–150 (estimate)  
+
+Revenue:  
+- ~$20M–$50M (estimate)  
+
+Square Footage:  
+- ~40,000–80,000 ft² (estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: Gemini  
+
+---
+
+Row 226  
+https://promedmolding.com/  
+promedmolding.com  
+ProMed Molded Products, Inc.  
+15600 Medina Road  
+Plymouth, MN 55447  
+Phone: (763) 331-3800  
+
+Company: ProMed Molded Products, Inc.  
+
+About:  
+- FDA-registered, ISO 13485/ISO 9001 medical molder specializing in silicone (LSR/HCR) and thermoplastics for implantable and Class II/III devices; sister company to ProMed Pharma (drug-eluting silicones). :contentReference[oaicite:0]{index=0}  
+
+Services:  
+- LSR/HCR silicone molding (single- & multi-shot), micro/insert/overmolding  
+- Thermoplastic molding, prototype-to-production, automation  
+- Tooling design/build, cleanroom molding & assembly, validation & QA  
+
+Industries:  
+- Medical devices & life sciences  
+- Drug-device combination (via ProMed Pharma)  
+
+Employees:  
+- ~200–400 (multi-facility medical molding estimate)  
+
+Revenue:  
+- ~$50M–$120M (medical molding group estimate)  
+
+Square Footage:  
+- ~80,000–120,000 ft² (combined manufacturing & cleanrooms, est.)  
+
+Ownership:  
+- Privately held  
+
+Source: Gemini  
+
+---  
+
+Row 227  
+https://www.service-mold.com/  
+service-mold.com  
+Service Mold + Aerospace Inc.  
+2711 St. Etienne Blvd  
+Windsor, ON N8W 5B1, Canada  
+Phone: +1 (519) 945-3344  
+
+Company: Service Mold + Aerospace Inc.  
+
+About:  
+- Canadian mold builder serving aerospace, automotive, and industrial markets; known for large-format 5-axis machining and turnkey tooling programs. :contentReference[oaicite:1]{index=1}  
+
+Services:  
+- Tooling design/engineering, large 5-axis CNC milling  
+- Injection & compression molds, aerospace tooling  
+- Program management, tryout, repair & maintenance  
+
+Industries:  
+- Aerospace & defense  
+- Automotive & mobility  
+- Industrial OEM  
+
+Employees:  
+- ~100–200 (medium mold shop estimate)  
+
+Revenue:  
+- ~$25M–$60M (industry estimate)  
+
+Square Footage:  
+- ~100,000–150,000 ft² (multi-bay facility estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: Gemini  
+
+---  
+
+Row 228  
+https://macfab.ca/  
+macfab.ca  
+Macfab Manufacturing Inc.  
+330 Britannia Rd E  
+Mississauga, ON L4Z 1X9, Canada  
+Phone: +1 (905) 238-1210  
+
+Company: Macfab Manufacturing Inc.  
+
+About:  
+- Advanced CNC machining and manufacturing services provider; 42,000+ ft² facility supporting prototypes through volume production. :contentReference[oaicite:2]{index=2}  
+
+Services:  
+- CNC milling/turning, 5-axis machining  
+- Fabrication, finishing, assembly & testing  
+- Design for manufacturability, inspection & QA  
+
+Industries:  
+- Aerospace & defense  
+- Medical/diagnostics  
+- Industrial & semiconductor equipment  
+
+Employees:  
+- ~100–200 (size class estimate)  
+
+Revenue:  
+- ~$20M–$45M (industry estimate)  
+
+Square Footage:  
+- 42,000+ ft² (site) :contentReference[oaicite:3]{index=3}  
+
+Ownership:  
+- Privately held  
+
+Source: Gemini  
+
+---  
+
+Row 229  
+https://www.mtdmicromolding.com  
+mtdmicromolding.com  
+MTD Micro Molding, Inc.  
+15 Trolley Crossing Road  
+Charlton, MA 01507  
+Phone: 1-800-998-5549; (508) 248-0111  
+
+Company: MTD Micro Molding, Inc.  
+
+About:  
+- Award-winning micro medical molder focused on bioabsorbable and high-performance polymers; ISO 13485 certified with extensive micromolding IP. :contentReference[oaicite:4]{index=4}  
+
+Services:  
+- Micro injection molding & tooling (bioabsorbables, PEEK, LCP, etc.)  
+- Design for micro-molding, metrology, assembly  
+- Cleanroom production, validation, documentation  
+
+Industries:  
+- Medical devices (drug delivery, neuro, vascular, implantables)  
+
+Employees:  
+- ~100–200 (growth-stage estimate)  
+
+Revenue:  
+- ~$25M–$60M (medical micromolding estimate)  
+
+Square Footage:  
+- ~40,000–70,000 ft² (plant & cleanrooms, est.)  
+
+Ownership:  
+- Privately held  
+
+Source: Gemini  
+
+---  
+
+Row 230  
+https://www.mrpcorp.com/  
+mrpcorp.com  
+MRPC (Medical Rubber Products Company) – Headquarters  
+13161 W. Glendale Ave (PO Box 246)  
+Butler, WI 53007-0246  
+Phone: (262) 781-7122  
+
+Company: MRPC  
+
+About:  
+- FDA-registered, ISO 13485 contract manufacturer specializing in silicone, rubber, and thermoplastic molding with facilities in WI, FL, and NH. :contentReference[oaicite:5]{index=5}  
+
+Services:  
+- LSR/HCR silicone, rubber & thermoplastic molding  
+- Tooling, assembly, automation & packaging  
+- Engineering, validation, supply-chain support  
+
+Industries:  
+- Medical devices & diagnostics  
+- Life sciences & drug-delivery  
+
+Employees:  
+- ~300–600 (multi-site estimate)  
+
+Revenue:  
+- ~$80M–$180M (multi-site contract manufacturing estimate)  
+
+Square Footage:  
+- 150,000+ ft² across facilities (est.)  
+
+Ownership:  
+- Privately held  
+
+Source: Gemini  
+
+---  
+
+Row 231  
+https://www.hobsonmotzer.com/  
+hobsonmotzer.com  
+Hobson & Motzer, Inc.  
+30 Airline Road  
+Durham, CT 06422  
+Phone: (860) 349-1756  
+
+Company: Hobson & Motzer, Inc.  
+
+About:  
+- Precision metal stamping and machining manufacturer serving medical and advanced industrial markets; U.S. operations centered in Connecticut. :contentReference[oaicite:6]{index=6}  
+
+Services:  
+- Progressive precision stamping & tool build  
+- CNC machining, Swiss turning, micro-features  
+- Assembly, finishing, metrology & validation  
+
+Industries:  
+- Medical device & surgical instruments  
+- Electronics/industrial components  
+
+Employees:  
+- ~300–600 (multi-operation estimate)  
+
+Revenue:  
+- ~$80M–$180M (industry estimate)  
+
+Square Footage:  
+- ~150,000–250,000 ft² (multi-building campus estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: Gemini  
+
+---
+
+Row 232  
+https://www.mrmold.com  
+mrmold.com  
+MR Mold & Engineering Corp.  
+27101 Burbank  
+Foothill Ranch, CA 92610  
+Phone: (714) 630-5043  
+
+Company: MR Mold & Engineering Corp.  
+
+About:  
+- Founded in 1985; precision mold maker and injection molding specialist for Liquid Silicone Rubber (LSR) and thermoplastics.  
+- Provides complete design-to-production solutions, with in-house engineering, mold building, and processing.  
+
+Services:  
+- LSR and thermoplastic injection mold design & build  
+- Cleanroom molding & validation  
+- Prototyping, mold trials, and tool repair/maintenance  
+- Engineering support & automation integration  
+
+Industries:  
+- Medical / Healthcare  
+- Consumer products  
+- Industrial & electronics  
+- Aerospace / Defense  
+
+Employees:  
+- ~40–80 (industry estimate)  
+
+Revenue:  
+- ~$10M–$25M (business scale estimate)  
+
+Square Footage:  
+- ~20,000–40,000 ft² (facility footprint)  
+
+Ownership:  
+- Privately held  
+
+Source: GPT deep research  
+
+---  
+
+Row 233  
+https://janler.com  
+janler.com  
+Janler Corporation  
+5849 W. Howard Street  
+Niles, IL 60714  
+Phone: (773) 774-5445  
+
+Company: Janler Corporation  
+
+About:  
+- Established 1952; experienced mold maker for plastic injection tooling, specializing in precision medical and industrial applications.  
+- Known for tight-tolerance tool design and validation services, ISO 9001 certified.  
+
+Services:  
+- Precision injection mold design & engineering  
+- Prototype to production molds  
+- Tool validation, maintenance & repair  
+- Custom tooling for medical and industrial clients  
+
+Industries:  
+- Medical devices  
+- Consumer & industrial plastics  
+- Automotive components  
+- Electronics  
+
+Employees:  
+- ~50–100  
+
+Revenue:  
+- ~$10M–$30M  
+
+Square Footage:  
+- ~30,000 ft²  
+
+Ownership:  
+- Privately held; family-founded  
+
+Source: GPT deep research  
+
+---  
+
+Row 234  
+https://www.dyntool.com  
+dyntool.com  
+Dynamic Tool Corporation  
+W165 N9240 St. Francis Drive  
+Menomonee Falls, WI 53051  
+Phone: (262) 781-7122  
+
+Company: Dynamic Tool Corporation  
+
+About:  
+- Founded in 1973; leading precision mold builder specializing in multi-cavity, high-precision injection molds.  
+- Provides tool design, mold building, metrology, and production support.  
+
+Services:  
+- High-precision injection molds (multi-cavity, stack, hot runner)  
+- CAD/CAM engineering & tool design  
+- Mold validation, repair & maintenance  
+- Measurement & inspection services  
+
+Industries:  
+- Medical / Life sciences  
+- Packaging  
+- Automotive  
+- Electronics  
+
+Employees:  
+- ~150–250  
+
+Revenue:  
+- ~$40M–$80M  
+
+Square Footage:  
+- ~85,000 ft²  
+
+Ownership:  
+- Privately held  
+
+Source: GPT deep research  
+
+---  
+
+Row 235  
+https://www.tri-waymold.com  
+tri-waymold.com  
+Tri-Way Mold & Engineering, Inc.  
+20260 Bahama Street  
+Chatsworth, CA 91311  
+Phone: (818) 998-5288  
+
+Company: Tri-Way Mold & Engineering, Inc.  
+
+About:  
+- Custom injection mold builder established in Southern California; specializes in precision, high-tolerance plastic molds.  
+- Offers engineering, tool building, and mold repair services.  
+
+Services:  
+- Plastic injection mold design & build  
+- Prototyping & short-run tooling  
+- Tool repair, modification, and maintenance  
+- Engineering & validation support  
+
+Industries:  
+- Aerospace & Defense  
+- Medical devices  
+- Consumer products  
+- Industrial plastics  
+
+Employees:  
+- ~20–50  
+
+Revenue:  
+- ~$5M–$12M  
+
+Square Footage:  
+- ~15,000–25,000 ft²  
+
+Ownership:  
+- Privately held  
+
+Source: GPT deep research  
+
+---
+
+Row 236  
+https://twinmold.com  
+twinmold.com  
+Twin Mold & Engineering  
+51738 Filomena Dr  
+Shelby Township, MI 48315  
+Phone: (586) 532-8558  
+
+Company: Twin Mold & Engineering  
+
+About:  
+- Provides full injection mold design, build, and repair services from its Metro Detroit facility.  
+- Offers preventive maintenance, prototyping, tooling changeovers, and mold repairs.  
+
+Services:  
+- Injection mold design & engineering  
+- Mold build & assembly  
+- Mold repair & refurbishment  
+- Prototype and small-run tooling  
+
+Industries:  
+- Consumer goods  
+- Medical / Healthcare  
+- Industrial & packaging  
+
+Employees:  
+- ~29 (Manta listing)  
+
+Revenue:  
+- ~$7.0M (Manta listing)  
+
+Square Footage:  
+- no confirmed data (fallback estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: GPT deep research  
+
+---
+
+Row 237  
+https://burteckllc.com  
+burteckllc.com  
+Burteck LLC  
+55 Griffin Rd South  
+Bloomfield, CT 06002  
+Phone: (860) 219-1406  
+
+Company: Burteck LLC  
+
+About:  
+- Builds Class 101 precision injection molds with rigorous standards for medical, automotive, and consumer applications.  
+- Operates a fully equipped mold facility with development, qualification, and performance testing.  
+
+Services:  
+- Injection mold design & build  
+- Tool development & qualification  
+- Turnkey mold services, validation support  
+
+Industries:  
+- Medical devices  
+- Consumer products  
+- Automotive  
+
+Employees:  
+- 11–50  
+
+Revenue:  
+- $1M–$5M  
+
+Square Footage:  
+- no confirmed data (fallback)  
+
+Ownership:  
+- Privately held  
+
+Source: GPT deep research  
+
+---
+
+Row 238  
+https://www.basilius.com  
+basilius.com  
+Basilius Inc.  
+4338 South Ave  
+Toledo, OH 43615  
+Phone: (419) 536-5810  
+
+Company: Basilius Inc.  
+
+About:  
+- Full-service injection molding and mold building firm with engineering, automation, and custom tooling services.  
+- Handles projects from prototype tools to high-volume production with integrated machining and finishing.  
+
+Services:  
+- Injection molding / molding run support  
+- Mold build & repair  
+- Tooling, automation, process development  
+
+Industries:  
+- Automotive  
+- Medical / Healthcare  
+- Consumer / Industrial  
+
+Employees:  
+- 11–50  
+
+Revenue:  
+- ~$30M–$80M (estimate)  
+
+Square Footage:  
+- facility size data not confirmed  
+
+Ownership:  
+- Privately held  
+
+Source: GPT deep research  
+
+---
+
+Row 239  
+https://www.executool.net  
+executool.net  
+Executool Precision Tooling & Molding  
+2727 West 16th St  
+Erie, PA 16505  
+Phone: (814) 836-1141  
+
+Company: Executool Precision Tooling & Molding  
+
+About:  
+- Specializes in close-tolerance molds, precision injection molding, and mold repair.  
+- ISO 9001 / ISO 13485 capability; operates a 40,000+ ft² facility.  
+
+Services:  
+- Mold design & build  
+- Precision injection molding  
+- Tool repair & refurbishment  
+- Quality assurance & validation  
+
+Industries:  
+- Automotive / Electronics  
+- Medical devices  
+- Consumer / Industrial  
+
+Employees:  
+- ~100–200 (facility size)  
+
+Revenue:  
+- ~$10M–$30M (estimate)  
+
+Square Footage:  
+- ~40,000 ft² (facility listing)  
+
+Ownership:  
+- Privately held  
+
+Source: GPT deep research  
+
+---
+
+Row 240  
+https://www.dynamicgroup.com  
+dynamicgroup.com  
+Dynamic Group, Inc.  
+13911 Unity Street NW  
+Ramsey, MN 55303  
+Phone: (763) 780-8674  
+
+Company: Dynamic Group, Inc.  
+
+About:  
+- Family-owned for over 48 years, operates tooling and molding facilities in Minnesota.  
+- Supports complex custom tooling, medical molding, and contract manufacturing.  
+
+Services:  
+- Injection molding & polymer tooling  
+- Tool & die build & repair  
+- Assembly, packaging, validation  
+
+Industries:  
+- Medical / Healthcare  
+- Industrial / OEM  
+- Consumer / Specialty products  
+
+Employees:  
+- ~300–600 (multi-facility estimate)  
+
+Revenue:  
+- ~$80M–$200M (corporate estimate)  
+
+Square Footage:  
+- ~100,000+ ft² (tooling + molding capacity)  
+
+Ownership:  
+- Privately held  
+
+Source: GPT deep research  
+
+---
+
+Row 241  
+https://carlsontool.com  
+carlsontool.com  
+Carlson Tool & Manufacturing Corp.  
+W57 N14386 Doerr Way  
+Cedarburg, WI 53012  
+Phone: (800) 532-2252 / (262) 377-2020  
+
+Company: Carlson Tool & Manufacturing Corp.  
+
+About:  
+- ISO and ITAR certified tool, drill, machining, and tooling services provider; deep hole drilling, honing, EDM, mold tooling.  
+- Located in Cedarburg, WI; long history of tool & drill specialty services.  
+
+Services:  
+- Deep hole drilling, boring, EDM, machining  
+- Tooling & mold manufacturing  
+- Tool refurbishment & repair  
+
+Industries:  
+- Automotive  
+- Aerospace / Defense  
+- Industrial / OEM  
+- Energy / Heavy Equipment  
+
+Employees:  
+- ~150–300 (D&B / industry estimate)  
+
+Revenue:  
+- ~$20M–$60M (mid-size tool specialist estimate)  
+
+Square Footage:  
+- ~100,000 ft² (tool & production facility, estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: GPT deep research  
+
+---
+
+Row 242  
+https://franchino.com  
+franchino.com  
+Franchino Mold & Engineering Co.  
+5599 W Grand River Avenue  
+Lansing, MI 48906  
+Phone: (517) 321-5609  
+
+Company: Franchino Mold & Engineering Co.  
+
+About:  
+- Since 1955; custom die cast dies, plastic injection molds, machining and tooling services.  
+- Operates ~125,000 sq ft in Michigan and additional ~16,000 sq ft in Kentucky.  
+
+Services:  
+- Die casting dies, injection mold tooling  
+- Contract machining & die repair  
+- Design, engineering, tool validation  
+
+Industries:  
+- Automotive  
+- Consumer electronics  
+- Appliance  
+- Industrial  
+
+Employees:  
+- 11–50 (ContactOut listing)  
+
+Revenue:  
+- ~$5M–$15M (regional tooling estimate)  
+
+Square Footage:  
+- ~125,000 + 16,000 = ~141,000 ft²  
+
+Ownership:  
+- Privately held  
+
+Source: GPT deep research  
+
+---
+
+Row 243  
+https://americantoolandmold.com  
+americantoolandmold.com  
+American Tool & Mold, Inc.  
+1700 Sunshine Drive  
+Clearwater, FL 33765  
+Phone: (727) 447-7377  
+
+Company: American Tool & Mold, Inc.  
+
+About:  
+- Specialized in complex, precision multi-cavity molds including thin-wall, stack, hot-runner, unscrewing & two-shot molds.  
+- Serves global customers from its Clearwater facility.  
+
+Services:  
+- Multi-cavity, stack, hot-runner, two-shot mold design/build  
+- You can also provide mold testing, troubleshooting & validation  
+
+Industries:  
+- Consumer goods  
+- Medical / Device  
+- Automotive / Electronics  
+
+Employees:  
+- ~100–200 (estimated tool & mold business)  
+
+Revenue:  
+- ~$20M–$50M (mid-range mold supplier estimate)  
+
+Square Footage:  
+- ~75,000 ft² (facility estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: GPT deep research  
+
+---
+
+Row 244  
+https://www.midstatemold.com  
+midstatemold.com  
+Midstate Mold & Engineering  
+20 Liberty Way, Ste C  
+Franklin, MA 02038  
+Phone: (508) 520-0011  
+
+Company: Midstate Mold & Engineering  
+
+About:  
+- Precision plastic injection molder and mold maker serving global clients; agile shop with long customer retention.  
+- Known for tight tolerances, in-house prototyping, mold storage & relocation.  
+
+Services:  
+- Tooling & mold making  
+- Plastic injection molding (standard, insert, overmolding)  
+- Prototype to production, tooling maintenance  
+
+Industries:  
+- Medical / Life sciences  
+- Electronics  
+- Industrial OEM  
+- Consumer goods  
+
+Employees:  
+- ~50–150 (estimate)  
+
+Revenue:  
+- ~$10M–$30M (shop scale estimate)  
+
+Square Footage:  
+- ~50,000 ft² (facility estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: GPT deep research  
+
+---
+
+Row 245  
+https://www.teameliteonline.com  
+teameliteonline.com  
+Elite Mold & Engineering, Inc.  
+51548 Filomena Drive  
+Shelby Township, MI 48315  
+Phone: (586) 314-4000  
+
+Company: Elite Mold & Engineering, Inc.  
+
+About:  
+- Provider of plastic injection molding, mold building, and CNC machining across prototype to production runs.  
+- Operates multiple buildings in Shelby Twp, Mich., with three facilities.  
+
+Services:  
+- Custom mold design & build  
+- Injection molding (prototype to production)  
+- CNC machining, repair & maintenance  
+
+Industries:  
+- Automotive / Mobility  
+- Consumer / Electronics  
+- Medical / Industrial  
+
+Employees:  
+- ~50–150 (medium mold shop estimate)  
+
+Revenue:  
+- ~$10M–$35M (molding & tooling business estimate)  
+
+Square Footage:  
+- ~60,000 ft² (three-building campus estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: GPT deep research  
+
+---
+
+Row 146  
+https://www.precisetooling.info/  
+precisetooling.info  
+Precise Tooling Solutions  
+3150 Scott Dr  
+Columbus, IN 47201  
+Phone: (812) 378-0247  
+
+Company: Precise Tooling Solutions  
+
+About:  
+- Specialty tooling & machining subsidiary of Noblitt International, delivering precision machining, mold tooling & repair.  
+- Offers in-house CNC, EDM, and mold repair capabilities.  
+
+Services:  
+- CNC machining (mills, lathes)  
+- EDM / wire EDM  
+- Injection mold tooling & repair  
+- Fixture & jig design  
+
+Industries:  
+- Plastics / Mold makers  
+- Industrial manufacturing  
+- Consumer / Appliance  
+
+Employees:  
+- ~21  
+
+Revenue:  
+- ~$1M–$10M  
+
+Square Footage:  
+- no published value (fallback)  
+
+Ownership:  
+- Privately held (subsidiary of Noblitt International)  
+
+Source: GPT deep research  
+
+---  
+
+Row 147  
+https://www.basilius.com/  
+basilius.com  
+Basilius Inc.  
+4338 South Ave  
+Toledo, OH 43615  
+Phone: (419) 536-5810  
+
+Company: Basilius Inc.  
+
+About:  
+- Full-service injection molding & mold building provider in Toledo, OH, integrating automation & mold engineering.  
+- ISO / precision-certified, supporting automotive, medical, consumer, and industrial clients.  
+
+Services:  
+- Injection molding (thermoplastics)  
+- Mold building, repair & overhaul  
+- Tooling & automation support  
+
+Industries:  
+- Automotive  
+- Medical / Healthcare  
+- Consumer goods  
+- Industrial / OEM  
+
+Employees:  
+- 45  
+
+Revenue:  
+- $5M–$25M  
+
+Square Footage:  
+- no published value (fallback)  
+
+Ownership:  
+- Privately held  
+
+Source: GPT deep research  
+
+---  
+
+Row 148  
+https://www.advancemold.com/  
+advancemold.com  
+Advance Mold & Manufacturing, Inc.  
+71 Utopia Rd  
+Manchester, CT 06042  
+Phone: [not publicly listed]  
+
+Company: Advance Mold & Manufacturing, Inc.  
+
+About:  
+- Since 1959, a precision injection mold builder of stack molds, multi-shot, high-cavitation & specialty molds.  
+- Operates an 80,000 ft² facility with full in-house engineering, mold production, and qualification.  
+
+Services:  
+- Injection mold design & build (stack, multi-shot, high-cavitation)  
+- Prototype to production tool build  
+- Mold validation, service & maintenance  
+
+Industries:  
+- Medical / Life Sciences  
+- Consumer / Appliance  
+- Industrial / Fluid systems  
+
+Employees:  
+- 11–50  
+
+Revenue:  
+- no published number (fallback)  
+
+Square Footage:  
+- ~80,000 ft²  
+
+Ownership:  
+- Privately held  
+
+Source: GPT deep research  
