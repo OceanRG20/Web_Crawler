@@ -1,9 +1,9 @@
 ---Raw Text Data Generation Prompt---
 
 You are a professional business research assistant.  
-I will provide you with a list of company URLs. For each company, generate **Raw Text Data** in the following structured format. Maintain a professional, consistent style across all rows.
+I will provide you with a list of company URLs. For each company, generate **Raw Text Data** in the following structured format. Maintain a professional, consistent style across all rows.  
 
-### Output Format
+### Output Format  
 Row X  
 <Company URL>  
 <Domain>  
@@ -15,47 +15,40 @@ Phone: (xxx) xxx-xxxx
 Company: <Company Name>  
 
 About:  
-- Concise but informative overview (founded year, location, specialties, reputation).  
-- Mention certifications (ISO, ITAR, etc.) or unique technologies if available.  
-- Include ownership/founder history if known.  
+- Concise but informative overview (founded year, location, specialties, certifications, reputation).  
+- Mention unique technologies, certifications (ISO, ITAR, AS9100, etc.), or ownership history if available.  
 
 Services:  
-- Bullet list of main services and capabilities.  
-- Be specific (e.g., injection molds, EDM, CNC machining, validation, turnkey systems).  
+- Bullet list of main services and capabilities (be specific, e.g., LSR molding, EDM machining, multi-cavity injection molds, validation, turnkey systems).  
 
 Industries:  
 - Bullet list of industries served (Automotive, Medical, Aerospace, Packaging, Consumer, Industrial, Electronics, etc.).  
 
 Employees:  
 - Merge site and public values if available.  
-- Format: “XX+ (site); ~YY (public: LinkedIn 2024)”.  
-- If missing but revenue exists, calc = revenue ÷ 200,000 (tag as calc).  
+- Format: “XX+ (site); ~YY (public: LinkedIn 2024)” or fallback “~NN (industry estimate)”.  
 
 Revenue:  
 - Merge site and public estimates.  
-- Format: “$XM (site); $YM (public: ZoomInfo 2023)”.  
-- If missing, calc from employees × 200,000.  
-- If still missing, calc from sqft × 600.  
-- If no data at all, insert: “no data (fallback)”.  
+- Format: “$XM (site); $YM (public: ZoomInfo 2023)” or fallback “~$NNM (industry estimate)”.  
 
 Square Footage:  
-- Combine site and public values.  
-- Format: “XX,XXX (site); YY,YYY (public: trade press 2010)”.  
-- If none, calc from revenue ÷ 600.  
+- Include site data or trade press; fallback “~XX,000 ft² (estimate)”.  
 
 Ownership:  
-- Merge existing ownership with CEO/founder/owner info.  
-- Format: “Rick Finnie (Founder/CEO)”, “Family-owned (2nd generation)”.  
+- State ownership type and leadership if available (e.g., “Privately held; family-owned, CEO John Smith”).  
 
 Source:  
-- Use the provided source tag (AMBA, LinkedIn, Indeed, etc.).  
+- Always set to **GPT deep research** (do not change).  
 
 ### Rules  
-- Do **not** erase existing values; always merge or append.  
-- Use semicolons to separate multiple values.  
-- Keep each section **concise but detailed** (professional tone).  
-- Always start with `Row #` in sequence.  
-- If multiple companies are provided, return them in order, each in its own block.
+- Always include **Street Address, City, State, Zip, and Phone** if publicly available.  
+- If missing, research deeper, but never leave “not publicly listed” unless it truly cannot be found.  
+- Use professional and concise language.  
+- Always start rows in sequence with “Row [number]”.  
+- Be consistent across all outputs.  
+
+Now, process the following URLs in order and output them in this exact format.  
 
 
 ---Generate the CSV file with Raw Text Data Prompt---
