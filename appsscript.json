@@ -1,0 +1,29 @@
+{
+  "timeZone": "America/Los_Angeles",
+  "exceptionLogging": "STACKDRIVER",
+  "dependencies": {},
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/script.container.ui",
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/script.scriptapp"
+  ],
+  "runtimeVersion": "V8",
+  "sheets": {
+    "macros": [
+      {
+        "menuName": "getActiveRowFromAnotherTab",
+        "functionName": "getActiveRowFromAnotherTab"
+      },
+      {
+        "menuName": "getValueFromActiveRow",
+        "functionName": "getValueFromActiveRow"
+      },
+      {
+        "menuName": "Open Record View",
+        "functionName": "OpenRecordView",
+        "defaultShortcut": "Ctrl+Alt+Shift+1"
+      }
+    ]
+  }
+}

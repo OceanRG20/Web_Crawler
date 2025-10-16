@@ -10091,7 +10091,7 @@ Source: GPT deep research
 
 ---
 
-Row 146  
+Row 246  
 https://www.precisetooling.info/  
 precisetooling.info  
 Precise Tooling Solutions  
@@ -10132,7 +10132,7 @@ Source: GPT deep research
 
 ---  
 
-Row 147  
+Row 247  
 https://www.basilius.com/  
 basilius.com  
 Basilius Inc.  
@@ -10173,7 +10173,7 @@ Source: GPT deep research
 
 ---  
 
-Row 148  
+Row 248  
 https://www.advancemold.com/  
 advancemold.com  
 Advance Mold & Manufacturing, Inc.  
@@ -10212,3 +10212,588 @@ Ownership:
 Source: GPT deep research  
 
 ---
+
+Row 249  
+https://cncindustries.com/  
+cncindustries.com  
+CNC Industries Ltd.  
+3291 8 St  
+Nisku, AB T9E 8T3, Canada  
+Phone: (780) 469-2346  
+
+Company: CNC Industries Ltd.  
+
+About:  
+- Founded in 1985; headquartered in Nisku, Alberta with operations in Asia.  
+- Supplies OEM components for mining, construction, oil & gas; ISO 9001:2015 and API Q1 certified.  
+- Known for high-precision machining, heavy equipment parts, and specialized tool services.  
+
+Services:  
+- CNC & conventional machining  
+- Induction hardening & heat treatment  
+- Custom oilfield and heavy equipment parts  
+- Tooling, repair & prototyping  
+
+Industries:  
+- Mining / Earthmoving  
+- Oil & Gas  
+- Heavy Equipment / Construction  
+- Industrial OEM  
+
+Employees:  
+- ~150 (industry estimate)  
+
+Revenue:  
+- ~$30M–$80M (industry estimate)  
+
+Square Footage:  
+- ~54,000 ft² (manufacturing floor area)  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---  
+
+Row 250  
+https://paceind.com/  
+paceind.com  
+Pace Industries, LLC  
+825 Lower Brownsville Rd  
+Jackson, TN 38301  
+Phone: 1-888-DIE-CAST  
+
+Company: Pace Industries, LLC  
+
+About:  
+- North America’s largest full-service die casting company with 18 facilities in the U.S. & Mexico.  
+- Offers aluminum, magnesium, and zinc casting plus machining, tooling, and finishing.  
+
+Services:  
+- High-pressure die casting (Al, Mg, Zn)  
+- Precision machining & assembly  
+- Tool & die design/build  
+- Surface finishing & coating  
+
+Industries:  
+- Automotive / Transportation  
+- Aerospace / Defense  
+- Appliance / Lighting  
+- Industrial / Electrical  
+- Medical  
+
+Employees:  
+- ~4,000  
+
+Revenue:  
+- ~$500M+  
+
+Square Footage:  
+- Multi-site; hundreds of thousands ft²  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---  
+
+Row 251  
+https://pridemanufacturing.com/  
+pridemanufacturing.com  
+Pride Manufacturing LLC  
+155 Franklin Rd, Ste 250  
+Brentwood, TN 37027  
+Phone: (615) 507-5000  
+
+Company: Pride Manufacturing LLC  
+
+About:  
+- Precision parts manufacturer providing machining, assemblies, and value-added services.  
+- Supports engineering and supply chain needs of OEMs and contract manufacturers.  
+
+Services:  
+- Precision machining & fabrication  
+- Assembly & subassembly  
+- Supply chain & sourcing support  
+
+Industries:  
+- Industrial machinery  
+- Electronics / Components  
+- Consumer / Appliances  
+
+Employees:  
+- ~50 (directory estimate)  
+
+Revenue:  
+- ~$10M–$25M  
+
+Square Footage:  
+- ~20,000–40,000 ft² (estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: Grok  
+
+---  
+
+Row 252  
+https://www.iqsdirectory.com  
+iqsdirectory.com  
+IQS Directory – Quebec Precision Turning Listings  
+[Directory Listing Page]  
+Quebec, Canada  
+Phone: [not applicable]  
+
+Company: IQS Directory – Quebec Precision Turning  
+
+About:  
+- Online industrial directory listing Quebec precision turning and machining suppliers.  
+- Provides searchable profiles, categories, and RFQ submission for buyers.  
+
+Services:  
+- Directory listings  
+- Lead generation & RFQ system  
+- Supplier categorization  
+
+Industries:  
+- Manufacturing / Machining  
+- Industrial supply networks  
+
+Employees:  
+- no data (fallback)  
+
+Revenue:  
+- no data (fallback)  
+
+Square Footage:  
+- no data (fallback)  
+
+Ownership:  
+- Directory operator (privately held)  
+
+Source: Grok  
+
+---
+
+Row 253  
+https://www.simtec-silicone.com  
+simtec-silicone.com  
+SIMTEC Silicone Parts, LLC  
+3006 NW 33rd Ave  
+Fort Lauderdale, FL 33309  
+Phone: (954) 656-4212  
+
+Company: SIMTEC Silicone Parts, LLC  
+
+About:  
+- Founded in 2002; U.S. specialist in Liquid Silicone Rubber (LSR) injection molding, multi-shot molding, and overmolding.  
+- ISO 9001 and ISO 13485 certified; cleanroom molding capabilities.  
+
+Services:  
+- LSR injection molding (single- & multi-shot)  
+- Overmolding & multi-material molding  
+- Prototyping & design-for-manufacturability  
+- Post-molding processes & finishing  
+
+Industries:  
+- Medical / Healthcare  
+- Consumer products  
+- Automotive / Mobility  
+- Industrial & electronics  
+
+Employees:  
+- ~50–100 (LinkedIn estimate)  
+
+Revenue:  
+- ~$10M–$30M (industry estimate)  
+
+Square Footage:  
+- ~20,000–40,000 ft² (facility estimate)  
+
+Ownership:  
+- Subsidiary of Rico Group (Austria)  
+
+Source: Perplexity  
+
+---  
+
+Row 254  
+https://beaconmedtech.com  
+beaconmedtech.com  
+Beacon MedTech Solutions  
+165 Flagship Drive  
+North Andover, MA 01845  
+Phone: (978) 688-8291  
+
+Company: Beacon MedTech Solutions  
+
+About:  
+- Contract manufacturer specializing in injection molding and assembly for complex medical and life science applications.  
+- Provides end-to-end solutions including mold design, manufacturing, and cleanroom production.  
+
+Services:  
+- Injection molding (thermoplastics & LSR)  
+- Cleanroom molding & assembly  
+- Tooling design, validation, & maintenance  
+- Supply chain & program management  
+
+Industries:  
+- Medical devices & life sciences  
+- Biotech & diagnostics  
+- Industrial medical equipment  
+
+Employees:  
+- ~200–300  
+
+Revenue:  
+- ~$50M–$100M  
+
+Square Footage:  
+- ~80,000–100,000 ft²  
+
+Ownership:  
+- Privately held  
+
+Source: Perplexity  
+
+---  
+
+Row 255  
+https://www.die-moldtool.com  
+die-moldtool.com  
+Die-Mold Tool Ltd.  
+210 Summerlea Rd  
+Brampton, ON L6T 4X3, Canada  
+Phone: (905) 792-3991  
+
+Company: Die-Mold Tool Ltd.  
+
+About:  
+- Founded in 1974; Canadian mold maker specializing in unscrewing molds, precision tooling, and custom injection molds.  
+- Known for patented unscrewing technology and global customer base.  
+
+Services:  
+- Unscrewing mold design & manufacturing  
+- High-precision injection mold building  
+- Mold repair & maintenance  
+- Engineering & prototyping  
+
+Industries:  
+- Packaging  
+- Medical & healthcare  
+- Consumer products  
+- Industrial plastics  
+
+Employees:  
+- ~50–100  
+
+Revenue:  
+- ~$10M–$25M  
+
+Square Footage:  
+- ~35,000–50,000 ft²  
+
+Ownership:  
+- Privately held  
+
+Source: Perplexity  
+
+---  
+
+Row 256  
+https://www.triumphtool.com  
+triumphtool.com  
+Triumph Tool Ltd.  
+1219 Franklin Blvd  
+Cambridge, ON N1R 8B6, Canada  
+Phone: (519) 740-8555  
+
+Company: Triumph Tool Ltd.  
+
+About:  
+- Canadian distributor and tooling solutions provider; specializes in cutting tools, workholding, and mold/die components.  
+- Works with leading global brands to supply precision tooling for manufacturing sectors.  
+
+Services:  
+- Distribution of cutting tools, carbide, workholding  
+- Mold and die components supply  
+- Technical consulting & application support  
+
+Industries:  
+- Automotive & aerospace machining  
+- Industrial & moldmaking  
+- Medical device manufacturing  
+
+Employees:  
+- ~25–50  
+
+Revenue:  
+- ~$5M–$15M  
+
+Square Footage:  
+- ~15,000–25,000 ft²  
+
+Ownership:  
+- Privately held  
+
+Source: Perplexity  
+
+---  
+
+Row 257  
+https://www.baumanntools.com/  
+baumanntools.com  
+Baumann Tool & Die, Inc.  
+1105 Lakeview Ave  
+Covington, KY 41011  
+Phone: (859) 291-3052  
+
+Company: Baumann Tool & Die, Inc.  
+
+About:  
+- Family-owned tool & die shop providing custom dies, molds, and precision-machined components since 1970s.  
+- Offers design-to-build services with CNC, EDM, and grinding capabilities.  
+
+Services:  
+- Tool & die design/build  
+- Injection mold tooling  
+- CNC machining & EDM  
+- Mold & die repair/maintenance  
+
+Industries:  
+- Automotive  
+- Appliance & consumer products  
+- Industrial equipment  
+- Packaging  
+
+Employees:  
+- ~20–50  
+
+Revenue:  
+- ~$3M–$10M  
+
+Square Footage:  
+- ~20,000 ft² (facility estimate)  
+
+Ownership:  
+- Family-owned, privately held  
+
+Source: Perplexity  
+
+---
+
+Row 258  
+https://precisionmoldsupplies.com/  
+precisionmoldsupplies.com  
+Precision Mold Supplies Ltd.  
+574 52 St  
+Delta, BC V4M 3S5  
+Phone: (604) 943-7702  
+
+Company: Precision Mold Supplies Ltd.  
+
+About:  
+- Canadian supplier of mold components, mold bases, polishing supplies, cutting tools, and auxiliary machines.  
+- Founded in 1991; operates satellite office in Port Alberni, BC.  
+
+Services:  
+- Mold components & consumables  
+- Cutting tools & auxiliary machinery  
+- Mold bases & tooling supplies  
+- Polishing, finishing & accessory parts  
+
+Industries:  
+- Mold & tooling  
+- Plastics / Injection molding  
+- Die casting  
+
+Employees:  
+- ~3 (CanPlast listing) :contentReference[oaicite:0]{index=0}  
+
+Revenue:  
+- ~$0.5M–$1.5M (estimate for distributor scale)  
+
+Square Footage:  
+- no published data (fallback)  
+
+Ownership:  
+- Privately held  
+
+Source: Perplexity  
+
+---
+
+Row 259  
+https://www.cirtecmed.com/  
+cirtecmed.com  
+Cirtec Medical Corp.  
+9200 Xylon Ave N  
+Brooklyn Park, MN 55445  
+Phone: (763) 493-8556  
+
+Company: Cirtec Medical Corp.  
+
+About:  
+- Medical device tooling & manufacturing firm focused on cardiology, neurology, precision components.  
+- Operates in U.S. and globally, with sites in Minnesota, Germany, Costa Rica. :contentReference[oaicite:1]{index=1}  
+
+Services:  
+- Tooling / molds for medical / medical devices  
+- Precision machining, assembly & production  
+- Design & development support  
+
+Industries:  
+- Medical devices  
+- Life sciences  
+- Biotech  
+
+Employees:  
+- ~200–300 (corporate estimate)  
+
+Revenue:  
+- ~$30M–$80M (medical tooling scale estimate)  
+
+Square Footage:  
+- ~100,000 ft² (group facility footprint estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: Perplexity  
+
+---
+
+Row 260  
+https://www.jt-lsr.com/  
+jt-lsr.com  
+JT LSR / JVTECH Silicone  
+Building A, Shouli Industrial Park  
+Minzhong Street, Zhongshan, Guangdong  
+China  
+Phone: +86 13424592517  
+
+Company: JT LSR / JVTECH Silicone  
+
+About:  
+- Established 2012; specialized in LSR (liquid silicone rubber) injection molding, two-shot, overmolding applications. :contentReference[oaicite:2]{index=2}  
+- Offers integrated mold building, molding, testing and full mold support services.  
+
+Services:  
+- LSR injection molding (single-, multi-shot)  
+- Overmolding & dual-shot processes  
+- Mold design & build  
+- Quality lab & testing services  
+
+Industries:  
+- Medical / Healthcare  
+- Consumer / Electronics  
+- Automotive  
+
+Employees:  
+- ~100–200 (estimate)  
+
+Revenue:  
+- ~$10M–$30M (estimate)  
+
+Square Footage:  
+- ~50,000 ft² (plant estimate)  
+
+Ownership:  
+- Privately held  
+
+Source: Perplexity  
+
+---
+
+Row 261  
+https://kingsonmold.com  
+kingsonmold.com  
+Kingson Mold & Machine, Inc.  
+1350 Titan Way  
+Brea, CA 92821  
+Phone: (714) 871-0221  
+
+Company: Kingson Mold & Machine, Inc.  
+
+About:  
+- Family-owned since 1977; a leader in liquid silicone rubber (LSR) mold making. :contentReference[oaicite:0]{index=0}  
+- ISO 9001:2015 certified; serves medical, aerospace, automotive, electronics, and consumer industries. :contentReference[oaicite:1]{index=1}  
+
+Services:  
+- LSR mold design & build  
+- Injection, compression, and transfer molds  
+- Prototyping & pre-production tooling  
+- Mold repair & maintenance  
+- Quality assurance & inspections  
+
+Industries:  
+- Medical / Healthcare  
+- Aerospace / Defense  
+- Automotive  
+- Electronics / Consumer  
+- Specialty silicone applications  
+
+Employees:  
+- 11–50 (Indeed estimate)  
+
+Revenue:  
+- ~$5M–$25M (industry estimate)  
+
+Square Footage:  
+- ~25,000 ft² (estimated from revenue)  
+
+Ownership:  
+- Family-owned  
+
+Source: Claude  
+
+---  
+
+Row 262  
+https://precisionmold.com  
+precisionmold.com  
+Precision Mold & Machining Services Inc.  
+13143 East 9 Mile Road  
+Warren, MI 48089  
+Phone: (586) 774-2330  
+
+Company: Precision Mold & Machining Services Inc.  
+
+About:  
+- Michigan-based precision machining and injection mold repair firm, also servicing aerospace, defense, automotive, and medical sectors. :contentReference[oaicite:2]{index=2}  
+- AS9100D / ISO 9001 certified; originally started as component machining and expanded into mold services. :contentReference[oaicite:3]{index=3}  
+
+Services:  
+- CNC machining (3-axis & 5-axis)  
+- EDM machining  
+- Deep hole & gun drilling  
+- Mold diagnostics, maintenance & repair  
+- Tool rebuilding & finishing  
+
+Industries:  
+- Aerospace / Aviation  
+- Defense  
+- Automotive  
+- Medical / Healthcare  
+- Industrial  
+
+Employees:  
+- ~12 (public directories)  
+
+Revenue:  
+- ~$2.4M (estimated from employee base)  
+
+Square Footage:  
+- ~4,000 ft² (estimated from revenue)  
+
+Ownership:  
+- Privately held  
+
+Source: Claude  
+
+---
+
+

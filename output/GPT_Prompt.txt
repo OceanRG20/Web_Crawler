@@ -39,7 +39,7 @@ Ownership:
 - State ownership type and leadership if available (e.g., “Privately held; family-owned, CEO John Smith”).  
 
 Source:  
-- Always set to **GPT deep research** (do not change).  
+- Always set the inputing company source if not ("Not Sure").  
 
 ### Rules  
 - Always include **Street Address, City, State, Zip, and Phone** if publicly available.  
