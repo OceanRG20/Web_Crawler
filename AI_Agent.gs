@@ -4,6 +4,7 @@
  *   ▶ Raw Text Data Generation  (Prompt ID = Raw_Data)
  *   ▶ Add new candidates to MMCrawl  (Prompt ID = Add_MMCrawl)
  *   ▶ News Search                 (Prompt ID = News_Search)
+ *   ▶ MMCrawl Backfill            (Prompt ID = Column_Backfill)
  *   🔑 Set OpenAI API Key
  *   ✔ Authorize (first-time only)
  * Results → column C; Timestamp → column D
@@ -44,7 +45,7 @@ var AIA = {
   COL_URL: 2,
   COL_SOURCE: 3,
 
-  MMCRAWL_SHEET: "MMCrawl", // target DB for Add_MMCrawl
+  MMCRAWL_SHEET: "MMCrawl", // target DB for Add_MMCrawl + Backfill
   NEWSRAW_SHEET: "News Raw", // target DB for News_Search
 
   MODEL: "gpt-4o-mini",
@@ -60,6 +61,7 @@ function onOpen_Agent(ui) {
     .addItem("▶ Raw Text Data Generation", "AI_runRawTextData")
     .addItem("▶ Add new candidates to MMCrawl", "AI_runAddMMCrawl")
     .addItem("▶ News Search", "AI_runNewsSearch")
+    .addItem("▶ MMCrawl Backfill", "AI_runMMCrawlBackfill") // Backfill (generic mapping)
     .addSeparator()
     .addItem("🔑 Set OpenAI API Key", "AI_setApiKey")
     .addSeparator()
@@ -182,14 +184,7 @@ function AI_runAddMMCrawl() {
   }
 }
 
-/* ========= NEWS SEARCH =========
- * - Iterates Candidate URLs one by one.
- * - Calls GPT per URL with your News_Search template + "Return JSON only."
- * - Parses and collects JSON; if none, pushes a minimal object with is_estimated:true.
- * - De-duplicates by canonical news_url and (company_name + headline) OR the spaced keys.
- * - Writes a single combined JSON array to the News_Search row’s Result cell.
- * - Also appends results to the "News Raw" sheet (header-mapped).
- */
+/* ========= NEWS SEARCH ========= */
 function AI_runNewsSearch() {
   const ss = SpreadsheetApp.getActive();
   const ui = AIA_safeUi_();
@@ -263,18 +258,14 @@ function AI_runNewsSearch() {
         is_estimated: true,
       });
     }
-    Utilities.sleep(300); // gentle pacing
+    Utilities.sleep(300);
   }
 
-  // De-duplicate combined results (supports both key styles)
   const deduped = AIA_dedupeArticles_(collected);
-
-  // Save JSON back to AI Integration
   const jsonOutput = JSON.stringify(deduped, null, 2);
   sheet.getRange(row, AIA.RESULT_COL).setValue(jsonOutput);
   sheet.getRange(row, AIA.WHEN_COL).setValue(new Date());
 
-  // Append to News Raw
   const appended = AIA_appendToNewsRaw_(deduped);
   if (ui)
     ss.toast(
@@ -287,6 +278,107 @@ function AI_runNewsSearch() {
     if (typeof newsRawRemoveDuplicateStories === "function")
       newsRawRemoveDuplicateStories(false);
   } catch (_) {}
+}
+
+/* ========= MMCrawl BACKFILL (generic mapping) =========
+ * Uses Prompt ID = Column_Backfill.
+ * For EACH MMCrawl row, sends the entire row as JSON.
+ * Expects GPT to return a plain JSON object whose keys MATCH MMCrawl column headers.
+ * Any returned key/value is written into the same-named column for that row.
+ * Writes a JSON summary (updated keys per row or error) back to AI Integration.
+ */
+function AI_runMMCrawlBackfill() {
+  const ss = SpreadsheetApp.getActive();
+  const ui = AIA_safeUi_();
+  const integ = ss.getSheetByName(AIA.SHEET_NAME);
+  const dataSh = ss.getSheetByName(AIA.MMCRAWL_SHEET);
+  if (!integ) {
+    if (ui) ui.alert(`Sheet "${AIA.SHEET_NAME}" not found.`);
+    return;
+  }
+  if (!dataSh) {
+    if (ui) ui.alert(`Sheet "${AIA.MMCRAWL_SHEET}" not found.`);
+    return;
+  }
+
+  const row = AIA_findPromptRow_("Column_Backfill");
+  if (!row) {
+    if (ui) ui.alert('Prompt ID "Column_Backfill" not found.');
+    return;
+  }
+
+  const template = String(integ.getRange(row, 2).getValue() || "").trim();
+  if (!template) {
+    if (ui) ui.alert('No template found in column B for "Column_Backfill".');
+    return;
+  }
+
+  const lastRow = dataSh.getLastRow();
+  const lastCol = dataSh.getLastColumn();
+  if (lastRow <= 1 || lastCol < 1) {
+    if (ui) ui.alert("MMCrawl has no data.");
+    return;
+  }
+
+  const headers = dataSh.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
+  const allRows = dataSh.getRange(2, 1, lastRow - 1, lastCol).getValues();
+  const summary = [];
+
+  for (let i = 0; i < allRows.length; i++) {
+    const absoluteRow = 2 + i;
+    const vals = allRows[i];
+    const inputObj = {};
+    headers.forEach((h, idx) => (inputObj[String(h)] = vals[idx]));
+
+    const prompt =
+      template +
+      "\n\n### Input Row (MMCrawl JSON)\n" +
+      JSON.stringify(inputObj, null, 2) +
+      '\n\nReturn **JSON only** with keys EXACTLY matching MMCrawl headers you want to update. Example: {"Region":"W.Pa","Medical":"Yes"}';
+
+    try {
+      if (ui)
+        ss.toast(
+          `Backfill ${i + 1}/${allRows.length}: row ${absoluteRow}`,
+          "AI Integration",
+          3
+        );
+      const ans = AIA_callOpenAI_(prompt);
+      const obj = AIA_extractJsonObject_(ans);
+
+      const updatedKeys = [];
+      if (obj && typeof obj === "object") {
+        for (const k in obj) {
+          if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
+          const idx =
+            typeof getHeaderIndexSmart_ === "function"
+              ? getHeaderIndexSmart_(headers, k)
+              : headers.findIndex(
+                  (h) => String(h).toLowerCase() === String(k).toLowerCase()
+                );
+          if (idx >= 0) {
+            dataSh.getRange(absoluteRow, idx + 1).setValue(obj[k]);
+            updatedKeys.push(headers[idx]);
+          }
+        }
+      }
+
+      if (updatedKeys.length) {
+        summary.push({ row: absoluteRow, updated: updatedKeys });
+      } else {
+        summary.push({ row: absoluteRow, note: "No matching keys returned" });
+      }
+    } catch (err) {
+      summary.push({ row: absoluteRow, error: String(err) });
+    }
+    Utilities.sleep(200);
+  }
+
+  integ
+    .getRange(row, AIA.RESULT_COL)
+    .setValue(JSON.stringify(summary, null, 2));
+  integ.getRange(row, AIA.WHEN_COL).setValue(new Date());
+  if (ui) ss.toast("MMCrawl Backfill complete.", "AI Integration", 5);
 }
 
 /* ========= GENERIC EXECUTION HANDLER ========= */
@@ -482,6 +574,16 @@ function AIA_extractJsonArray_(text) {
   if (typeof obj === "object") return [obj];
   return [];
 }
+function AIA_extractJsonObject_(text) {
+  const arr = AIA_extractJsonArray_(text);
+  if (arr.length === 1) return arr[0];
+  if (arr.length > 1) return arr[0];
+  try {
+    return JSON.parse(String(text || ""));
+  } catch (_) {
+    return {};
+  }
+}
 function AIA_jsonString_(obj) {
   try {
     return JSON.stringify(obj, null, 2);
@@ -490,7 +592,7 @@ function AIA_jsonString_(obj) {
   }
 }
 
-/* ========= News utils: canonicalize & dedupe (supports both schemas) ========= */
+/* ========= News utils ========= */
 function AIA_canonicalUrl_(u) {
   if (!u) return "";
   try {
@@ -603,7 +705,6 @@ function AIA_mapItemToRow_(item, headers) {
   Object.keys(item || {}).forEach((k) => (j[k.toLowerCase()] = item[k]));
 
   function v() {
-    // alias picker
     for (let i = 0; i < arguments.length; i++) {
       const key = String(arguments[i]).toLowerCase();
       if (key in j) {
@@ -705,7 +806,7 @@ function AIA_mapItemToRow_(item, headers) {
   return row;
 }
 
-/* ========= Append to News Raw (supports both key styles) ========= */
+/* ========= Append to News Raw ========= */
 function AIA_appendToNewsRaw_(articles) {
   if (!articles || !articles.length) return 0;
   const ss = SpreadsheetApp.getActive();
