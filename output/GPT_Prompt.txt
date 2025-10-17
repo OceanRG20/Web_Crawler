@@ -95,8 +95,7 @@ Company Name | Target Status | Status (proposed) | Public Website Homepage URL |
 
 
 ---News Search Prompt---
-
-You are an MBA-trained analyst with 5+ years researching U.S. precision metal manufacturers (mold building; tool & die). Perform a thorough news search and return **only CSV rows**.
+You are an MBA-trained analyst with 5+ years researching U.S. precision metal manufacturers (mold building; tool & die). Perform a thorough news search and return only valid **JSON objects**, one per article.
 
 ## Inputs (provided by user)
 - A list of one or more **Company Website URLs** (homepage links).
@@ -124,7 +123,7 @@ For each company:
    - `"Company Name" "City" "State"`
    - `"Company Name" + manufacturing` | `mold` | `"tool and die"` | `injection mold`
    - `"Company Name" site:(local paper domain)` (if known)
-   - `"Company Name" + economic development`
+   - `"Company Name" + economic development"`
    - For former names: `"Old Name" "City" "State"`
 3) Prefer results from:
    - City/County/Regional newspapers; Business Journals; State/County EDCs
@@ -137,52 +136,58 @@ For each company:
 - It is not a low-value repost; when duplicates exist, keep the **originating source** if identifiable.
 
 ## Data extraction per accepted article
-- **Headline**: exact as published.
-- **Publisher or Source**: outlet’s name (e.g., *Plastics News*).
-- **Publication Date**: YYYY-MM-DD if possible; else original format or blank.
-- **Full Article Text**: extract the full main text (exclude boilerplate/nav/related links). (Used only to build the GPT Summary; not output directly.)
-- **Photo Captions**: capture any primary caption tied to the article’s main image.
+Extract and output fields using **these exact keys**:
 
-## GPT Summary construction (CSV-safe)
-- Compose concise bullets separated by soft line breaks `\n` (not hard paragraph breaks).
-- **First bullet**: `Headline — Publisher (Date)`
+- **"Company Name"** — Exact current company name.
+- **"Company Website URL"** — The homepage URL.
+- **"News Story URL"** — Canonicalized article URL (remove UTM/fbclid/tracking).
+- **"Headline"** — Exact headline text.
+- **"Publication Date"** — `YYYY-MM-DD` if possible; else blank or visible date string.
+- **"Publisher or Source"** — Outlet name (e.g. “Plastics News”).
+- **"GPT Summary"** — Concise factual summary built as below.
+
+## GPT Summary construction (JSON-safe)
+Generate a multi-bullet summary with `\n` separators (not paragraphs).  
+Rules:
+- **First bullet:** `Headline — Publisher (Date)`
 - Include all **verbatim quotes** with attribution: `"Quote text"` — Name, Title/affiliation, Source.
-- If **no quotes**: include a bullet `No direct quotes appear in this article.`
-- If a **photo caption** exists: include a bullet `Photo: <caption>`
-- Keep language factual; avoid marketing tone; avoid commas where possible; prefer semicolons; ensure CSV safety.
+- If **no quotes**, add bullet: `No direct quotes appear in this article.`
+- If a **photo caption** exists: include bullet `Photo: <caption>`
+- Keep factual tone; avoid marketing; avoid commas inside sentences when possible; prefer semicolons; ensure JSON-safe escaping.
 
-## Output format (CSV rows only; no header row; no commentary)
-Columns, in order:
-1. Company Name
-2. Company Website URL
-3. News Story URL
-4. Headline
-5. Publication Date
-6. Publisher or Source
-7. GPT Summary
+## Output format (strict JSON)
+- Return a **JSON array** of objects.
+- Each object must use exactly these keys:
 
-- **One row per article**.
-- If **no valid articles** for a company, output a single row with:
-  - Headline = `No news`
-  - GPT Summary = `No news found after applying filters (local/regional/trade priority; junk excluded).`
+[
+  {
+    "Company Name": "ABC Mold & Tool",
+    "Company Website URL": "https://www.abcmold.com",
+    "News Story URL": "https://www.plasticsnews.com/article123",
+    "Headline": "ABC Mold expands operations in Michigan",
+    "Publication Date": "2023-11-18",
+    "Publisher or Source": "Plastics News",
+    "GPT Summary": "ABC Mold expands operations in Michigan — Plastics News (2023-11-18)\nPlant expansion to add 25 jobs and new EDM machines.\n“Michigan is still the best place to grow precision tooling,” — John Doe, President.\nPhoto: Workers installing new Haas VF-6 CNC."
+  },
+  {
+    "Company Name": "XYZ Tooling",
+    "Company Website URL": "https://www.xyztooling.com",
+    "News Story URL": "",
+    "Headline": "No news",
+    "Publication Date": "",
+    "Publisher or Source": "",
+    "GPT Summary": "No news found after applying filters (local/regional/trade priority; junk excluded)."
+  }
+]
+
+- If no valid articles exist for a company, still output one JSON object with `"Headline": "No news"` and `"GPT Summary": "No news found after applying filters (local/regional/trade priority; junk excluded)."`
 
 ## De-duplication rules
-- Before outputting any row, if `News Story URL` (after canonicalization: strip UTM, fbclid, tracking params) is in `SeenLinks`, **skip** it.
-- Prefer the **original** source when the same story appears in multiple outlets; if uncertain, keep the most **local** credible outlet.
+- Before adding any article, if `"News Story URL"` (after canonicalization) already exists in `SeenLinks`, skip it.
+- When duplicate coverage exists, prefer the **original** or most **local** credible outlet.
 
-## CSV integrity rules
-- Do **not** output a header row.
-- Escape internal quotes in fields by doubling them `""`.
-- Replace newlines inside fields with `\n`.
-- Do not include extra commas by keeping bullets short and using semicolons where helpful.
-- Do not add extra columns or notes.
-
-## Special handling
-- If an article page shows **clearly conflicting dates** (e.g., updated vs. published), choose the **published/original** date; if unclear, choose the earliest on-page date and note ambiguity in the summary as `Updated date appears on page`.
-- For paywalled trade press with visible headline/date but hidden body, you may still output if the **headline** unambiguously indicates relevant coverage; include `No direct quotes appear in this article.` unless quotes are visible.
-
-## Final answer requirement
-- **Return only CSV rows** that meet the above spec—no explanations, headers, or commentary.
+## Final output requirement
+Return a **valid JSON array** of objects only — no commentary, no markdown, no CSV, and no text outside the JSON.
 
 
 ---Indeed Candidate Company Urls fetching Prompt---
