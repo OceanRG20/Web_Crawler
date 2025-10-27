@@ -4,10 +4,9 @@
  *   ▶ Raw Text Data Generation  (Prompt ID = Raw_Data)
  *   ▶ Add new candidates to MMCrawl  (Prompt ID = Add_MMCrawl)
  *   ▶ News Search                 (Prompt ID = News_Search)
- *   ▶ MMCrawl Backfill            (Prompt ID = Column_Backfill)
  *   🔑 Set OpenAI API Key
  *   ✔ Authorize (first-time only)
- * Results → column C; Timestamp → column D
+ * Results → column C; Timestamp → column D; Prompt Preview → column E
  **************************************************/
 
 /** ===== Safe UI getter ===== */
@@ -39,20 +38,27 @@ var AIA = {
   SHEET_NAME: "AI Integration", // tab with prompts
   RESULT_COL: 3, // C
   WHEN_COL: 4, // D
+  PREVIEW_COL: 5, // E  (Prompt Preview)
 
   CANDIDATE_SHEET: "Candidate", // used by Raw_Data & News_Search
   COL_NO: 1,
   COL_URL: 2,
   COL_SOURCE: 3,
 
-  MMCRAWL_SHEET: "MMCrawl", // target DB for Add_MMCrawl + Backfill
+  MMCRAWL_SHEET: "MMCrawl", // target DB for Add_MMCrawl
   NEWSRAW_SHEET: "News Raw", // target DB for News_Search
 
-  MODEL: "gpt-4o-mini",
+  MODEL: "gpt-4o",
   TEMP: 0.2,
+  MAX_TOKENS: 5000,
+
+  // Prompt preview OFF per your request
+  DEBUG_SHOW_PROMPT: false,
+  PREVIEW_MAX_CHARS: 18000,
+  PREVIEW_ONLY_FIRST_IN_LOOP: true,
 };
 
-/* ========= MENU HOOK ========= */
+/* ========= MENU HOOK (Backfill removed) ========= */
 function onOpen_Agent(ui) {
   ui = ui || AIA_safeUi_();
   if (!ui) return;
@@ -61,7 +67,6 @@ function onOpen_Agent(ui) {
     .addItem("▶ Raw Text Data Generation", "AI_runRawTextData")
     .addItem("▶ Add new candidates to MMCrawl", "AI_runAddMMCrawl")
     .addItem("▶ News Search", "AI_runNewsSearch")
-    .addItem("▶ MMCrawl Backfill", "AI_runMMCrawlBackfill") // Backfill (generic mapping)
     .addSeparator()
     .addItem("🔑 Set OpenAI API Key", "AI_setApiKey")
     .addSeparator()
@@ -71,7 +76,6 @@ function onOpen_Agent(ui) {
 
 /* ========= AUTHORIZATION ========= */
 function AI_authorize() {
-  // harmless call to request UrlFetch scope for new users
   UrlFetchApp.fetch("https://example.com", { muteHttpExceptions: true });
 }
 
@@ -96,18 +100,129 @@ function AI_setApiKey() {
   ui.alert("Saved. You can now run prompts from the AI menu.");
 }
 
-/* ========= RAW DATA GENERATION (uses Candidate list) ========= */
+/* ========= RAW DATA GENERATION — per-candidate processing ========= */
 function AI_runRawTextData() {
-  AI_runPromptById_("Raw_Data", (template, row, sheet) => {
-    if (AIA_hasNoCandidates_()) {
-      AIA_notifyNoCandidates_(sheet, row);
-      return null;
+  const ss = SpreadsheetApp.getActive();
+  const ui = AIA_safeUi_();
+  const sheet = ss.getSheetByName(AIA.SHEET_NAME);
+  if (!sheet) {
+    if (ui) ui.alert(`Sheet "${AIA.SHEET_NAME}" not found.`);
+    return;
+  }
+
+  const row = AIA_findPromptRow_("Raw_Data");
+  if (!row) {
+    if (ui) ui.alert('Prompt ID "Raw_Data" not found.');
+    return;
+  }
+
+  const template = String(sheet.getRange(row, 2).getValue() || "").trim();
+  if (!template) {
+    if (ui) ui.alert('No template found in column B for "Raw_Data".');
+    return;
+  }
+
+  const candidates = AIA_getCandidateRows_();
+  if (!candidates.length) {
+    AIA_notifyNoCandidates_(sheet, row);
+    return;
+  }
+
+  const outputs = [];
+  for (let i = 0; i < candidates.length; i++) {
+    const { no, url, source } = candidates[i];
+    if (ui)
+      ss.toast(
+        `Raw_Data ${i + 1}/${candidates.length}: ${url}`,
+        "AI Integration",
+        4
+      );
+
+    // fetch text bundle (+ simple hints from HTML)
+    const bundle = AIA_fetchSiteBundleText_(url, 24000);
+    const hints = AIA_extractHintsFromBundle_(bundle.htmls || [], url);
+
+    const prompt = AIA_buildSingleRawPrompt_(
+      template,
+      no,
+      url,
+      source,
+      bundle.text,
+      hints
+    );
+
+    try {
+      let ans = AIA_callOpenAI_(prompt);
+      // Enforce identity with our best hints; fix Phone formatting; force Source line
+      ans = AIA_enforceIdentityHeader_(ans, hints);
+      ans = AIA_normalizePhoneLine_(ans);
+      ans = AIA_forceSourceLine_(ans, source);
+      outputs.push(String(ans || "").trim());
+    } catch (err) {
+      const fallback =
+        `Row ${no}\n${url}\n\n${AIA_extractDomain_(url)}\n` +
+        `${hints.company || ""}\n${hints.street || ""}\n${
+          hints.cityStateZip || ""
+        }\n` +
+        `Phone: ${hints.phoneFmt || hints.phoneRaw || ""}\n\nCompany: ${
+          hints.company || ""
+        }\n\n` +
+        `About:\n- ERROR: ${String(
+          err
+        )}\n\nServices:\n- \n\nIndustries:\n- \n\n` +
+        `Employees:\n- \n\nRevenue:\n- \n\nSquare Footage:\n- \n\nOwnership:\n- \n\n` +
+        `Equipment:\n- null\n\nSource:\n- ${source || "Not Sure"}`;
+      outputs.push(fallback);
     }
-    return AIA_buildRawDataPrompt_(template);
-  });
+    Utilities.sleep(250);
+  }
+
+  const finalText = outputs.join("\n\n");
+  sheet.getRange(row, AIA.RESULT_COL).setValue(finalText);
+  sheet.getRange(row, AIA.WHEN_COL).setValue(new Date());
+  if (ui)
+    ss.toast(
+      `Raw_Data complete: ${candidates.length} URLs processed.`,
+      "AI Integration",
+      6
+    );
 }
 
-/* ========= ADD MMCrawl ========= */
+/* Build a single-company Raw_Data prompt */
+function AIA_buildSingleRawPrompt_(
+  template,
+  no,
+  url,
+  source,
+  excerptText,
+  hints
+) {
+  const domain = AIA_extractDomain_(url);
+
+  const guidance =
+    "\n\n### Important\n" +
+    "- Output plain text ONLY in the exact Output Format. No extra headings, no commentary, no JSON.\n" +
+    "- The 5-line identity header (Domain, Official Name, Street, City/State ZIP, Phone) should be as complete as possible. Use HINTS below when consistent; avoid 'N/A'/'Not Available'.\n" +
+    "- You MAY supplement Employees, Revenue, Ownership/Corporate parent, and Industries with clearly matched public sources (same entity). " +
+    "When you do, annotate like: 'N/A (site); ~300 (public: LinkedIn 2024)'.\n" +
+    "- Never mix similarly named companies from other states/domains. For equipment, if nothing verifiable → write exactly: 'null'.\n";
+
+  const hintsBlock =
+    "### HINTS (parsed from site bundle)\n" +
+    `Company Name (guess): ${hints.company || ""}\n` +
+    `Street Address (guess): ${hints.street || ""}\n` +
+    `City/State/ZIP (guess): ${hints.cityStateZip || ""}\n` +
+    `Phone (guess): ${hints.phoneFmt || hints.phoneRaw || ""}\n`;
+
+  const block =
+    `\nRow ${no}\n${url}\n\n${domain}\n` +
+    `<<SOURCE_EXCERPT_BEGIN>>\n${excerptText || ""}\n<<SOURCE_EXCERPT_END>>\n` +
+    `${hintsBlock}\nSource:\n- ${source || "Not Sure"}\n`;
+
+  return template + guidance + block;
+}
+
+/* ========= ADD MMCrawl — per-record processing ========= */
 function AI_runAddMMCrawl() {
   const ss = SpreadsheetApp.getActive();
   const ui = AIA_safeUi_();
@@ -147,41 +262,77 @@ function AI_runAddMMCrawl() {
     return;
   }
 
-  const prompt =
-    template +
-    "\n\n### Input: Raw Text Data\n" +
-    "Use the following **Raw Text Data** to construct MMCrawl CSV rows exactly as requested:\n\n" +
-    rawInput +
-    "\n";
+  const chunks = AIA_splitRawDataRows_(rawInput);
+  if (!chunks.length) {
+    if (ui) ui.alert('Could not detect any "Row X" blocks in Raw Text Data.');
+    return;
+  }
 
-  try {
-    if (ui) ss.toast("Running Add_MMCrawl…", "AI Integration", 5);
-    const answer = AIA_callOpenAI_(prompt);
-    integ.getRange(addRow, AIA.RESULT_COL).setValue(answer);
-    integ.getRange(addRow, AIA.WHEN_COL).setValue(new Date());
+  let appendedTotal = 0;
+  integ.getRange(addRow, AIA.RESULT_COL).clearContent();
 
-    const items = AIA_extractJsonArray_(answer);
-    if (!items.length) {
-      if (ui)
-        ss.toast(
-          "Add_MMCrawl: could not parse JSON. Check the result cell.",
-          "AI Integration",
-          6
-        );
-      return;
-    }
-    const appended = AIA_appendToMMCrawl_(items);
+  for (let i = 0; i < chunks.length; i++) {
+    const piece = chunks[i].trim();
+    if (!piece) continue;
+
     if (ui)
-      ss.toast(`Added ${appended} row(s) to MMCrawl`, "AI Integration", 6);
-  } catch (err) {
-    const msg = String(err);
-    integ.getRange(addRow, AIA.RESULT_COL).setValue("ERROR: " + msg);
-    integ.getRange(addRow, AIA.WHEN_COL).setValue(new Date());
-    if (ui) {
-      ss.toast(`Error: ${AIA_truncate_(msg, 90)}`, "AI Integration", 8);
-      ui.alert("OpenAI Error", msg, ui.ButtonSet.OK);
+      ss.toast(`Add_MMCrawl ${i + 1}/${chunks.length}`, "AI Integration", 4);
+
+    const prompt =
+      template +
+      "\n\n### Input: Raw Text Data (single record)\n" +
+      piece +
+      "\n\nReturn **JSON array only** (one object) matching the exact MMCrawl schema; no markdown;";
+
+    try {
+      const ans = AIA_callOpenAI_(prompt);
+      integ.getRange(addRow, AIA.RESULT_COL).setValue(ans);
+      integ.getRange(addRow, AIA.WHEN_COL).setValue(new Date());
+
+      const items = AIA_extractJsonArray_(ans);
+      if (!items.length) continue;
+      appendedTotal += AIA_appendToMMCrawl_(items);
+    } catch (err) {
+      integ.getRange(addRow, AIA.RESULT_COL).setValue("ERROR: " + String(err));
+      integ.getRange(addRow, AIA.WHEN_COL).setValue(new Date());
+    }
+    Utilities.sleep(250);
+  }
+
+  if (ui)
+    ss.toast(
+      `Add_MMCrawl complete. ${appendedTotal} row(s) added.`,
+      "AI Integration",
+      6
+    );
+  try {
+    if (typeof mmcrawlRemoveDuplicateUrls === "function")
+      mmcrawlRemoveDuplicateUrls(false);
+  } catch (_) {}
+}
+
+/* Split Raw_Data text into per-row blocks starting at "Row <number>" lines */
+function AIA_splitRawDataRows_(rawText) {
+  const lines = String(rawText || "").split(/\r?\n/);
+  const blocks = [];
+  let cur = [];
+  function pushCur() {
+    if (cur.length) {
+      blocks.push(cur.join("\n").trim());
+      cur = [];
     }
   }
+  for (let i = 0; i < lines.length; i++) {
+    const L = lines[i];
+    if (/^\s*Row\s+\d+\s*$/i.test(L.trim())) {
+      pushCur();
+      cur.push(L);
+    } else {
+      cur.push(L);
+    }
+  }
+  pushCur();
+  return blocks.filter((b) => /\bRow\s+\d+\b/i.test(b));
 }
 
 /* ========= NEWS SEARCH ========= */
@@ -228,12 +379,18 @@ function AI_runNewsSearch() {
       url +
       "\n\nReturn **JSON array only** with objects that follow the exact schema; no markdown; no commentary.";
 
+    if (i === 0 && AIA.PREVIEW_ONLY_FIRST_IN_LOOP && AIA.DEBUG_SHOW_PROMPT) {
+      if (
+        !AIA_previewAndConfirm_(sheet, row, "News_Search (first run)", prompt)
+      )
+        return;
+    }
+
     try {
       const ans = AIA_callOpenAI_(prompt);
       const parsed = AIA_extractJsonArray_(ans);
-      if (parsed.length) {
-        parsed.forEach((o) => collected.push(o));
-      } else {
+      if (parsed.length) parsed.forEach((o) => collected.push(o));
+      else {
         collected.push({
           "Company Name": AIA_guessNameFromUrl_(url),
           "Company Website URL": url,
@@ -262,8 +419,9 @@ function AI_runNewsSearch() {
   }
 
   const deduped = AIA_dedupeArticles_(collected);
-  const jsonOutput = JSON.stringify(deduped, null, 2);
-  sheet.getRange(row, AIA.RESULT_COL).setValue(jsonOutput);
+  sheet
+    .getRange(row, AIA.RESULT_COL)
+    .setValue(JSON.stringify(deduped, null, 2));
   sheet.getRange(row, AIA.WHEN_COL).setValue(new Date());
 
   const appended = AIA_appendToNewsRaw_(deduped);
@@ -278,107 +436,6 @@ function AI_runNewsSearch() {
     if (typeof newsRawRemoveDuplicateStories === "function")
       newsRawRemoveDuplicateStories(false);
   } catch (_) {}
-}
-
-/* ========= MMCrawl BACKFILL (generic mapping) =========
- * Uses Prompt ID = Column_Backfill.
- * For EACH MMCrawl row, sends the entire row as JSON.
- * Expects GPT to return a plain JSON object whose keys MATCH MMCrawl column headers.
- * Any returned key/value is written into the same-named column for that row.
- * Writes a JSON summary (updated keys per row or error) back to AI Integration.
- */
-function AI_runMMCrawlBackfill() {
-  const ss = SpreadsheetApp.getActive();
-  const ui = AIA_safeUi_();
-  const integ = ss.getSheetByName(AIA.SHEET_NAME);
-  const dataSh = ss.getSheetByName(AIA.MMCRAWL_SHEET);
-  if (!integ) {
-    if (ui) ui.alert(`Sheet "${AIA.SHEET_NAME}" not found.`);
-    return;
-  }
-  if (!dataSh) {
-    if (ui) ui.alert(`Sheet "${AIA.MMCRAWL_SHEET}" not found.`);
-    return;
-  }
-
-  const row = AIA_findPromptRow_("Column_Backfill");
-  if (!row) {
-    if (ui) ui.alert('Prompt ID "Column_Backfill" not found.');
-    return;
-  }
-
-  const template = String(integ.getRange(row, 2).getValue() || "").trim();
-  if (!template) {
-    if (ui) ui.alert('No template found in column B for "Column_Backfill".');
-    return;
-  }
-
-  const lastRow = dataSh.getLastRow();
-  const lastCol = dataSh.getLastColumn();
-  if (lastRow <= 1 || lastCol < 1) {
-    if (ui) ui.alert("MMCrawl has no data.");
-    return;
-  }
-
-  const headers = dataSh.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
-  const allRows = dataSh.getRange(2, 1, lastRow - 1, lastCol).getValues();
-  const summary = [];
-
-  for (let i = 0; i < allRows.length; i++) {
-    const absoluteRow = 2 + i;
-    const vals = allRows[i];
-    const inputObj = {};
-    headers.forEach((h, idx) => (inputObj[String(h)] = vals[idx]));
-
-    const prompt =
-      template +
-      "\n\n### Input Row (MMCrawl JSON)\n" +
-      JSON.stringify(inputObj, null, 2) +
-      '\n\nReturn **JSON only** with keys EXACTLY matching MMCrawl headers you want to update. Example: {"Region":"W.Pa","Medical":"Yes"}';
-
-    try {
-      if (ui)
-        ss.toast(
-          `Backfill ${i + 1}/${allRows.length}: row ${absoluteRow}`,
-          "AI Integration",
-          3
-        );
-      const ans = AIA_callOpenAI_(prompt);
-      const obj = AIA_extractJsonObject_(ans);
-
-      const updatedKeys = [];
-      if (obj && typeof obj === "object") {
-        for (const k in obj) {
-          if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
-          const idx =
-            typeof getHeaderIndexSmart_ === "function"
-              ? getHeaderIndexSmart_(headers, k)
-              : headers.findIndex(
-                  (h) => String(h).toLowerCase() === String(k).toLowerCase()
-                );
-          if (idx >= 0) {
-            dataSh.getRange(absoluteRow, idx + 1).setValue(obj[k]);
-            updatedKeys.push(headers[idx]);
-          }
-        }
-      }
-
-      if (updatedKeys.length) {
-        summary.push({ row: absoluteRow, updated: updatedKeys });
-      } else {
-        summary.push({ row: absoluteRow, note: "No matching keys returned" });
-      }
-    } catch (err) {
-      summary.push({ row: absoluteRow, error: String(err) });
-    }
-    Utilities.sleep(200);
-  }
-
-  integ
-    .getRange(row, AIA.RESULT_COL)
-    .setValue(JSON.stringify(summary, null, 2));
-  integ.getRange(row, AIA.WHEN_COL).setValue(new Date());
-  if (ui) ss.toast("MMCrawl Backfill complete.", "AI Integration", 5);
 }
 
 /* ========= GENERIC EXECUTION HANDLER ========= */
@@ -444,33 +501,20 @@ function AIA_findPromptRow_(id) {
   return idx >= 0 ? 2 + idx : 0;
 }
 
-/* ========= PROMPT BUILDERS ========= */
-function AIA_buildRawDataPrompt_(template) {
-  const list = AIA_getCandidateRows_();
-  const formatted = AIA_formatCandidateList_(list);
-  const inputBlock =
-    "\n\n### Input List\n" +
-    "Below is the list of company websites to process. For each, generate **Raw Text Data** in the requested output format. " +
-    "If a URL is unreachable, note it explicitly and continue.\n\n" +
-    formatted +
-    "\n";
-  return template + inputBlock;
-}
-
 /* ========= Candidate sheet readers ========= */
 function AIA_getCandidateRows_() {
   const sh = SpreadsheetApp.getActive().getSheetByName(AIA.CANDIDATE_SHEET);
   if (!sh) throw new Error(`Sheet "${AIA.CANDIDATE_SHEET}" not found.`);
   const lastRow = sh.getLastRow();
   if (lastRow < 2) return [];
-  const values = sh.getRange(2, 1, lastRow - 1, 3).getDisplayValues();
-  const rows = [];
-  for (let i = 0; i < values.length; i++) {
-    const [no, url, source] = values[i].map((s) => String(s || "").trim());
+  const vals = sh.getRange(2, 1, lastRow - 1, 3).getDisplayValues();
+  const out = [];
+  for (let i = 0; i < vals.length; i++) {
+    const [no, url, source] = vals[i].map((s) => String(s || "").trim());
     if (!url) continue;
-    rows.push({ no: no || String(i + 1), url, source: source || "" });
+    out.push({ no: no || String(i + 1), url, source: source || "" });
   }
-  return rows;
+  return out;
 }
 function AIA_getCandidateUrls_() {
   const sh = SpreadsheetApp.getActive().getSheetByName(AIA.CANDIDATE_SHEET);
@@ -482,37 +526,6 @@ function AIA_getCandidateUrls_() {
     .getDisplayValues()
     .map((r) => String(r[0] || "").trim())
     .filter(Boolean);
-}
-function AIA_formatCandidateList_(rows) {
-  if (!rows.length) return "(No candidates found in Candidate sheet)";
-  return rows
-    .map(
-      (r) => `${r.no}) ${r.url}${r.source ? "  |  Source: " + r.source : ""}`
-    )
-    .join("\n");
-}
-
-/* ========= No-candidate handling ========= */
-function AIA_hasNoCandidates_() {
-  return AIA_getCandidateRows_().length === 0;
-}
-function AIA_notifyNoCandidates_(sheet, row) {
-  const msg = "No Candidate Company list";
-  sheet.getRange(row, AIA.RESULT_COL).setValue(msg);
-  sheet.getRange(row, AIA.WHEN_COL).setValue(new Date());
-  const ui = AIA_safeUi_();
-  if (ui) ui.alert(msg);
-}
-function AIA_setAndNotifyEmpty_(sheet, row, reason) {
-  const ss = SpreadsheetApp.getActive();
-  const ui = AIA_safeUi_();
-  sheet.getRange(row, AIA.RESULT_COL).clearContent();
-  sheet.getRange(row, AIA.WHEN_COL).setValue(new Date());
-  const msg = reason || "No input available.";
-  if (ui) {
-    ss.toast(msg, "AI Integration", 5);
-    ui.alert(msg);
-  }
 }
 
 /* ========= OpenAI call ========= */
@@ -532,11 +545,15 @@ function AIA_callOpenAI_(userPrompt) {
     payload: JSON.stringify({
       model: AIA.MODEL,
       temperature: AIA.TEMP,
+      max_tokens: AIA.MAX_TOKENS,
       messages: [
         {
           role: "system",
           content:
-            "You are a professional research assistant. Return plain text only unless asked for JSON.",
+            "You extract company profiles using the provided SOURCE_EXCERPT (site-first grounding) and HINTS parsed from the site. " +
+            "Prefer site content; you may supplement Employees/Revenue/Ownership/Industries with clearly matched public sources (same entity). " +
+            'When you use public data, annotate provenance in parentheses (e.g., "~300 (public: LinkedIn 2024)"). ' +
+            "Never mix similarly named companies from other states/domains. Return plain text only in the exact Output Format.",
         },
         { role: "user", content: userPrompt },
       ],
@@ -550,6 +567,30 @@ function AIA_callOpenAI_(userPrompt) {
   const answer = data?.choices?.[0]?.message?.content;
   if (!answer) throw new Error("No content returned from OpenAI.");
   return String(answer).trim();
+}
+
+/* ========= Prompt Preview (kept, disabled by default) ========= */
+function AIA_previewAndConfirm_(sheet, row, title, promptText) {
+  if (!AIA.DEBUG_SHOW_PROMPT) return true;
+  try {
+    const headerCell = sheet.getRange(1, AIA.PREVIEW_COL);
+    if (!String(headerCell.getValue() || "").trim())
+      headerCell.setValue("Prompt Preview");
+  } catch (_) {}
+  const preview = String(promptText || "");
+  const toWrite =
+    preview.length > AIA.PREVIEW_MAX_CHARS
+      ? preview.slice(0, AIA.PREVIEW_MAX_CHARS) + "\n...[truncated]"
+      : preview;
+  sheet.getRange(row, AIA.PREVIEW_COL).setValue(toWrite);
+  const ui = AIA_safeUi_();
+  if (!ui) return true;
+  const res = ui.alert(
+    "Preview: " + title,
+    "Full prompt written to column E (Prompt Preview). Proceed?",
+    ui.ButtonSet.OK_CANCEL
+  );
+  return res === ui.Button.OK;
 }
 
 /* ========= JSON helpers ========= */
@@ -716,8 +757,6 @@ function AIA_mapItemToRow_(item, headers) {
   }
 
   function hIdx(name) {
-    if (typeof getHeaderIndexSmart_ === "function")
-      return getHeaderIndexSmart_(headers, name);
     const canon = String(name).toLowerCase();
     return headers.findIndex((h) => String(h).toLowerCase() === canon);
   }
@@ -817,8 +856,6 @@ function AIA_appendToNewsRaw_(articles) {
   const headers = sh.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
 
   function colIdx(name) {
-    if (typeof getHeaderIndexSmart_ === "function")
-      return getHeaderIndexSmart_(headers, name);
     const canon = String(name).toLowerCase();
     return headers.findIndex((h) => String(h).toLowerCase() === canon);
   }
@@ -837,7 +874,6 @@ function AIA_appendToNewsRaw_(articles) {
     const d = new Date(s);
     return isNaN(d.getTime()) ? s : d;
   }
-
   function get(a, spacedKey, snakeKey) {
     return a[spacedKey] != null
       ? a[spacedKey]
@@ -867,7 +903,6 @@ function AIA_appendToNewsRaw_(articles) {
   });
 
   if (!matrix.length) return 0;
-
   const startRow = sh.getLastRow() + 1;
   sh.getRange(startRow, 1, matrix.length, lastCol).setValues(matrix);
   return matrix.length;
@@ -877,4 +912,337 @@ function AIA_appendToNewsRaw_(articles) {
 function AIA_truncate_(s, n) {
   s = String(s || "");
   return s.length <= n ? s : s.slice(0, n - 1) + "…";
+}
+function AIA_extractDomain_(url) {
+  try {
+    const u = new URL(/^(https?:)?\/\//i.test(url) ? url : "http://" + url);
+    return u.hostname.replace(/^www\./i, "");
+  } catch (e) {
+    return String(url || "")
+      .replace(/^https?:\/\//i, "")
+      .split("/")[0];
+  }
+}
+
+/* ========= Site bundle fetch + hints extraction (expanded) ========= */
+function AIA_fetchSiteBundleText_(baseUrl, maxChars) {
+  const base = String(baseUrl || "").replace(/\/+$/, "");
+  const paths = [
+    "",
+    "/",
+    "/contact",
+    "/contact-us",
+    "/about",
+    "/about-us",
+    "/company",
+    "/locations",
+    "/location",
+    "/where-to-find-us",
+    "/find-us",
+    "/contactus",
+  ];
+  const urls = paths.map(
+    (p) => (/^https?:\/\//i.test(base) ? base : "http://" + base) + p
+  );
+  const htmls = [];
+  const texts = [];
+  const headers = {
+    "User-Agent": "Mozilla/5.0 (compatible; GoogleAppsScript/1.0)",
+  };
+
+  for (let i = 0; i < urls.length; i++) {
+    const u = urls[i];
+    try {
+      const resp = UrlFetchApp.fetch(u, {
+        muteHttpExceptions: true,
+        followRedirects: true,
+        validateHttpsCertificates: true,
+        headers,
+      });
+      const html = resp.getContentText();
+      if (!html) continue;
+      htmls.push(html);
+      const text = html
+        .replace(/<script[\s\S]*?<\/script>/gi, "")
+        .replace(/<style[\s\S]*?<\/style>/gi, "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      texts.push(text);
+    } catch (_) {}
+    Utilities.sleep(90);
+  }
+  const joined = texts.join("\n").slice(0, maxChars || 24000);
+  return { text: joined, htmls };
+}
+
+function AIA_extractHintsFromBundle_(htmls, url) {
+  const out = {
+    company: "",
+    street: "",
+    cityStateZip: "",
+    phoneRaw: "",
+    phoneFmt: "",
+  };
+  const all = (htmls || []).join("\n");
+
+  // JSON-LD blocks (Organization / PostalAddress)
+  try {
+    const blocks =
+      all.match(
+        /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
+      ) || [];
+    for (let i = 0; i < blocks.length; i++) {
+      const m = blocks[i].match(/<script[^>]*>([\s\S]*?)<\/script>/i);
+      if (!m) continue;
+      let raw = m[1];
+      // Handle multiple JSON objects concatenated
+      const candidates = [];
+      try {
+        const obj = JSON.parse(raw);
+        if (Array.isArray(obj)) candidates.push.apply(candidates, obj);
+        else candidates.push(obj);
+      } catch (_) {
+        // try loose splitting
+        const parts = raw
+          .split(/\}\s*,\s*\{/)
+          .map((t, idx, arr) => {
+            if (!t.trim()) return null;
+            if (!t.trim().startsWith("{")) t = "{" + t;
+            if (!t.trim().endsWith("}")) t = t + "}";
+            return t;
+          })
+          .filter(Boolean);
+        for (let k = 0; k < parts.length; k++) {
+          try {
+            candidates.push(JSON.parse(parts[k]));
+          } catch (_) {}
+        }
+      }
+
+      for (let j = 0; j < candidates.length; j++) {
+        const o = candidates[j] || {};
+        const n = o.name || o.legalName || "";
+        const tel = (o.telephone || o.phone || "").toString();
+        const adr = o.address || {};
+        const street = adr.streetAddress || "";
+        const city = adr.addressLocality || "";
+        const state = adr.addressRegion || "";
+        const zip = adr.postalCode || "";
+        if (!out.company && n) out.company = String(n).trim();
+        if (!out.phoneRaw && tel) out.phoneRaw = String(tel).trim();
+        if (!out.street && street) out.street = String(street).trim();
+        const csz = [city, state, zip]
+          .filter(Boolean)
+          .join(", ")
+          .replace(", ,", ",");
+        if (!out.cityStateZip && csz) out.cityStateZip = csz;
+      }
+    }
+  } catch (_) {}
+
+  // tel: links
+  try {
+    const telMatches = all.match(/href=["']tel:([^"']+)["']/gi) || [];
+    if (telMatches.length && !out.phoneRaw) {
+      const t = telMatches[0]
+        .replace(/.*tel:/i, "")
+        .replace(/["']/g, "")
+        .trim();
+      out.phoneRaw = t;
+    }
+  } catch (_) {}
+
+  // <title> fallback for company
+  try {
+    if (!out.company) {
+      const t = all.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+      if (t) {
+        out.company = String(t[1] || "")
+          .replace(/\s*\|.*$/, "")
+          .replace(/[-–—].*$/, "")
+          .trim();
+      }
+    }
+  } catch (_) {}
+
+  // Phone (NANP) fallback incl. formats
+  if (!out.phoneRaw) {
+    const m = all.match(
+      /(?:\+?1[\s\-\.])?\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\d{4}/
+    );
+    if (m) out.phoneRaw = m[0];
+  }
+  out.phoneFmt = AIA_formatNANP_(out.phoneRaw);
+
+  // Street + City/State/ZIP fallback (US + Canada)
+  if (!out.street || !out.cityStateZip) {
+    const streetMatch = all.match(
+      /\b\d{1,6}\s+[A-Za-z0-9\.\- ]+\s(?:Road|Rd\.?|Street|St\.?|Drive|Dr\.?|Avenue|Ave\.?|Boulevard|Blvd\.?|Lane|Ln\.?|Court|Ct\.?|Parkway|Pkwy\.?|Circle|Cir\.?)\b[^\n<]{0,80}/i
+    );
+    if (streetMatch && !out.street) out.street = streetMatch[0].trim();
+    // US city, state ZIP
+    const usMatch = all.match(
+      /\b([A-Za-z][A-Za-z\.\- ]+),\s*([A-Z]{2})\s*(\d{5}(?:-\d{4})?)\b/
+    );
+    // CA city, province postal
+    const caMatch = all.match(
+      /\b([A-Za-z][A-Za-z\.\- ]+),\s*(AB|BC|MB|NB|NL|NS|NT|NU|ON|PE|QC|SK|YT)\s*([A-Z]\d[A-Z]\s?\d[A-Z]\d)\b/
+    );
+    if (!out.cityStateZip && (usMatch || caMatch)) {
+      const mm = usMatch || caMatch;
+      out.cityStateZip = `${mm[1].trim()}, ${mm[2]} ${mm[3]}`
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+  }
+
+  if (!out.company) out.company = AIA_guessNameFromUrl_(url);
+  return out;
+}
+
+/* ========= Post-processing: identity, phone, source enforcement ========= */
+function AIA_formatNANP_(raw) {
+  if (!raw) return "";
+  const digits = String(raw).replace(/[^\d]/g, "");
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(
+      7,
+      11
+    )}`;
+  }
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(
+      6,
+      10
+    )}`;
+  }
+  return ""; // not NANP
+}
+
+function AIA_normalizePhoneLine_(recordText) {
+  const lines = String(recordText || "").split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\s*Phone\s*:/.test(lines[i])) {
+      const val = lines[i].replace(/^\s*Phone\s*:\s*/i, "").trim();
+      const fmt = AIA_formatNANP_(val);
+      lines[i] = `Phone: ${fmt || (val ? val : "")}`.trim();
+      break;
+    }
+  }
+  return lines.join("\n");
+}
+
+function AIA_enforceIdentityHeader_(recordText, hints) {
+  const txt = String(recordText || "");
+  const parts = txt.split(/^\s*Company\s*:/im);
+  if (parts.length < 2) return txt;
+  const before = parts[0];
+  const afterStart = txt.slice(before.length);
+
+  const lines = before.split(/\r?\n/);
+
+  // Acceptable "empty" markers that we will replace from hints
+  const isEmptyish = (s) => {
+    const t = String(s || "").trim();
+    return (
+      !t ||
+      /^n\/a$/i.test(t) ||
+      /^not\s+available$/i.test(t) ||
+      /^\[.*unavailable.*\]$/i.test(t)
+    );
+  };
+
+  // Find the domain line (heuristic: dot, no spaces, not http, not "Row")
+  let domainIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const s = lines[i].trim();
+    if (
+      s &&
+      s.includes(".") &&
+      !/\s/.test(s) &&
+      !/^http/i.test(s) &&
+      !/^row/i.test(s)
+    ) {
+      domainIdx = i;
+      break;
+    }
+  }
+  if (domainIdx < 0) return txt;
+
+  const nameIdx = domainIdx + 1;
+  const streetIdx = domainIdx + 2;
+  const cityIdx = domainIdx + 3;
+  const phoneIdx = domainIdx + 4;
+
+  if (isEmptyish(lines[nameIdx]))
+    lines[nameIdx] = hints.company || lines[nameIdx] || "";
+  if (isEmptyish(lines[streetIdx]))
+    lines[streetIdx] = hints.street || lines[streetIdx] || "";
+  if (isEmptyish(lines[cityIdx]))
+    lines[cityIdx] = hints.cityStateZip || lines[cityIdx] || "";
+  if (/^\s*Phone\s*:/.test(lines[phoneIdx] || "")) {
+    const val = lines[phoneIdx].replace(/^\s*Phone\s*:\s*/i, "").trim();
+    const existingFmt = AIA_formatNANP_(val);
+    const fallback = hints.phoneFmt || hints.phoneRaw || "";
+    const use = existingFmt || fallback;
+    lines[phoneIdx] = `Phone: ${use}`.trim();
+  }
+
+  return lines.join("\n") + afterStart;
+}
+
+function AIA_forceSourceLine_(recordText, source) {
+  const txt = String(recordText || "");
+  const src = String(source || "Not Sure").trim();
+  const lines = txt.split(/\r?\n/);
+  let inSource = false;
+  for (let i = 0; i < lines.length; i++) {
+    const L = lines[i];
+    if (/^\s*Source\s*:\s*$/i.test(L)) {
+      inSource = true;
+      continue;
+    }
+    if (inSource) {
+      if (/^\s*-\s*/.test(L)) {
+        lines[i] = `- ${src}`;
+        break;
+      } else {
+        // If the very next line isn't a bullet, insert it
+        lines.splice(i, 0, `- ${src}`);
+        break;
+      }
+    }
+  }
+  return lines.join("\n");
+}
+
+/* ========= Cross-file helper ========= */
+function getHeaderIndexSmart_(headers, name) {
+  const canon = String(name || "")
+    .toLowerCase()
+    .normalize("NFKC")
+    .replace(/[\u2010-\u2015]/g, "-")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  for (let i = 0; i < headers.length; i++) {
+    const h = String(headers[i] || "")
+      .toLowerCase()
+      .normalize("NFKC")
+      .replace(/[\u2010-\u2015]/g, "-")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+    if (h === canon) return i;
+  }
+  const keys = canon.split(" ").filter(Boolean);
+  for (let i = 0; i < headers.length; i++) {
+    const h = String(headers[i] || "")
+      .toLowerCase()
+      .normalize("NFKC")
+      .replace(/[\u2010-\u2015]/g, "-")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+    if (keys.every((k) => h.includes(k))) return i;
+  }
+  return -1;
 }
