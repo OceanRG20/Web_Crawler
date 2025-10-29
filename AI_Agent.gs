@@ -31,6 +31,23 @@ function onOpen(e) {
   } catch (err) {
     console.log("onOpen_Agent:", err);
   }
+  // ✅ Ensure Backfill menu is also added on load (defined in Backfill.gs)
+  try {
+    if (typeof onOpen_Backfill === "function") onOpen_Backfill(ui);
+  } catch (err) {
+    console.log("onOpen_Backfill:", err);
+  }
+
+  // ✅ Always add the Auto Filter menu (defined in Auto_Filter.gs)
+  try {
+    AIA_addAutoFilterMenu_(ui);
+  } catch (err) {
+    console.log("AIA_addAutoFilterMenu_:", err);
+  }
+}
+
+function onInstall(e) {
+  onOpen(e);
 }
 
 /* ========= CONFIG ========= */
@@ -48,17 +65,50 @@ var AIA = {
   MMCRAWL_SHEET: "MMCrawl", // target DB for Add_MMCrawl
   NEWSRAW_SHEET: "News Raw", // target DB for News_Search
 
-  MODEL: "gpt-4o",
-  TEMP: 0.2,
+  MODEL: "gpt-4o", // stronger at following grounding
+  TEMP: 0.2, // a touch of creativity for synthesis
   MAX_TOKENS: 5000,
 
-  // Prompt preview OFF per your request
+  // Prompt preview (off per your last request)
   DEBUG_SHOW_PROMPT: false,
   PREVIEW_MAX_CHARS: 18000,
   PREVIEW_ONLY_FIRST_IN_LOOP: true,
 };
 
-/* ========= MENU HOOK (Backfill removed) ========= */
+/* ========= AUTO FILTER MENU INJECTION ========= */
+/**
+ * Adds the Auto Filter menu. Prefers AutoFilter.addMenu(ui) if present in Auto_Filter.gs,
+ * otherwise builds a minimal fallback menu wired to the global wrapper functions.
+ */
+function AIA_addAutoFilterMenu_(ui) {
+  ui = ui || AIA_safeUi_();
+  if (!ui) return;
+
+  // Preferred: use the module hook
+  try {
+    if (typeof AutoFilter !== "undefined" && AutoFilter.addMenu) {
+      AutoFilter.addMenu(ui);
+      return;
+    }
+  } catch (err) {
+    console.log("AutoFilter.addMenu error:", err);
+  }
+
+  // Fallback: create a minimal menu that calls global wrappers in Auto_Filter.gs
+  try {
+    ui.createMenu("Auto Filter")
+      .addItem("Open Filter Dialog…", "AutoFilter_openFilterDialog")
+      .addItem("Run Last Filter", "AutoFilter_runLastFilter")
+      .addSeparator()
+      .addItem("Clear Filter Flags", "AutoFilter_clearFilterFlags")
+      .addItem("Show All Rows (remove filter)", "AutoFilter_removeSheetFilter")
+      .addToUi();
+  } catch (err2) {
+    console.log("Auto Filter fallback menu error:", err2);
+  }
+}
+
+/* ========= MENU HOOK ========= */
 function onOpen_Agent(ui) {
   ui = ui || AIA_safeUi_();
   if (!ui) return;
@@ -128,7 +178,7 @@ function AI_runRawTextData() {
     return;
   }
 
-  const outputs = [];
+  let outputs = [];
   for (let i = 0; i < candidates.length; i++) {
     const { no, url, source } = candidates[i];
     if (ui)
@@ -138,8 +188,8 @@ function AI_runRawTextData() {
         4
       );
 
-    // fetch text bundle (+ simple hints from HTML)
-    const bundle = AIA_fetchSiteBundleText_(url, 24000);
+    // Build bundle text + hints
+    const bundle = AIA_fetchSiteBundleText_(url, 20000);
     const hints = AIA_extractHintsFromBundle_(bundle.htmls || [], url);
 
     const prompt = AIA_buildSingleRawPrompt_(
@@ -151,29 +201,28 @@ function AI_runRawTextData() {
       hints
     );
 
+    let ans = "";
     try {
-      let ans = AIA_callOpenAI_(prompt);
-      // Enforce identity with our best hints; fix Phone formatting; force Source line
-      ans = AIA_enforceIdentityHeader_(ans, hints);
-      ans = AIA_normalizePhoneLine_(ans);
-      ans = AIA_forceSourceLine_(ans, source);
-      outputs.push(String(ans || "").trim());
+      ans = AIA_callOpenAI_(prompt);
+      ans = AIA_fixIdentityNA_(ans, hints); // fill identity header, no N/A
+      ans = AIA_normalizePhoneLine_(ans); // format Phone: (xxx) xxx-xxxx
     } catch (err) {
-      const fallback =
+      ans =
         `Row ${no}\n${url}\n\n${AIA_extractDomain_(url)}\n` +
-        `${hints.company || ""}\n${hints.street || ""}\n${
-          hints.cityStateZip || ""
+        `${hints.company || "N/A"}\n${hints.street || "N/A"}\n${
+          hints.cityStateZip || "N/A"
         }\n` +
-        `Phone: ${hints.phoneFmt || hints.phoneRaw || ""}\n\nCompany: ${
-          hints.company || ""
+        `Phone: ${hints.phoneFmt || "N/A"}\n\nCompany: ${
+          hints.company || "N/A"
         }\n\n` +
         `About:\n- ERROR: ${String(
           err
-        )}\n\nServices:\n- \n\nIndustries:\n- \n\n` +
-        `Employees:\n- \n\nRevenue:\n- \n\nSquare Footage:\n- \n\nOwnership:\n- \n\n` +
+        )}\n\nServices:\n- N/A\n\nIndustries:\n- N/A\n\n` +
+        `Employees:\n- N/A\n\nRevenue:\n- N/A\n\nSquare Footage:\n- N/A\n\nOwnership:\n- N/A\n\n` +
         `Equipment:\n- null\n\nSource:\n- ${source || "Not Sure"}`;
-      outputs.push(fallback);
     }
+
+    outputs.push(String(ans || "").trim());
     Utilities.sleep(250);
   }
 
@@ -202,9 +251,10 @@ function AIA_buildSingleRawPrompt_(
   const guidance =
     "\n\n### Important\n" +
     "- Output plain text ONLY in the exact Output Format. No extra headings, no commentary, no JSON.\n" +
-    "- The 5-line identity header (Domain, Official Name, Street, City/State ZIP, Phone) should be as complete as possible. Use HINTS below when consistent; avoid 'N/A'/'Not Available'.\n" +
-    "- You MAY supplement Employees, Revenue, Ownership/Corporate parent, and Industries with clearly matched public sources (same entity). " +
-    "When you do, annotate like: 'N/A (site); ~300 (public: LinkedIn 2024)'.\n" +
+    "- The 5-line identity header (Domain, Official Name, Street, City/State ZIP, Phone) MUST NOT contain 'N/A'. Use HINTS below if present and consistent.\n" +
+    "- Core identity must come from the SOURCE_EXCERPT or HINTS (derived from the site bundle). If still unknown after both, leave the line blank (do not write 'N/A').\n" +
+    "- You MAY supplement Employees, Revenue, Ownership/Leadership/Corporate parent, and Industries with clearly matched public sources (same entity).\n" +
+    "  When you do, annotate like: 'N/A (site); ~300 (public: LinkedIn 2024)' or 'N/A (site); ~$17.9M (public: Datanyze est.)'.\n" +
     "- Never mix similarly named companies from other states/domains. For equipment, if nothing verifiable → write exactly: 'null'.\n";
 
   const hintsBlock =
@@ -389,8 +439,25 @@ function AI_runNewsSearch() {
     try {
       const ans = AIA_callOpenAI_(prompt);
       const parsed = AIA_extractJsonArray_(ans);
-      if (parsed.length) parsed.forEach((o) => collected.push(o));
-      else {
+
+      if (parsed.length) {
+        parsed.forEach((o) => {
+          // If model returned a “No news” placeholder, skip appending later
+          const headline = (o.Headline || o.headline || "")
+            .toString()
+            .trim()
+            .toLowerCase();
+          const urlNews = (o["News Story URL"] || o.news_url || "")
+            .toString()
+            .trim();
+          if (headline === "no news" || !urlNews) {
+            // Keep in 'collected' only to show result cell; don't add to News Raw
+            collected.push({ ...o, _skip_append: true });
+          } else {
+            collected.push(o);
+          }
+        });
+      } else {
         collected.push({
           "Company Name": AIA_guessNameFromUrl_(url),
           "Company Website URL": url,
@@ -398,9 +465,9 @@ function AI_runNewsSearch() {
           Headline: "No news",
           "Publication Date": "",
           "Publisher or Source": "",
-          "GPT Summary":
-            "No news found after applying filters (local/regional/trade priority; junk excluded).",
+          "GPT Summary": "No valid articles found after filtering.",
           is_estimated: true,
+          _skip_append: true,
         });
       }
     } catch (err) {
@@ -413,24 +480,25 @@ function AI_runNewsSearch() {
         "Publisher or Source": "",
         "GPT Summary": String(err),
         is_estimated: true,
+        _skip_append: true,
       });
     }
     Utilities.sleep(300);
   }
 
-  const deduped = AIA_dedupeArticles_(collected);
+  // Write full JSON (including any _skip_append markers) to result cell
   sheet
     .getRange(row, AIA.RESULT_COL)
-    .setValue(JSON.stringify(deduped, null, 2));
+    .setValue(JSON.stringify(collected, null, 2));
   sheet.getRange(row, AIA.WHEN_COL).setValue(new Date());
 
-  const appended = AIA_appendToNewsRaw_(deduped);
-  if (ui)
-    ss.toast(
-      `News Search complete. ${deduped.length} articles total; ${appended} row(s) added to News Raw.`,
-      "AI Integration",
-      7
-    );
+  // Append only valid articles (not marked to skip)
+  const toAppend = collected.filter((a) => !a._skip_append);
+  const appended = AIA_appendToNewsRaw_(toAppend);
+  const uiMsg = toAppend.length
+    ? `News Search complete. ${toAppend.length} valid article(s) added to News Raw.`
+    : `News Search complete. No valid articles to add.`;
+  if (ui) ss.toast(uiMsg, "AI Integration", 7);
 
   try {
     if (typeof newsRawRemoveDuplicateStories === "function")
@@ -551,8 +619,9 @@ function AIA_callOpenAI_(userPrompt) {
           role: "system",
           content:
             "You extract company profiles using the provided SOURCE_EXCERPT (site-first grounding) and HINTS parsed from the site. " +
-            "Prefer site content; you may supplement Employees/Revenue/Ownership/Industries with clearly matched public sources (same entity). " +
-            'When you use public data, annotate provenance in parentheses (e.g., "~300 (public: LinkedIn 2024)"). ' +
+            'Identity header (Domain, Official Name, Street, City/State ZIP, Phone) must not contain "N/A"; prefer HINTS when available. ' +
+            "You may supplement Employees, Revenue, Ownership/Leadership/Corporate parent, and Industries ONLY if clearly matched public sources refer to the SAME entity (same domain + city/state). " +
+            'When you use public data, annotate provenance in parentheses (e.g., "~300 (public: LinkedIn 2024)", "~$17.9M (public: Datanyze est.)"). ' +
             "Never mix similarly named companies from other states/domains. Return plain text only in the exact Output Format.",
         },
         { role: "user", content: userPrompt },
@@ -924,43 +993,24 @@ function AIA_extractDomain_(url) {
   }
 }
 
-/* ========= Site bundle fetch + hints extraction (expanded) ========= */
+/* ========= Site bundle fetch + hints extraction ========= */
 function AIA_fetchSiteBundleText_(baseUrl, maxChars) {
-  const base = String(baseUrl || "").replace(/\/+$/, "");
-  const paths = [
-    "",
-    "/",
-    "/contact",
-    "/contact-us",
-    "/about",
-    "/about-us",
-    "/company",
-    "/locations",
-    "/location",
-    "/where-to-find-us",
-    "/find-us",
-    "/contactus",
-  ];
-  const urls = paths.map(
-    (p) => (/^https?:\/\//i.test(base) ? base : "http://" + base) + p
+  const urls = [baseUrl, "/contact", "/about", "/locations"].map((p) =>
+    p.startsWith("http") ? p : String(baseUrl).replace(/\/+$/, "") + p
   );
   const htmls = [];
   const texts = [];
-  const headers = {
-    "User-Agent": "Mozilla/5.0 (compatible; GoogleAppsScript/1.0)",
-  };
-
-  for (let i = 0; i < urls.length; i++) {
-    const u = urls[i];
+  urls.forEach((u) => {
     try {
       const resp = UrlFetchApp.fetch(u, {
         muteHttpExceptions: true,
         followRedirects: true,
         validateHttpsCertificates: true,
-        headers,
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; GoogleAppsScript/1.0)",
+        },
       });
       const html = resp.getContentText();
-      if (!html) continue;
       htmls.push(html);
       const text = html
         .replace(/<script[\s\S]*?<\/script>/gi, "")
@@ -970,9 +1020,9 @@ function AIA_fetchSiteBundleText_(baseUrl, maxChars) {
         .trim();
       texts.push(text);
     } catch (_) {}
-    Utilities.sleep(90);
-  }
-  const joined = texts.join("\n").slice(0, maxChars || 24000);
+    Utilities.sleep(120);
+  });
+  const joined = texts.join("\n").slice(0, maxChars || 20000);
   return { text: joined, htmls };
 }
 
@@ -986,7 +1036,7 @@ function AIA_extractHintsFromBundle_(htmls, url) {
   };
   const all = (htmls || []).join("\n");
 
-  // JSON-LD blocks (Organization / PostalAddress)
+  // Try JSON-LD
   try {
     const blocks =
       all.match(
@@ -995,65 +1045,33 @@ function AIA_extractHintsFromBundle_(htmls, url) {
     for (let i = 0; i < blocks.length; i++) {
       const m = blocks[i].match(/<script[^>]*>([\s\S]*?)<\/script>/i);
       if (!m) continue;
-      let raw = m[1];
-      // Handle multiple JSON objects concatenated
-      const candidates = [];
+      const raw = m[1];
       try {
         const obj = JSON.parse(raw);
-        if (Array.isArray(obj)) candidates.push.apply(candidates, obj);
-        else candidates.push(obj);
-      } catch (_) {
-        // try loose splitting
-        const parts = raw
-          .split(/\}\s*,\s*\{/)
-          .map((t, idx, arr) => {
-            if (!t.trim()) return null;
-            if (!t.trim().startsWith("{")) t = "{" + t;
-            if (!t.trim().endsWith("}")) t = t + "}";
-            return t;
-          })
-          .filter(Boolean);
-        for (let k = 0; k < parts.length; k++) {
-          try {
-            candidates.push(JSON.parse(parts[k]));
-          } catch (_) {}
+        const cand = Array.isArray(obj) ? obj : [obj];
+        for (let j = 0; j < cand.length; j++) {
+          const o = cand[j];
+          const n = o.name || o.legalName || "";
+          const tel = (o.telephone || o.phone || "").toString();
+          const adr = o.address || {};
+          const street = adr.streetAddress || "";
+          const city = adr.addressLocality || "";
+          const state = adr.addressRegion || "";
+          const zip = adr.postalCode || "";
+          if (!out.company && n) out.company = String(n).trim();
+          if (!out.phoneRaw && tel) out.phoneRaw = String(tel).trim();
+          if (!out.street && street) out.street = String(street).trim();
+          const csz = [city, state, zip]
+            .filter(Boolean)
+            .join(", ")
+            .replace(", ,", ",");
+          if (!out.cityStateZip && csz) out.cityStateZip = csz;
         }
-      }
-
-      for (let j = 0; j < candidates.length; j++) {
-        const o = candidates[j] || {};
-        const n = o.name || o.legalName || "";
-        const tel = (o.telephone || o.phone || "").toString();
-        const adr = o.address || {};
-        const street = adr.streetAddress || "";
-        const city = adr.addressLocality || "";
-        const state = adr.addressRegion || "";
-        const zip = adr.postalCode || "";
-        if (!out.company && n) out.company = String(n).trim();
-        if (!out.phoneRaw && tel) out.phoneRaw = String(tel).trim();
-        if (!out.street && street) out.street = String(street).trim();
-        const csz = [city, state, zip]
-          .filter(Boolean)
-          .join(", ")
-          .replace(", ,", ",");
-        if (!out.cityStateZip && csz) out.cityStateZip = csz;
-      }
+      } catch (_) {}
     }
   } catch (_) {}
 
-  // tel: links
-  try {
-    const telMatches = all.match(/href=["']tel:([^"']+)["']/gi) || [];
-    if (telMatches.length && !out.phoneRaw) {
-      const t = telMatches[0]
-        .replace(/.*tel:/i, "")
-        .replace(/["']/g, "")
-        .trim();
-      out.phoneRaw = t;
-    }
-  } catch (_) {}
-
-  // <title> fallback for company
+  // Title tag fallback
   try {
     if (!out.company) {
       const t = all.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
@@ -1066,7 +1084,7 @@ function AIA_extractHintsFromBundle_(htmls, url) {
     }
   } catch (_) {}
 
-  // Phone (NANP) fallback incl. formats
+  // Phone fallback (NANP)
   if (!out.phoneRaw) {
     const m = all.match(
       /(?:\+?1[\s\-\.])?\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\d{4}/
@@ -1075,17 +1093,15 @@ function AIA_extractHintsFromBundle_(htmls, url) {
   }
   out.phoneFmt = AIA_formatNANP_(out.phoneRaw);
 
-  // Street + City/State/ZIP fallback (US + Canada)
+  // Address fallbacks
   if (!out.street || !out.cityStateZip) {
     const streetMatch = all.match(
       /\b\d{1,6}\s+[A-Za-z0-9\.\- ]+\s(?:Road|Rd\.?|Street|St\.?|Drive|Dr\.?|Avenue|Ave\.?|Boulevard|Blvd\.?|Lane|Ln\.?|Court|Ct\.?|Parkway|Pkwy\.?|Circle|Cir\.?)\b[^\n<]{0,80}/i
     );
     if (streetMatch && !out.street) out.street = streetMatch[0].trim();
-    // US city, state ZIP
     const usMatch = all.match(
       /\b([A-Za-z][A-Za-z\.\- ]+),\s*([A-Z]{2})\s*(\d{5}(?:-\d{4})?)\b/
     );
-    // CA city, province postal
     const caMatch = all.match(
       /\b([A-Za-z][A-Za-z\.\- ]+),\s*(AB|BC|MB|NB|NL|NS|NT|NU|ON|PE|QC|SK|YT)\s*([A-Z]\d[A-Z]\s?\d[A-Z]\d)\b/
     );
@@ -1101,7 +1117,7 @@ function AIA_extractHintsFromBundle_(htmls, url) {
   return out;
 }
 
-/* ========= Post-processing: identity, phone, source enforcement ========= */
+/* ========= Post-processing: identity & phone normalization ========= */
 function AIA_formatNANP_(raw) {
   if (!raw) return "";
   const digits = String(raw).replace(/[^\d]/g, "");
@@ -1133,7 +1149,7 @@ function AIA_normalizePhoneLine_(recordText) {
   return lines.join("\n");
 }
 
-function AIA_enforceIdentityHeader_(recordText, hints) {
+function AIA_fixIdentityNA_(recordText, hints) {
   const txt = String(recordText || "");
   const parts = txt.split(/^\s*Company\s*:/im);
   if (parts.length < 2) return txt;
@@ -1141,19 +1157,11 @@ function AIA_enforceIdentityHeader_(recordText, hints) {
   const afterStart = txt.slice(before.length);
 
   const lines = before.split(/\r?\n/);
-
-  // Acceptable "empty" markers that we will replace from hints
-  const isEmptyish = (s) => {
-    const t = String(s || "").trim();
-    return (
-      !t ||
-      /^n\/a$/i.test(t) ||
-      /^not\s+available$/i.test(t) ||
-      /^\[.*unavailable.*\]$/i.test(t)
-    );
-  };
-
-  // Find the domain line (heuristic: dot, no spaces, not http, not "Row")
+  function replaceIfNA(idx, val) {
+    if (!lines[idx]) return;
+    const s = lines[idx].trim();
+    if (!s || /^N\/A$/i.test(s)) lines[idx] = val || "";
+  }
   let domainIdx = -1;
   for (let i = 0; i < lines.length; i++) {
     const s = lines[i].trim();
@@ -1168,53 +1176,22 @@ function AIA_enforceIdentityHeader_(recordText, hints) {
       break;
     }
   }
-  if (domainIdx < 0) return txt;
+  if (domainIdx >= 0) {
+    const nameIdx = domainIdx + 1;
+    const streetIdx = domainIdx + 2;
+    const cityIdx = domainIdx + 3;
+    const phoneIdx = domainIdx + 4;
 
-  const nameIdx = domainIdx + 1;
-  const streetIdx = domainIdx + 2;
-  const cityIdx = domainIdx + 3;
-  const phoneIdx = domainIdx + 4;
-
-  if (isEmptyish(lines[nameIdx]))
-    lines[nameIdx] = hints.company || lines[nameIdx] || "";
-  if (isEmptyish(lines[streetIdx]))
-    lines[streetIdx] = hints.street || lines[streetIdx] || "";
-  if (isEmptyish(lines[cityIdx]))
-    lines[cityIdx] = hints.cityStateZip || lines[cityIdx] || "";
-  if (/^\s*Phone\s*:/.test(lines[phoneIdx] || "")) {
-    const val = lines[phoneIdx].replace(/^\s*Phone\s*:\s*/i, "").trim();
-    const existingFmt = AIA_formatNANP_(val);
-    const fallback = hints.phoneFmt || hints.phoneRaw || "";
-    const use = existingFmt || fallback;
-    lines[phoneIdx] = `Phone: ${use}`.trim();
+    replaceIfNA(nameIdx, hints.company || "");
+    replaceIfNA(streetIdx, hints.street || "");
+    replaceIfNA(cityIdx, hints.cityStateZip || "");
+    if (/^\s*Phone\s*:/.test(lines[phoneIdx] || "")) {
+      const fmt = hints.phoneFmt || "";
+      if (fmt) lines[phoneIdx] = `Phone: ${fmt}`;
+      else lines[phoneIdx] = lines[phoneIdx].replace(/N\/A/i, "").trim();
+    }
   }
-
   return lines.join("\n") + afterStart;
-}
-
-function AIA_forceSourceLine_(recordText, source) {
-  const txt = String(recordText || "");
-  const src = String(source || "Not Sure").trim();
-  const lines = txt.split(/\r?\n/);
-  let inSource = false;
-  for (let i = 0; i < lines.length; i++) {
-    const L = lines[i];
-    if (/^\s*Source\s*:\s*$/i.test(L)) {
-      inSource = true;
-      continue;
-    }
-    if (inSource) {
-      if (/^\s*-\s*/.test(L)) {
-        lines[i] = `- ${src}`;
-        break;
-      } else {
-        // If the very next line isn't a bullet, insert it
-        lines.splice(i, 0, `- ${src}`);
-        break;
-      }
-    }
-  }
-  return lines.join("\n");
 }
 
 /* ========= Cross-file helper ========= */
@@ -1245,4 +1222,20 @@ function getHeaderIndexSmart_(headers, name) {
     if (keys.every((k) => h.includes(k))) return i;
   }
   return -1;
+}
+
+/* ========= Missing helper referenced above ========= */
+function AIA_setAndNotifyEmpty_(sheet, row, msg) {
+  sheet.getRange(row, AIA.RESULT_COL).setValue("[]");
+  sheet.getRange(row, AIA.WHEN_COL).setValue(new Date());
+  const ui = AIA_safeUi_();
+  if (ui) ui.alert(msg || "No input.");
+}
+
+function AIA_notifyNoCandidates_(sheet, row) {
+  AIA_setAndNotifyEmpty_(
+    sheet,
+    row,
+    "No candidate URLs found in Candidate sheet."
+  );
 }
