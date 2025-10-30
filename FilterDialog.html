@@ -4,91 +4,141 @@
     <base target="_top" />
     <style>
       body {
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial,
-          sans-serif;
-        padding: 12px;
+        font-family: Arial, sans-serif;
+        margin: 12px;
+      }
+      h2 {
+        font-size: 18px;
+        margin-top: 0;
       }
       textarea {
         width: 100%;
-        height: 160px;
-      }
-      .row {
-        margin-top: 8px;
+        height: 120px;
+        font-size: 13px;
+        resize: vertical;
       }
       button {
-        padding: 8px 12px;
-        margin-right: 8px;
-        cursor: pointer;
+        margin: 4px 4px 4px 0;
+        padding: 6px 12px;
       }
-      .muted {
-        color: #666;
-        font-size: 12px;
-      }
-      .status {
+      #status {
         margin-top: 10px;
+        font-size: 13px;
+        color: #333;
+        white-space: pre-wrap;
       }
       .spinner {
-        display: inline-block;
-        width: 10px;
-        height: 10px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #4285f4;
         border-radius: 50%;
-        border: 2px solid #999;
-        border-top-color: transparent;
-        animation: spin 0.8s linear infinite;
+        width: 12px;
+        height: 12px;
+        display: inline-block;
+        animation: spin 1s linear infinite;
         vertical-align: middle;
         margin-right: 6px;
       }
       @keyframes spin {
-        to {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
           transform: rotate(360deg);
         }
+      }
+      #progressBar {
+        width: 100%;
+        height: 10px;
+        background: #ddd;
+        border-radius: 5px;
+        margin-top: 6px;
+        overflow: hidden;
+      }
+      #progressFill {
+        height: 100%;
+        width: 0%;
+        background: #4285f4;
+        transition: width 0.3s ease;
       }
     </style>
   </head>
   <body>
-    <h3>AI Auto Filter</h3>
-    <div class="muted">
-      Example: Revenues $5–$20M, Family = Yes, 20+ years, not Canada.
-    </div>
-    <div class="row">
-      <textarea id="prompt" placeholder="Type your filter query here…">
+    <h2>AI Auto Filter</h2>
+    <p style="font-size: 12px; color: #666">
+      Example: <br />
+      <code>Revenues $5–$20M, Family = Yes, 20+ years, not Canada.</code>
+    </p>
+
+    <textarea id="prompt" placeholder="Enter your filter query here...">
 <?= lastPrompt ?></textarea
-      >
-    </div>
-    <div class="row">
+    >
+
+    <div>
       <button onclick="run()">Filter</button>
       <button onclick="runLast()">Run Last</button>
       <button onclick="clearFlags()">Clear Flags</button>
       <button onclick="showAll()">Show All</button>
     </div>
-    <div id="status" class="status"></div>
+
+    <div id="progressBar">
+      <div id="progressFill"></div>
+    </div>
+
+    <div id="status">Ready.</div>
 
     <script>
+      // Utility to update text and spinner
       function setStatus(msg, spin) {
-        document.getElementById("status").innerHTML = spin
-          ? '<span class="spinner"></span>' + msg
-          : msg;
+        const el = document.getElementById("status");
+        el.innerHTML = spin ? '<span class="spinner"></span>' + msg : msg;
       }
+
+      // Utility to update visual progress bar
+      function updateProgress(percent) {
+        document.getElementById("progressFill").style.width = percent + "%";
+      }
+
+      // Start new filtering session
       function run() {
         const prompt = document.getElementById("prompt").value.trim();
         if (!prompt) {
           setStatus("Please enter a filter query.");
           return;
         }
-        setStatus("Filtering…", true);
+        setStatus("Starting filter…", true);
+        updateProgress(0);
+        runBatch(prompt, 0); // start with batch 0
+      }
+
+      // Recursive batch execution
+      function runBatch(prompt, batchIndex) {
         google.script.run
           .withSuccessHandler((res) => {
-            setStatus(res.message || "Done.");
+            updateProgress(res.progress || 0);
+            setStatus(res.message, !res.done);
+
+            if (!res.done) {
+              // Continue next batch
+              runBatch(prompt, batchIndex + 1);
+            } else {
+              // Completed
+              updateProgress(100);
+              setStatus(res.message);
+            }
           })
           .withFailureHandler((err) => {
             setStatus("Error: " + (err.message || err));
           })
-          .AutoFilter_runAutoFilterFromClient(prompt);
+          .AutoFilter_runAutoFilterBatch(prompt, batchIndex);
       }
+
+      // Run last prompt again
       function runLast() {
         setStatus("Running last filter…", true);
+        updateProgress(0);
         google.script.run
           .withSuccessHandler((res) => {
+            updateProgress(100);
             setStatus(res.message || "Done.");
           })
           .withFailureHandler((err) => {
@@ -96,10 +146,14 @@
           })
           .AutoFilter_runLastFilter();
       }
+
+      // Clear AI filter flags
       function clearFlags() {
         setStatus("Clearing flags…", true);
+        updateProgress(0);
         google.script.run
           .withSuccessHandler(() => {
+            updateProgress(0);
             setStatus("AI flags cleared.");
           })
           .withFailureHandler((err) => {
@@ -107,10 +161,14 @@
           })
           .AutoFilter_clearFilterFlags();
       }
+
+      // Remove sheet filter and show all rows
       function showAll() {
         setStatus("Removing sheet filter…", true);
+        updateProgress(0);
         google.script.run
           .withSuccessHandler(() => {
+            updateProgress(0);
             setStatus("All rows visible.");
           })
           .withFailureHandler((err) => {
