@@ -40,7 +40,7 @@
       }
       @keyframes spin {
         0% {
-          transform: rotate(0deg);
+          transform: rotate(0);
         }
         100% {
           transform: rotate(360deg);
@@ -60,6 +60,9 @@
         background: #4285f4;
         transition: width 0.3s ease;
       }
+      .muted {
+        opacity: 0.6;
+      }
     </style>
   </head>
   <body>
@@ -74,31 +77,54 @@
     >
 
     <div>
-      <button onclick="run()">Filter</button>
-      <button onclick="runLast()">Run Last</button>
-      <button onclick="clearFlags()">Clear Flags</button>
-      <button onclick="showAll()">Show All</button>
+      <button id="btnRun" onclick="run()">Filter</button>
+      <button id="btnClear" onclick="clearFlags()">Clear Flags</button>
+      <button id="showFilteredBtn" onclick="showFiltered()">
+        Show Filtered
+      </button>
+      <button id="btnShowAll" onclick="showAll()">Show All</button>
     </div>
 
-    <div id="progressBar">
-      <div id="progressFill"></div>
-    </div>
-
+    <div id="progressBar"><div id="progressFill"></div></div>
     <div id="status">Ready.</div>
 
     <script>
-      // Utility to update text and spinner
+      // ---- utilities ----
       function setStatus(msg, spin) {
         const el = document.getElementById("status");
-        el.innerHTML = spin ? '<span class="spinner"></span>' + msg : msg;
+        el.innerHTML = spin
+          ? '<span class="spinner"></span>' + String(msg || "")
+          : String(msg || "");
       }
-
-      // Utility to update visual progress bar
       function updateProgress(percent) {
-        document.getElementById("progressFill").style.width = percent + "%";
+        document.getElementById("progressFill").style.width =
+          (percent || 0) + "%";
+      }
+      function disableShowFiltered(disabled) {
+        const b = document.getElementById("showFilteredBtn");
+        if (b) b.disabled = !!disabled;
+      }
+      function setWorking(isBusy) {
+        ["btnRun", "btnClear", "showFilteredBtn", "btnShowAll"].forEach(
+          (id) => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = !!isBusy;
+          }
+        );
+      }
+      function safeErr(e) {
+        try {
+          if (!e) return "Unknown error";
+          if (typeof e === "string") return e;
+          if (e.message) return e.message;
+          // try a shallow stringify, guard circular
+          return JSON.stringify(e, Object.getOwnPropertyNames(e));
+        } catch (_) {
+          return "Unknown error";
+        }
       }
 
-      // Start new filtering session
+      // ---- actions ----
       function run() {
         const prompt = document.getElementById("prompt").value.trim();
         if (!prompt) {
@@ -106,75 +132,83 @@
           return;
         }
         setStatus("Starting filter…", true);
+        setWorking(true);
+        disableShowFiltered(true);
         updateProgress(0);
-        runBatch(prompt, 0); // start with batch 0
+        runBatch(prompt, 0);
       }
 
-      // Recursive batch execution
       function runBatch(prompt, batchIndex) {
         google.script.run
           .withSuccessHandler((res) => {
             updateProgress(res.progress || 0);
             setStatus(res.message, !res.done);
-
             if (!res.done) {
-              // Continue next batch
               runBatch(prompt, batchIndex + 1);
             } else {
-              // Completed
               updateProgress(100);
               setStatus(res.message);
+              disableShowFiltered(false);
+              setWorking(false);
             }
           })
           .withFailureHandler((err) => {
-            setStatus("Error: " + (err.message || err));
+            setStatus("Error: " + safeErr(err));
+            setWorking(false);
+            disableShowFiltered(false);
           })
           .AutoFilter_runAutoFilterBatch(prompt, batchIndex);
       }
 
-      // Run last prompt again
-      function runLast() {
-        setStatus("Running last filter…", true);
-        updateProgress(0);
-        google.script.run
-          .withSuccessHandler((res) => {
-            updateProgress(100);
-            setStatus(res.message || "Done.");
-          })
-          .withFailureHandler((err) => {
-            setStatus("Error: " + (err.message || err));
-          })
-          .AutoFilter_runLastFilter();
-      }
-
-      // Clear AI filter flags
       function clearFlags() {
         setStatus("Clearing flags…", true);
         updateProgress(0);
+        setWorking(true);
+        disableShowFiltered(true);
         google.script.run
-          .withSuccessHandler(() => {
+          .withSuccessHandler((msg) => {
             updateProgress(0);
-            setStatus("AI flags cleared.");
+            setStatus(msg || "AI flags cleared.");
+            setWorking(false);
+            disableShowFiltered(true);
           })
           .withFailureHandler((err) => {
-            setStatus("Error: " + (err.message || err));
+            setStatus("Error: " + safeErr(err));
+            setWorking(false);
           })
           .AutoFilter_clearFilterFlags();
       }
 
-      // Remove sheet filter and show all rows
       function showAll() {
         setStatus("Removing sheet filter…", true);
         updateProgress(0);
+        setWorking(true);
         google.script.run
-          .withSuccessHandler(() => {
+          .withSuccessHandler((msg) => {
             updateProgress(0);
-            setStatus("All rows visible.");
+            setStatus(msg || "All rows visible.");
+            setWorking(false);
           })
           .withFailureHandler((err) => {
-            setStatus("Error: " + (err.message || err));
+            setStatus("Error: " + safeErr(err));
+            setWorking(false);
           })
           .AutoFilter_removeSheetFilter();
+      }
+
+      function showFiltered() {
+        setStatus("Applying filtered view…", true);
+        setWorking(true);
+        google.script.run
+          .withSuccessHandler((msg) => {
+            setStatus(msg || "Showing filtered rows.");
+            setWorking(false);
+          })
+          .withFailureHandler((err) => {
+            setStatus("Error: " + safeErr(err));
+            setWorking(false);
+          })
+          .AutoFilter_applyYesFilter();
       }
     </script>
   </body>
