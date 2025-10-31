@@ -18,31 +18,36 @@ function AIA_safeUi_() {
   }
 }
 
-/** ===== MASTER onOpen ===== */
+/** ===== MASTER onOpen (ordered menus) ===== */
 function onOpen(e) {
   const ui = AIA_safeUi_();
+
+  // 1) Record View
   try {
     if (typeof onOpen_Code === "function") onOpen_Code(ui);
   } catch (err) {
     console.log("onOpen_Code:", err);
   }
+
+  // 2) Auto Filter
+  try {
+    AIA_addAutoFilterMenu_(ui);
+  } catch (err) {
+    console.log("AIA_addAutoFilterMenu_:", err);
+  }
+
+  // 3) AI Integration
   try {
     if (typeof onOpen_Agent === "function") onOpen_Agent(ui);
   } catch (err) {
     console.log("onOpen_Agent:", err);
   }
-  // ✅ Ensure Backfill menu is also added on load (defined in Backfill.gs)
+
+  // 4) Backfill
   try {
     if (typeof onOpen_Backfill === "function") onOpen_Backfill(ui);
   } catch (err) {
     console.log("onOpen_Backfill:", err);
-  }
-
-  // ✅ Always add the Auto Filter menu (defined in Auto_Filter.gs)
-  try {
-    AIA_addAutoFilterMenu_(ui);
-  } catch (err) {
-    console.log("AIA_addAutoFilterMenu_:", err);
   }
 }
 
