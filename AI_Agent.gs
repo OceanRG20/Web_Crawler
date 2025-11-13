@@ -1018,11 +1018,28 @@ function AIA_extractDomain_(url) {
 
 /* ========= Site bundle fetch + hints extraction ========= */
 function AIA_fetchSiteBundleText_(baseUrl, maxChars) {
-  const urls = [baseUrl, "/contact", "/about", "/locations"].map((p) =>
-    p.startsWith("http") ? p : String(baseUrl).replace(/\/+$/, "") + p
-  );
+  // Normalize base URL
+  const raw = String(baseUrl || "").trim();
+  const root = raw.replace(/\/+$/, "");
+  // common contact/about variants
+  const paths = [
+    "",             // home
+    "/contact",
+    "/contact-us",
+    "/contactus",
+    "/about",
+    "/about-us",
+    "/locations"
+  ];
+  const urls = paths.map((p) => {
+    let base = root || "";
+    if (!/^https?:\/\//i.test(base)) base = "http://" + base;
+    return p ? base + p : base;
+  });
+
   const htmls = [];
   const texts = [];
+
   urls.forEach((u) => {
     try {
       const resp = UrlFetchApp.fetch(u, {
@@ -1034,17 +1051,20 @@ function AIA_fetchSiteBundleText_(baseUrl, maxChars) {
         },
       });
       const html = resp.getContentText();
+      if (!html) return;
       htmls.push(html);
+
       const text = html
         .replace(/<script[\s\S]*?<\/script>/gi, "")
         .replace(/<style[\s\S]*?<\/style>/gi, "")
         .replace(/<[^>]+>/g, " ")
         .replace(/\s+/g, " ")
         .trim();
-      texts.push(text);
+      if (text) texts.push(text);
     } catch (_) {}
     Utilities.sleep(120);
   });
+
   const joined = texts.join("\n").slice(0, maxChars || 20000);
   return { text: joined, htmls };
 }
@@ -1059,7 +1079,7 @@ function AIA_extractHintsFromBundle_(htmls, url) {
   };
   const all = (htmls || []).join("\n");
 
-  // Try JSON-LD
+  // ---------- 1) JSON-LD (best source if present) ----------
   try {
     const blocks =
       all.match(
@@ -1081,9 +1101,11 @@ function AIA_extractHintsFromBundle_(htmls, url) {
           const city = adr.addressLocality || "";
           const state = adr.addressRegion || "";
           const zip = adr.postalCode || "";
+
           if (!out.company && n) out.company = String(n).trim();
           if (!out.phoneRaw && tel) out.phoneRaw = String(tel).trim();
           if (!out.street && street) out.street = String(street).trim();
+
           const csz = [city, state, zip]
             .filter(Boolean)
             .join(", ")
@@ -1094,7 +1116,29 @@ function AIA_extractHintsFromBundle_(htmls, url) {
     }
   } catch (_) {}
 
-  // Title tag fallback
+  // ---------- 2) Phones with labels "Phone" / "Tel" ----------
+  try {
+    const labeledPhones = [];
+    const phoneLabelRe =
+      /(phone|tel|telephone)[^0-9]{0,30}((?:\+?1[\s\-\.])?\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\d{4})/gi;
+    let m;
+    while ((m = phoneLabelRe.exec(all)) !== null) {
+      labeledPhones.push(m[2]);
+    }
+    if (!out.phoneRaw && labeledPhones.length) {
+      out.phoneRaw = labeledPhones[0];
+    }
+  } catch (_) {}
+
+  // ---------- 3) Generic phone fallback ----------
+  if (!out.phoneRaw) {
+    const generic = all.match(
+      /(?:\+?1[\s\-\.])?\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\d{4}/
+    );
+    if (generic) out.phoneRaw = generic[0];
+  }
+
+  // ---------- 4) Title tag → company name fallback ----------
   try {
     if (!out.company) {
       const t = all.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
@@ -1107,21 +1151,13 @@ function AIA_extractHintsFromBundle_(htmls, url) {
     }
   } catch (_) {}
 
-  // Phone fallback (NANP)
-  if (!out.phoneRaw) {
-    const m = all.match(
-      /(?:\+?1[\s\-\.])?\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\d{4}/
-    );
-    if (m) out.phoneRaw = m[0];
-  }
-  out.phoneFmt = AIA_formatNANP_(out.phoneRaw);
-
-  // Address fallbacks
+  // ---------- 5) Address fallbacks ----------
   if (!out.street || !out.cityStateZip) {
     const streetMatch = all.match(
       /\b\d{1,6}\s+[A-Za-z0-9\.\- ]+\s(?:Road|Rd\.?|Street|St\.?|Drive|Dr\.?|Avenue|Ave\.?|Boulevard|Blvd\.?|Lane|Ln\.?|Court|Ct\.?|Parkway|Pkwy\.?|Circle|Cir\.?)\b[^\n<]{0,80}/i
     );
     if (streetMatch && !out.street) out.street = streetMatch[0].trim();
+
     const usMatch = all.match(
       /\b([A-Za-z][A-Za-z\.\- ]+),\s*([A-Z]{2})\s*(\d{5}(?:-\d{4})?)\b/
     );
@@ -1136,6 +1172,7 @@ function AIA_extractHintsFromBundle_(htmls, url) {
     }
   }
 
+  out.phoneFmt = AIA_formatNANP_(out.phoneRaw);
   if (!out.company) out.company = AIA_guessNameFromUrl_(url);
   return out;
 }
@@ -1144,19 +1181,21 @@ function AIA_extractHintsFromBundle_(htmls, url) {
 function AIA_formatNANP_(raw) {
   if (!raw) return "";
   const digits = String(raw).replace(/[^\d]/g, "");
-  if (digits.length === 11 && digits.startsWith("1")) {
-    return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(
-      7,
-      11
-    )}`;
-  }
-  if (digits.length === 10) {
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(
-      6,
-      10
-    )}`;
-  }
-  return ""; // not NANP
+
+  // Strip leading 1 / +1
+  let core = digits;
+  if (core.length === 11 && core.startsWith("1")) core = core.slice(1);
+  if (core.length !== 10) return "";
+
+  const area = core.slice(0, 3);
+  const exchange = core.slice(3, 6);
+  const line = core.slice(6, 10);
+
+  // basic NANP validity: area & exchange 2-9xx
+  if (!/^[2-9][0-9]{2}$/.test(area)) return "";
+  if (!/^[2-9][0-9]{2}$/.test(exchange)) return "";
+
+  return `(${area}) ${exchange}-${line}`;
 }
 
 function AIA_normalizePhoneLine_(recordText) {
@@ -1279,9 +1318,15 @@ function AIA_buildCandidateSourceMap_() {
 function AIA_normalizeCandidateUrl_(u) {
   try {
     const url = new URL(/^(https?:)?\/\//i.test(u) ? u : "http://" + u);
-    return url.hostname.replace(/^www\./i, "") + (url.pathname === "/" ? "" : url.pathname.replace(/\/+$/, ""));
+    return (
+      url.hostname.replace(/^www\./i, "") +
+      (url.pathname === "/" ? "" : url.pathname.replace(/\/+$/, ""))
+    );
   } catch (_) {
-    return String(u).replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/+$/, "");
+    return String(u)
+      .replace(/^https?:\/\//i, "")
+      .replace(/^www\./i, "")
+      .replace(/\/+$/, "");
   }
 }
 function AIA_extractFirstUrl_(text) {
