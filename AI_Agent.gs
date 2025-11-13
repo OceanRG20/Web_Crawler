@@ -811,7 +811,7 @@ function AIA_guessNameFromUrl_(url) {
           .replace(/[-_]/g, " ")
           .replace(/\s+/g, " ")
           .trim()
-          .replace(/\b\w/g, (c) => c.toUpperCase())
+          .replace(/\b\w/g, (c) => c.ToUpperCase())
       : host;
   }
 }
@@ -1018,28 +1018,42 @@ function AIA_extractDomain_(url) {
 
 /* ========= Site bundle fetch + hints extraction ========= */
 function AIA_fetchSiteBundleText_(baseUrl, maxChars) {
-  // Normalize base URL
-  const raw = String(baseUrl || "").trim();
-  const root = raw.replace(/\/+$/, "");
-  // common contact/about variants
+  const root = String(baseUrl || "").replace(/\/+$/, "");
+  if (!root) return { text: "", htmls: [] };
+
+  // Keep existing targets + add .html / -us variants
   const paths = [
-    "",             // home
+    "",
+
     "/contact",
-    "/contact-us",
-    "/contactus",
     "/about",
+    "/locations",
+
+    "/contact/",
+    "/contact-us",
+    "/contact-us/",
+    "/contact.html",
+    "/contact-us.html",
+
+    "/about/",
     "/about-us",
-    "/locations"
+    "/about-us/",
+    "/about.html",
+    "/about-us.html",
+
+    "/locations/",
+    "/location",
+    "/location/",
   ];
-  const urls = paths.map((p) => {
-    let base = root || "";
-    if (!/^https?:\/\//i.test(base)) base = "http://" + base;
-    return p ? base + p : base;
+
+  const urls = [];
+  paths.forEach((p) => {
+    const u = p ? root + p : root;
+    if (urls.indexOf(u) === -1) urls.push(u);
   });
 
   const htmls = [];
   const texts = [];
-
   urls.forEach((u) => {
     try {
       const resp = UrlFetchApp.fetch(u, {
@@ -1051,22 +1065,59 @@ function AIA_fetchSiteBundleText_(baseUrl, maxChars) {
         },
       });
       const html = resp.getContentText();
-      if (!html) return;
       htmls.push(html);
-
       const text = html
         .replace(/<script[\s\S]*?<\/script>/gi, "")
         .replace(/<style[\s\S]*?<\/style>/gi, "")
         .replace(/<[^>]+>/g, " ")
         .replace(/\s+/g, " ")
         .trim();
-      if (text) texts.push(text);
-    } catch (_) {}
+      texts.push(text);
+    } catch (e) {
+      // ignore per-URL errors
+    }
     Utilities.sleep(120);
   });
-
   const joined = texts.join("\n").slice(0, maxChars || 20000);
   return { text: joined, htmls };
+}
+
+/* ===== Helper: choose best phone candidate from HTML ===== */
+function AIA_pickBestPhoneFromHtml_(htmlText) {
+  const txt = String(htmlText || "");
+  if (!txt) return "";
+
+  const re =
+    /(?:\+?1[\s\-\.\)]*)?\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\d{4}(?:\s*(?:ext|x)\s*\d{1,5})?/gi;
+
+  let best = "";
+  let bestScore = -1;
+  let m;
+  while ((m = re.exec(txt)) !== null) {
+    const raw = m[0];
+    const idx = m.index;
+    const windowStart = Math.max(0, idx - 120);
+    const windowEnd = Math.min(txt.length, idx + 120);
+    const ctx = txt.slice(windowStart, windowEnd).toLowerCase();
+
+    let score = 0;
+    if (ctx.includes("phone") || ctx.includes("tel") || ctx.includes("call"))
+      score += 3;
+    if (ctx.match(/\b(ext\.?|extension)\b/)) score += 1;
+    if (ctx.match(/\b[A-Z]{2}\s*\d{5}(?:-\d{4})?\b/i)) score += 2;
+    if (
+      ctx.match(
+        /\b(st(?:reet)?|rd\.?|road|dr\.?|drive|hwy\.?|highway|parkway|pkwy\.?)\b/i
+      )
+    )
+      score += 1;
+
+    if (score > bestScore) {
+      bestScore = score;
+      best = raw;
+    }
+  }
+  return best;
 }
 
 function AIA_extractHintsFromBundle_(htmls, url) {
@@ -1079,7 +1130,7 @@ function AIA_extractHintsFromBundle_(htmls, url) {
   };
   const all = (htmls || []).join("\n");
 
-  // ---------- 1) JSON-LD (best source if present) ----------
+  // Try JSON-LD
   try {
     const blocks =
       all.match(
@@ -1101,11 +1152,9 @@ function AIA_extractHintsFromBundle_(htmls, url) {
           const city = adr.addressLocality || "";
           const state = adr.addressRegion || "";
           const zip = adr.postalCode || "";
-
           if (!out.company && n) out.company = String(n).trim();
           if (!out.phoneRaw && tel) out.phoneRaw = String(tel).trim();
           if (!out.street && street) out.street = String(street).trim();
-
           const csz = [city, state, zip]
             .filter(Boolean)
             .join(", ")
@@ -1116,29 +1165,7 @@ function AIA_extractHintsFromBundle_(htmls, url) {
     }
   } catch (_) {}
 
-  // ---------- 2) Phones with labels "Phone" / "Tel" ----------
-  try {
-    const labeledPhones = [];
-    const phoneLabelRe =
-      /(phone|tel|telephone)[^0-9]{0,30}((?:\+?1[\s\-\.])?\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\d{4})/gi;
-    let m;
-    while ((m = phoneLabelRe.exec(all)) !== null) {
-      labeledPhones.push(m[2]);
-    }
-    if (!out.phoneRaw && labeledPhones.length) {
-      out.phoneRaw = labeledPhones[0];
-    }
-  } catch (_) {}
-
-  // ---------- 3) Generic phone fallback ----------
-  if (!out.phoneRaw) {
-    const generic = all.match(
-      /(?:\+?1[\s\-\.])?\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\d{4}/
-    );
-    if (generic) out.phoneRaw = generic[0];
-  }
-
-  // ---------- 4) Title tag → company name fallback ----------
+  // Title tag fallback
   try {
     if (!out.company) {
       const t = all.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
@@ -1151,13 +1178,19 @@ function AIA_extractHintsFromBundle_(htmls, url) {
     }
   } catch (_) {}
 
-  // ---------- 5) Address fallbacks ----------
+  // Phone fallback (NANP) – now use scoring / context near "Phone" or address
+  if (!out.phoneRaw) {
+    const best = AIA_pickBestPhoneFromHtml_(all);
+    if (best) out.phoneRaw = best;
+  }
+  out.phoneFmt = AIA_formatNANP_(out.phoneRaw);
+
+  // Address fallbacks
   if (!out.street || !out.cityStateZip) {
     const streetMatch = all.match(
       /\b\d{1,6}\s+[A-Za-z0-9\.\- ]+\s(?:Road|Rd\.?|Street|St\.?|Drive|Dr\.?|Avenue|Ave\.?|Boulevard|Blvd\.?|Lane|Ln\.?|Court|Ct\.?|Parkway|Pkwy\.?|Circle|Cir\.?)\b[^\n<]{0,80}/i
     );
     if (streetMatch && !out.street) out.street = streetMatch[0].trim();
-
     const usMatch = all.match(
       /\b([A-Za-z][A-Za-z\.\- ]+),\s*([A-Z]{2})\s*(\d{5}(?:-\d{4})?)\b/
     );
@@ -1172,7 +1205,6 @@ function AIA_extractHintsFromBundle_(htmls, url) {
     }
   }
 
-  out.phoneFmt = AIA_formatNANP_(out.phoneRaw);
   if (!out.company) out.company = AIA_guessNameFromUrl_(url);
   return out;
 }
@@ -1181,21 +1213,19 @@ function AIA_extractHintsFromBundle_(htmls, url) {
 function AIA_formatNANP_(raw) {
   if (!raw) return "";
   const digits = String(raw).replace(/[^\d]/g, "");
-
-  // Strip leading 1 / +1
-  let core = digits;
-  if (core.length === 11 && core.startsWith("1")) core = core.slice(1);
-  if (core.length !== 10) return "";
-
-  const area = core.slice(0, 3);
-  const exchange = core.slice(3, 6);
-  const line = core.slice(6, 10);
-
-  // basic NANP validity: area & exchange 2-9xx
-  if (!/^[2-9][0-9]{2}$/.test(area)) return "";
-  if (!/^[2-9][0-9]{2}$/.test(exchange)) return "";
-
-  return `(${area}) ${exchange}-${line}`;
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(
+      7,
+      11
+    )}`;
+  }
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(
+      6,
+      10
+    )}`;
+  }
+  return ""; // not NANP
 }
 
 function AIA_normalizePhoneLine_(recordText) {
