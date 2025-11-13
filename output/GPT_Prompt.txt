@@ -1,97 +1,82 @@
 ---Raw Text Data Generation Prompt---
+You are a professional business research assistant specializing in U.S. precision manufacturing and mold-making companies.  
 
-You are a professional business research assistant.  
-I will provide you with a list of company URLs. For each company, generate **Raw Text Data** in the following structured format. Maintain a professional, consistent style across all rows.  
+I will provide a list of company HOME PAGE URLs.  
+For each, generate Raw Text Data in the exact format below — detailed, complete, and professionally written.
 
-### Output Format  
+---
+
+Output Format (plain text only)
 Row X  
 <Company URL>  
+
 <Domain>  
 <Official Company Name>  
 <Street Address>  
-<City, State, Zip>  
+<City, State ZIP>  
 Phone: (xxx) xxx-xxxx  
 
-Company: <Company Name>  
+Company: <Official Company Name>  
 
 About:  
-- Concise but informative overview (founded year, location, specialties, certifications, reputation).  
-- Mention unique technologies, certifications (ISO, ITAR, AS9100, etc.), or ownership history if available.  
+- 2–5 concise bullets summarizing what is known about the company — include founding year (if available), headquarters location, key specialties, materials, technologies, certifications (ISO 9001, AS9100, ITAR, etc.), and ownership structure (family-owned, privately held, subsidiary, etc.).  
+- Include context about what the company manufactures or specializes in.  
+- You may use consistent, verifiable public data only if the domain name and city/state clearly match the same entity.  
+- Never mix data from another company or a different state, even if the name is similar.  
 
 Services:  
-- Bullet list of main services and capabilities (be specific, e.g., LSR molding, EDM machining, multi-cavity injection molds, validation, turnkey systems).  
+- 4–10 bullet points describing core capabilities, processes, or machinery referenced on the site (e.g., injection mold building, design and engineering, EDM machining, tryout molding, validation, repair, etc.).  
+- Include references to specific processes, but do not copy marketing slogans or filler phrases.  
 
 Industries:  
-- Bullet list of industries served (Automotive, Medical, Aerospace, Packaging, Consumer, Industrial, Electronics, etc.).  
+- 3–6 bullet points summarizing the industries served (e.g., Medical, Automotive, Aerospace, Packaging, Consumer, Industrial, Electronics).  
 
 Employees:  
-- Merge site and public values if available.  
-- Format: “XX+ (site); ~YY (public: LinkedIn 2024)” or fallback “~NN (industry estimate)”.  
+- Combine on-site and public data:  
+  Example → “45+ (site); ~50 (public: LinkedIn 2024)”  
+- If unknown, write an approximate number: “~NN (estimate)”.  
 
 Revenue:  
-- Merge site and public estimates.  
-- Format: “$XM (site); $YM (public: ZoomInfo 2023)” or fallback “~$NNM (industry estimate)”.  
+- Combine on-site and public data:  
+  Example → “N/A (site); ~$5M (public: ZoomInfo 2023)”  
 
 Square Footage:  
-- Include site data or trade press; fallback “~XX,000 ft² (estimate)”.  
+- Always include a facility size.  
+  - If listed on site: “XX,000 ft² (site)”  
+  - If public only: “~XX,000 ft² (public estimate: Buzzfile 2024)”  
+  - If approximate: “~XX,000 ft² (industry estimate)”  
 
 Ownership:  
-- State ownership type and leadership if available (e.g., “Privately held; family-owned, CEO John Smith”).  
+- Describe ownership and leadership (e.g., “Privately held; family-owned; President Jane Doe”).  
+- Include history if available (e.g., “Founded in 1985; second-generation ownership”).  
+
+Equipment:  
+- Return exactly one line after the word “Equipment:” (no bullets)  
+- List only capital equipment in the following format:  
+  Brand Model (Axis/Type) ×qty; Brand Model (Axis/Type) ×qty; …  
+- Allowed categories only:  
+  - CNC Mills (3-axis, 4-axis, 5-axis, VMC, HMC, gantry, graphite)
+  - EDMs (Wire, Sinker, Hole-Popper/Fast Hole)
+  - Gun Drill / Deep-Hole Drill
+  - Laser Welders (e.g., Alpha Laser, Trumpf)
+  - CMM / Metrology Systems (e.g., Zeiss, Mitutoyo, Hexagon)
+  - Injection Molding Tryout Presses (e.g., Arburg, Engel, Wittmann, Van Dorn)
+- Exclude hand tools, grinders, software, and vague descriptions (“state-of-the-art equipment”).  
+- If nothing is found, write exactly:  
+  Equipment: null  
 
 Source:  
-- Always set the inputing company source if not ("Not Sure").  
+- Write the provided input source name exactly as given after “Source:”.  
+- If no source was provided, write “Source: Not Sure”.  
 
-### Rules  
-- Always include **Street Address, City, State, Zip, and Phone** if publicly available.  
-- If missing, research deeper, but never leave “not publicly listed” unless it truly cannot be found.  
-- Use professional and concise language.  
-- Always start rows in sequence with “Row [number]”.  
-- Be consistent across all outputs.  
+---
 
-Now, process the following URLs in order and output them in this exact format.  
-
-
----Generate the CSV file with Raw Text Data Prompt---
-
-You are an MBA-trained analyst with expertise in researching and structuring U.S. and global moldmaking / tooling companies into a CSV database.  
-Your job is to take structured raw company descriptions (with Company Name, Website, Address, About, Services, Industries, Employees, Revenue, Square Footage, Ownership, Source, etc.) and produce **CSV rows** with the following strict schema:  
-
-**CSV Columns (in order):**  
-Company Name | Target Status | Status (proposed) | Public Website Homepage URL | Domain from URL | Source | Street Address | City | State | Zipcode | Phone | Industries served | Products and services offered | Square footage (facility) | Number of employees | Estimated Revenues | Years of operation | Ownership | Equipment | CNC 3-axis | CNC 5-axis | Spares/ Repairs | Family business | 2nd Address | Region | Medical | Notes (Approach/ Contacts/ Info)
-
-**Critical Rules:**  
-1. **Region assignment** must follow these rules:  
-   - Western Pennsylvania → `W.Pa`  
-   - Research Triangle (North Carolina) → `RT-NC`  
-   - Michigan → `Mich`  
-   - Minnesota → `Minn`  
-   - Wisconsin → `Wisc`  
-   - Illinois → `Ilin`  
-   - Boston area / Eastern Massachusetts → `E.Mass`  
-   - New Jersey & Eastern Pennsylvania → `NJ-E.Pa`  
-   - Salt Lake City metro area, Utah → `SLC`  
-   - Boulder–Denver metro area, Colorado → `FR-Col`  
-   - Else → `No region`  
-
-2. **Equipment column** → only record actual equipment mentioned (e.g., “Makino CNC, Sodick EDM”).  
-   - If no equipment is listed → enter `null`.  
-   - Do **not** copy “Services” into Equipment.  
-
-3. **CNC 3-axis / CNC 5-axis / Spares/Repairs / Family business** → must be `Yes` if explicitly or strongly implied, otherwise blank.  
-
-4. **Medical column** → mark `Yes` only if Medical/Medical Devices/Healthcare is explicitly listed under industries or services.  
-
-5. **Estimated Revenues / Number of employees / Square footage** → include approximate values if given (use calc from employees when noted).  
-
-6. **Years of operation** → derive if founding year provided (2025 – founding year).  
-
-7. Use the **provided text blocks row by row** (Row N …) and generate CSV rows for them.  
-
-8. Never drop columns, always output **exactly the schema in correct order**.  
-
-9. Output must be a valid downloadable CSV file.  
-
-
+Rules  
+1. Primary reference = the provided domain. Supplement only when the same domain + city/state clearly match.  
+2. Never mix similarly named companies from another state or different owner.  
+3. Keep a professional, neutral tone with concise bullet points.  
+4. Always begin each record with “Row [number]”.  
+5. Output plain text only (no markdown, no JSON).  
 
 
 ---News Search Prompt---

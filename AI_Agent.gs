@@ -146,9 +146,7 @@ function AI_setApiKey() {
   if (res.getSelectedButton() !== ui.Button.OK) return;
   const key = (res.getResponseText() || "").trim();
   if (!/^sk-/.test(key)) {
-    ui.alert(
-      'That does not look like an OpenAI key (should start with "sk-").'
-    );
+    ui.alert('That does not look like an OpenAI key (should start with "sk-").');
     return;
   }
   PropertiesService.getScriptProperties().setProperty("OPENAI_API_KEY", key);
@@ -211,18 +209,17 @@ function AI_runRawTextData() {
       ans = AIA_callOpenAI_(prompt);
       ans = AIA_fixIdentityNA_(ans, hints); // fill identity header, no N/A
       ans = AIA_normalizePhoneLine_(ans); // format Phone: (xxx) xxx-xxxx
+
+      // Safety: if model still forgot "Source:" block, append it.
+      if (!/\nSource:\s*\n- /i.test(ans)) {
+        ans = ans.replace(/\s*$/, `\n\nSource:\n- ${source || "Not Sure"}`);
+      }
     } catch (err) {
       ans =
         `Row ${no}\n${url}\n\n${AIA_extractDomain_(url)}\n` +
-        `${hints.company || "N/A"}\n${hints.street || "N/A"}\n${
-          hints.cityStateZip || "N/A"
-        }\n` +
-        `Phone: ${hints.phoneFmt || "N/A"}\n\nCompany: ${
-          hints.company || "N/A"
-        }\n\n` +
-        `About:\n- ERROR: ${String(
-          err
-        )}\n\nServices:\n- N/A\n\nIndustries:\n- N/A\n\n` +
+        `${hints.company || "N/A"}\n${hints.street || "N/A"}\n${hints.cityStateZip || "N/A"}\n` +
+        `Phone: ${hints.phoneFmt || "N/A"}\n\nCompany: ${hints.company || "N/A"}\n\n` +
+        `About:\n- ERROR: ${String(err)}\n\nServices:\n- N/A\n\nIndustries:\n- N/A\n\n` +
         `Employees:\n- N/A\n\nRevenue:\n- N/A\n\nSquare Footage:\n- N/A\n\nOwnership:\n- N/A\n\n` +
         `Equipment:\n- null\n\nSource:\n- ${source || "Not Sure"}`;
     }
@@ -242,7 +239,7 @@ function AI_runRawTextData() {
     );
 }
 
-/* Build a single-company Raw_Data prompt */
+/* Build a single-company Raw_Data prompt (FORCES Source echo) */
 function AIA_buildSingleRawPrompt_(
   template,
   no,
@@ -260,7 +257,8 @@ function AIA_buildSingleRawPrompt_(
     "- Core identity must come from the SOURCE_EXCERPT or HINTS (derived from the site bundle). If still unknown after both, leave the line blank (do not write 'N/A').\n" +
     "- You MAY supplement Employees, Revenue, Ownership/Leadership/Corporate parent, and Industries with clearly matched public sources (same entity).\n" +
     "  When you do, annotate like: 'N/A (site); ~300 (public: LinkedIn 2024)' or 'N/A (site); ~$17.9M (public: Datanyze est.)'.\n" +
-    "- Never mix similarly named companies from other states/domains. For equipment, if nothing verifiable → write exactly: 'null'.\n";
+    "- Never mix similarly named companies from other states/domains.\n" +
+    "- **Your record MUST end with a 'Source:' section containing exactly one bullet with the input source name provided below.**\n";
 
   const hintsBlock =
     "### HINTS (parsed from site bundle)\n" +
@@ -269,15 +267,16 @@ function AIA_buildSingleRawPrompt_(
     `City/State/ZIP (guess): ${hints.cityStateZip || ""}\n` +
     `Phone (guess): ${hints.phoneFmt || hints.phoneRaw || ""}\n`;
 
+  // Provide the source name explicitly; model must echo it in final "Source:".
   const block =
     `\nRow ${no}\n${url}\n\n${domain}\n` +
     `<<SOURCE_EXCERPT_BEGIN>>\n${excerptText || ""}\n<<SOURCE_EXCERPT_END>>\n` +
-    `${hintsBlock}\nSource:\n- ${source || "Not Sure"}\n`;
+    `${hintsBlock}Input_Source_Name: ${source || "Not Sure"}\n`;
 
   return template + guidance + block;
 }
 
-/* ========= ADD MMCrawl — per-record processing ========= */
+/* ========= ADD MMCrawl — per-record processing (with Source backfill) ========= */
 function AI_runAddMMCrawl() {
   const ss = SpreadsheetApp.getActive();
   const ui = AIA_safeUi_();
@@ -317,6 +316,9 @@ function AI_runAddMMCrawl() {
     return;
   }
 
+  // Build Candidate URL → Source map for backfill
+  const candMap = AIA_buildCandidateSourceMap_();
+
   const chunks = AIA_splitRawDataRows_(rawInput);
   if (!chunks.length) {
     if (ui) ui.alert('Could not detect any "Row X" blocks in Raw Text Data.');
@@ -333,6 +335,10 @@ function AI_runAddMMCrawl() {
     if (ui)
       ss.toast(`Add_MMCrawl ${i + 1}/${chunks.length}`, "AI Integration", 4);
 
+    // Extract the first URL from this Raw_Data block to find its Source
+    const urlInPiece = AIA_extractFirstUrl_(piece);
+    const lookedSource = AIA_lookupSourceByUrl_(candMap, urlInPiece) || "";
+
     const prompt =
       template +
       "\n\n### Input: Raw Text Data (single record)\n" +
@@ -345,8 +351,22 @@ function AI_runAddMMCrawl() {
       integ.getRange(addRow, AIA.WHEN_COL).setValue(new Date());
 
       const items = AIA_extractJsonArray_(ans);
-      if (!items.length) continue;
-      appendedTotal += AIA_appendToMMCrawl_(items);
+      if (items.length) {
+        items.forEach((obj) => {
+          // Backfill Source if missing
+          const hasSrc =
+            (obj.Source != null && String(obj.Source).trim() !== "") ||
+            (obj.source != null && String(obj.source).trim() !== "");
+          if (!hasSrc && lookedSource) obj["Source"] = lookedSource;
+
+          // Also backfill Domain/Website from the parsed URL if absent
+          if (!obj["Domain from URL"] && urlInPiece)
+            obj["Domain from URL"] = AIA_extractDomain_(urlInPiece);
+          if (!obj["Public Website Homepage URL"] && urlInPiece)
+            obj["Public Website Homepage URL"] = urlInPiece;
+        });
+        appendedTotal += AIA_appendToMMCrawl_(items);
+      }
     } catch (err) {
       integ.getRange(addRow, AIA.RESULT_COL).setValue("ERROR: " + String(err));
       integ.getRange(addRow, AIA.WHEN_COL).setValue(new Date());
@@ -499,7 +519,7 @@ function AI_runNewsSearch() {
 
   // Append only valid articles (not marked to skip)
   const toAppend = collected.filter((a) => !a._skip_append);
-  const appended = AIA_appendToNewsRaw_(toAppend);
+  AIA_appendToNewsRaw_(toAppend);
   const uiMsg = toAppend.length
     ? `News Search complete. ${toAppend.length} valid article(s) added to News Raw.`
     : `News Search complete. No valid articles to add.`;
@@ -992,9 +1012,7 @@ function AIA_extractDomain_(url) {
     const u = new URL(/^(https?:)?\/\//i.test(url) ? url : "http://" + url);
     return u.hostname.replace(/^www\./i, "");
   } catch (e) {
-    return String(url || "")
-      .replace(/^https?:\/\//i, "")
-      .split("/")[0];
+    return String(url || "").replace(/^https?:\/\//i, "").split("/")[0];
   }
 }
 
@@ -1238,9 +1256,40 @@ function AIA_setAndNotifyEmpty_(sheet, row, msg) {
 }
 
 function AIA_notifyNoCandidates_(sheet, row) {
-  AIA_setAndNotifyEmpty_(
-    sheet,
-    row,
-    "No candidate URLs found in Candidate sheet."
-  );
+  AIA_setAndNotifyEmpty_(sheet, row, "No candidate URLs found in Candidate sheet.");
+}
+
+/* ========= NEW: Candidate Source backfill helpers ========= */
+function AIA_buildCandidateSourceMap_() {
+  const sh = SpreadsheetApp.getActive().getSheetByName(AIA.CANDIDATE_SHEET);
+  const map = {};
+  if (!sh) return map;
+  const last = sh.getLastRow();
+  if (last < 2) return map;
+  const vals = sh.getRange(2, 1, last - 1, 3).getDisplayValues();
+  for (let i = 0; i < vals.length; i++) {
+    const url = String(vals[i][1] || "").trim();
+    const src = String(vals[i][2] || "").trim();
+    if (!url) continue;
+    const key = AIA_normalizeCandidateUrl_(url);
+    if (key) map[key] = { source: src, url: url };
+  }
+  return map;
+}
+function AIA_normalizeCandidateUrl_(u) {
+  try {
+    const url = new URL(/^(https?:)?\/\//i.test(u) ? u : "http://" + u);
+    return url.hostname.replace(/^www\./i, "") + (url.pathname === "/" ? "" : url.pathname.replace(/\/+$/, ""));
+  } catch (_) {
+    return String(u).replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/+$/, "");
+  }
+}
+function AIA_extractFirstUrl_(text) {
+  const m = String(text || "").match(/https?:\/\/\S+/i);
+  return m ? m[0].trim() : "";
+}
+function AIA_lookupSourceByUrl_(candMap, url) {
+  if (!url) return "";
+  const key = AIA_normalizeCandidateUrl_(url);
+  return (candMap[key] && candMap[key].source) || "";
 }
