@@ -645,9 +645,16 @@ function AIA_callOpenAI_(userPrompt) {
           content:
             "You extract company profiles using the provided SOURCE_EXCERPT (site-first grounding) and HINTS parsed from the site. " +
             'Identity header (Domain, Official Name, Street, City/State ZIP, Phone) must not contain "N/A"; prefer HINTS when available. ' +
-            "You may supplement Employees, Revenue, Ownership/Leadership/Corporate parent, and Industries ONLY if clearly matched public sources refer to the SAME entity (same domain + city/state). " +
-            'When you use public data, annotate provenance in parentheses (e.g., "~300 (public: LinkedIn 2024)", "~$17.9M (public: Datanyze est.)"). ' +
-            "Never mix similarly named companies from other states/domains. Return plain text only in the exact Output Format.",
+            "You may supplement Employees, Square footage (facility), and Estimated Revenues ONLY if clearly matched public sources refer to the SAME entity (same domain + city/state). " +
+            'When you use public data, annotate provenance in parentheses (e.g., "~80 (public: LinkedIn 2024)", "~$17.9M (public: ZoomInfo 2024)", "50,000 (public: BF 2024)"). ' +
+            "For Square footage (facility), Number of employees, and Estimated Revenues, always provide numeric/currency values and keep distinct datapoints separated by semicolons. " +
+            "The visible tokens before parentheses for these three fields must be numeric/currency only (with optional ~, +, or ranges). " +
+            "Use parentheses for sources and explanations (e.g., \"(site)\", \"(public: LinkedIn 2024)\", \"(calc from employees)\"). " +
+            "Never average conflicting estimates into a single number; preserve distinct datapoints. " +
+            "For Equipment, aggressively extract and normalize any CNC/EDM/gun drill/laser welder/CMM/tryout press information; only output 'Equipment: null' if no machinery at all is described on the site. " +
+            "Never mix similarly named companies from other states/domains. Return plain text only in the exact Output Format." + " Never output bare numeric-only values for Square footage (facility), Number of employees, or Estimated Revenues; always include at least one parenthetical source or explanation (e.g., \"(site)\", \"(public: ZoomInfo 2024)\", \"(estimate)\")."
+          
+            
         },
         { role: "user", content: userPrompt },
       ],
@@ -1022,28 +1029,21 @@ function AIA_fetchSiteBundleText_(baseUrl, maxChars) {
   if (!root) return { text: "", htmls: [] };
 
   // Keep existing targets + add .html / -us variants
+    // Expanded path list (includes equipment/capabilities pages)
   const paths = [
     "",
 
-    "/contact",
-    "/about",
-    "/locations",
+    // Contact
+    "/contact", "/contact/", "/contact-us", "/contact-us/", "/contact.html",
+    "/contact-us.html", "/contact.php",
 
-    "/contact/",
-    "/contact-us",
-    "/contact-us/",
-    "/contact.html",
-    "/contact-us.html",
+    // About
+    "/about", "/about/", "/about-us", "/about-us/", "/about.html",
+    "/about-us.html", "/about.php",
 
-    "/about/",
-    "/about-us",
-    "/about-us/",
-    "/about.html",
-    "/about-us.html",
+    // Locations
+    "/locations", "/locations/", "/location", "/location/", "/location.html",
 
-    "/locations/",
-    "/location",
-    "/location/",
   ];
 
   const urls = [];
