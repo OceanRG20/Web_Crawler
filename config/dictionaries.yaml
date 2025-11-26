@@ -1,0 +1,17 @@
+equipment:
+  - yasda
+  - makino
+  - kern
+
+target_phrases:
+  - class 101
+  - lsr
+  - liquid silicone rubber
+  - medical device
+  - implantable
+  - drug delivery
+
+disqualifiers:
+  - high volume plastic
+  - injection molded plastic
+  - mass production plastic
