@@ -1,9 +1,0 @@
-__pycache__/
-*.pyc
-venv/
-output/output.csv
-output/snapshots/
-evidence/
-service_account.json
-.env
-test
