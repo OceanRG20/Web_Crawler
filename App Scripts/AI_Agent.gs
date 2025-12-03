@@ -6,22 +6,6 @@
  *     ▶ Raw Text Data Generation      (Prompt ID = Raw_Data, via OpenAI)
  *     ▶ Add new candidates to MMCrawl (Prompt ID = Add_MMCrawl, via OpenAI)
  *     ▶ Reject Company                (Prompt ID = Reject_Company, via OpenAI)
- *     ▶ Backfill ▶  (driven by Backfill!A2:A)
- *         • Target Status
- *         • Status (proposed)
- *         • Equipment
- *         • CNC 3-axis
- *         • CNC 5-axis
- *         • Spares / Repairs
- *         • Family business
- *         • 2nd Address
- *         • Region
- *         • Medical
- *         • Square footage (facility)
- *         • Number of employees
- *         • Estimated Revenues
- *         • ↻ Refresh Backfill Menu
- *         • Test OpenAI
  *     ————
  *     🔑 Set OpenAI API Key
  *     ✔ Authorize (first-time only)
@@ -30,7 +14,6 @@
  *   - AI Integration (prompts + results)
  *   - Candidate     (No | URL | Source) — used by Raw_Data
  *   - MMCrawl       (main DB)
- *   - Backfill      (Column_ID | Prompt_Content | Result/logs)
  **************************************************/
 
 /** ===== Safe UI getter ===== */
@@ -60,12 +43,30 @@ function onOpen(e) {
     console.log("AIA_addAutoFilterMenu_:", err);
   }
 
-  // 3) AI Integration (includes Backfill submenu)
+  // 3) AI Integration (MMCrawl menu)
   try {
     if (typeof onOpen_Agent === "function") onOpen_Agent(ui);
   } catch (err) {
     console.log("onOpen_Agent:", err);
   }
+
+  // 4) ✅ News menu (from News_Agent.gs)
+  try {
+    if (typeof onOpen_News === "function") onOpen_News(ui);
+  } catch (err) {
+    console.log("onOpen_News:", err);
+  }
+
+  // 4) ✅ Backfill menu (from Backfill_Agent.gs)
+  try {
+    if (typeof onOpen_Backfill === "function") onOpen_Backfill(ui);
+  } catch (err) {
+    console.log("onOpen_Backfill:", err);
+  }
+}
+
+function onInstall(e) {
+  onOpen(e);
 }
 
 function onInstall(e) {
@@ -85,9 +86,8 @@ var AIA = {
   COL_SOURCE: 3,
 
   MMCRAWL_SHEET: "MMCrawl", // target DB for Add_MMCrawl
-  BACKFILL_SHEET: "Backfill", // source of backfill prompts
 
-  // OpenAI (GPT) for Raw_Data, Add_MMCrawl, Backfill, Reject_Company
+  // OpenAI (GPT) for Raw_Data, Add_MMCrawl, Reject_Company
   MODEL: "gpt-4o",
   TEMP: 0.2,
   MAX_TOKENS: 5000,
@@ -136,44 +136,16 @@ function onOpen_Agent(ui) {
   ui = ui || AIA_safeUi_();
   if (!ui) return;
 
-  const menu = ui.createMenu("AI Integration")
+  const menu = ui.createMenu("MMCrawl")
     .addItem("▶ Raw Text Data Generation", "AI_runRawTextData")
     .addItem("▶ Add new candidates to MMCrawl", "AI_runAddMMCrawl")
-    .addItem("▶ Reject Company", "AI_runRejectCompany"); // NEW
-
-  // Backfill submenu (driven by Backfill!A2:A)
-  try {
-    const bfRows = Backfill_readRows_(); // [{id, prompt, row}]
-    if (bfRows.length > 0) {
-      const sub = ui.createMenu("▶ Backfill");
-      const MAX_ITEMS = 20;
-      const n = Math.min(bfRows.length, MAX_ITEMS);
-      for (let i = 0; i < n; i++) {
-        const label = bfRows[i].id;
-        sub.addItem(label, "Backfill_run_" + (i + 1));
-      }
-      if (bfRows.length > MAX_ITEMS) {
-        sub.addSeparator().addItem(
-          "Only first " + MAX_ITEMS + " shown",
-          "Backfill_noop_"
-        );
-      }
-      sub
-        .addSeparator()
-        .addItem("↻ Refresh Backfill Menu", "Backfill_refreshFromMain_")
-        .addItem("Test OpenAI", "Backfill_testOpenAI_");
-      menu.addSubMenu(sub);
-    }
-  } catch (err) {
-    console.log("Backfill submenu error:", err);
-  }
-
-  menu
+    .addItem("▶ Reject Company", "AI_runRejectCompany")
     .addSeparator()
     .addItem("🔑 Set OpenAI API Key", "AI_setApiKey")
     .addSeparator()
-    .addItem("✔ Authorize (first-time only)", "AI_authorize")
-    .addToUi();
+    .addItem("✔ Authorize (first-time only)", "AI_authorize");
+
+  menu.addToUi();
 }
 
 /* ========= AUTHORIZATION ========= */
@@ -531,7 +503,7 @@ function AI_runRejectCompany() {
   try {
     if (ui) ss.toast("Running Reject_Company…", "AI Integration", 5);
 
-    const ans = AIA_callOpenAI_(prompt);
+    const ans = AIA_callOpenAI_Reject_(prompt);
     integ.getRange(row, AIA.RESULT_COL).setValue(ans);
     integ.getRange(row, AIA.WHEN_COL).setValue(new Date());
 
@@ -628,482 +600,6 @@ function AIA_callOpenAI_Reject_(userPrompt) {
 }
 
 /* ========= Move MMCrawl rows to "Rejected Companies" ========= */
-function AIA_moveRowsToRejected_(rejects, mmHeaders, mmSheet) {
-  if (!rejects || !rejects.length) return 0;
-  const ss = SpreadsheetApp.getActive();
-  let rejSheet = ss.getSheetByName("Rejected Companies");
-  if (!rejSheet) {
-    rejSheet = ss.insertSheet("Rejected Companies");
-  }
-
-  let lastRowRej = rejSheet.getLastRow();
-  let rejHeaders;
-  if (lastRowRej === 0) {
-    rejHeaders = mmHeaders.slice();
-    rejHeaders.push("Reject Reason", "Reject Source");
-    rejSheet.getRange(1, 1, 1, rejHeaders.length).setValues([rejHeaders]);
-    lastRowRej = 1;
-  } else {
-    const lastColRej = rejSheet.getLastColumn();
-    rejHeaders = rejSheet.getRange(1, 1, 1, lastColRej).getValues()[0].map(String);
-  }
-
-  function rejIdx(name) {
-    const lc = String(name || "").toLowerCase();
-    for (let i = 0; i < rejHeaders.length; i++) {
-      if (String(rejHeaders[i] || "").toLowerCase() === lc) return i;
-    }
-    return -1;
-  }
-
-  const idxRejectReason = rejIdx("Reject Reason");
-  const idxRejectSource = rejIdx("Reject Source");
-
-  const rowsToAppend = [];
-  const mmLastCol = mmHeaders.length;
-
-  const rowNums = rejects
-    .map(function (r) {
-      return r.rowNum;
-    })
-    .sort(function (a, b) {
-      return b - a;
-    });
-
-  const metaByRow = {};
-  rejects.forEach(function (r) {
-    metaByRow[r.rowNum] = r;
-  });
-
-  rowNums
-    .slice()
-    .reverse()
-    .forEach(function (rowNum) {
-      const mmVals = mmSheet.getRange(rowNum, 1, 1, mmLastCol).getValues()[0];
-      const out = new Array(rejHeaders.length).fill("");
-
-      for (let c = 0; c < mmHeaders.length; c++) {
-        const h = mmHeaders[c];
-        const idxR = rejIdx(h);
-        if (idxR >= 0) {
-          out[idxR] = mmVals[c];
-        }
-      }
-
-      const meta = metaByRow[rowNum] || {};
-      if (idxRejectReason >= 0) out[idxRejectReason] = meta.reason || "";
-      if (idxRejectSource >= 0) out[idxRejectSource] = meta.source || "";
-
-      rowsToAppend.push(out);
-    });
-
-  if (rowsToAppend.length) {
-    const start = rejSheet.getLastRow() + 1;
-    rejSheet
-      .getRange(start, 1, rowsToAppend.length, rejHeaders.length)
-      .setValues(rowsToAppend);
-  }
-
-  rowNums.forEach(function (r) {
-    if (r > 1 && r <= mmSheet.getLastRow()) {
-      mmSheet.deleteRow(r);
-    }
-  });
-
-  return rowsToAppend.length;
-}
-
-/* ========= GENERIC EXECUTION HANDLER ========= */
-function AI_runPromptById_(promptId, builderFn) {
-  const ss = SpreadsheetApp.getActive();
-  const ui = AIA_safeUi_();
-  const sheet = ss.getSheetByName(AIA.SHEET_NAME);
-  if (!sheet) {
-    if (ui) ui.alert('Sheet "' + AIA.SHEET_NAME + '" not found.');
-    return;
-  }
-
-  const row = AIA_findPromptRow_(promptId);
-  if (!row) {
-    if (ui) ui.alert('Prompt ID "' + promptId + '" not found in column A.');
-    return;
-  }
-
-  const template = String(sheet.getRange(row, 2).getValue() || "").trim();
-  if (!template) {
-    if (ui) ui.alert('No template found in column B for "' + promptId + '".');
-    return;
-  }
-
-  const finalPrompt = builderFn(template, row, sheet);
-  if (!finalPrompt) return;
-
-  try {
-    if (ui) ss.toast("Running " + promptId + "…", "AI Integration", 5);
-    const answer = AIA_callOpenAI_(finalPrompt);
-    sheet.getRange(row, AIA.RESULT_COL).setValue(answer);
-    sheet.getRange(row, AIA.WHEN_COL).setValue(new Date());
-    if (ui) {
-      ss.toast(
-        "Done: " + AIA_truncate_(answer, 90),
-        "AI Integration",
-        7
-      );
-    }
-  } catch (err) {
-    const msg = String(err);
-    sheet.getRange(row, AIA.RESULT_COL).setValue("ERROR: " + msg);
-    sheet.getRange(row, AIA.WHEN_COL).setValue(new Date());
-    if (ui) {
-      ss.toast(
-        "Error: " + AIA_truncate_(msg, 90),
-        "AI Integration",
-        8
-      );
-      ui.alert("OpenAI Error", msg, ui.ButtonSet.OK);
-    }
-  }
-}
-
-/* ========= PROMPT ROW LOCATOR ========= */
-function AIA_findPromptRow_(id) {
-  const sh = SpreadsheetApp.getActive().getSheetByName(AIA.SHEET_NAME);
-  if (!sh) return 0;
-  const last = sh.getLastRow();
-  if (last < 2) return 0;
-  const colA = sh
-    .getRange(2, 1, last - 1, 1)
-    .getDisplayValues()
-    .map(function (r) {
-      return String(r[0] || "").trim().toLowerCase();
-    });
-  const target = String(id || "").trim().toLowerCase();
-  const idx = colA.findIndex(function (v) {
-    return v === target;
-  });
-  return idx >= 0 ? 2 + idx : 0;
-}
-
-/* ========= Candidate sheet readers ========= */
-function AIA_getCandidateRows_() {
-  const sh = SpreadsheetApp.getActive().getSheetByName(AIA.CANDIDATE_SHEET);
-  if (!sh) throw new Error('Sheet "' + AIA.CANDIDATE_SHEET + '" not found.');
-  const lastRow = sh.getLastRow();
-  if (lastRow < 2) return [];
-  const vals = sh.getRange(2, 1, lastRow - 1, 3).getDisplayValues();
-  const out = [];
-  for (let i = 0; i < vals.length; i++) {
-    const row = vals[i].map(function (s) {
-      return String(s || "").trim();
-    });
-    const no = row[0];
-    const url = row[1];
-    const source = row[2];
-    if (!url) continue;
-    out.push({ no: no || String(i + 1), url: url, source: source || "" });
-  }
-  return out;
-}
-
-/* ========= OpenAI call (Raw_Data, Add_MMCrawl, Backfill) ========= */
-function AIA_callOpenAI_(userPrompt) {
-  const key =
-    PropertiesService.getScriptProperties().getProperty("OPENAI_API_KEY");
-  if (!key) {
-    throw new Error(
-      'Missing OpenAI API key. Use "AI Integration → Set OpenAI API Key".'
-    );
-  }
-
-  const resp = UrlFetchApp.fetch("https://api.openai.com/v1/chat/completions", {
-    method: "post",
-    contentType: "application/json",
-    muteHttpExceptions: true,
-    headers: { Authorization: "Bearer " + key },
-    payload: JSON.stringify({
-      model: AIA.MODEL,
-      temperature: AIA.TEMP,
-      max_tokens: AIA.MAX_TOKENS,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You extract company profiles using the provided SOURCE_EXCERPT (site-first grounding) and HINTS parsed from the site. " +
-            'Identity header (Domain, Official Name, Street, City/State ZIP, Phone) must not contain "N/A"; prefer HINTS when available. ' +
-            "You may supplement Employees, Square footage (facility), and Estimated Revenues ONLY if clearly matched public sources refer to the SAME entity (same domain + city/state). " +
-            'When you use public data, annotate provenance in parentheses (e.g., "~80 (public: LinkedIn 2024)", "~$17.9M (public: ZoomInfo 2024)", "50,000 (public: BF 2024)"). ' +
-            "For Square footage (facility), Number of employees, and Estimated Revenues, always provide numeric/currency values and keep distinct datapoints separated by semicolons. " +
-            "The visible tokens before parentheses for these three fields must be numeric/currency only (with optional ~, +, or ranges). " +
-            'Use parentheses for sources and explanations (e.g., "(site)", "(public: LinkedIn 2024)", "(calc from employees)"). ' +
-            "Never average conflicting estimates into a single number; preserve distinct datapoints. " +
-            "For Equipment, aggressively extract and normalize any CNC/EDM/gun drill/laser welder/CMM/tryout press information; only output 'Equipment: null' if no machinery at all is described on the site. " +
-            "Never mix similarly named companies from other states/domains. Return plain text only in the exact Output Format. " +
-            'Never output bare numeric-only values for Square footage (facility), Number of employees, or Estimated Revenues; always include at least one parenthetical source or explanation (e.g., "(site)", "(public: ZoomInfo 2024)", "(estimate)").'
-        },
-        { role: "user", content: userPrompt },
-      ],
-    }),
-  });
-
-  const code = resp.getResponseCode();
-  const text = resp.getContentText();
-  if (code < 200 || code >= 300) {
-    throw new Error("HTTP " + code + ": " + text);
-  }
-  const data = JSON.parse(text);
-  const answer =
-    data &&
-    data.choices &&
-    data.choices[0] &&
-    data.choices[0].message &&
-    data.choices[0].message.content;
-  if (!answer) {
-    throw new Error("No content returned from OpenAI.");
-  }
-  return String(answer).trim();
-}
-
-/* ========= Prompt Preview (kept, disabled by default) ========= */
-function AIA_previewAndConfirm_(sheet, row, title, promptText) {
-  if (!AIA.DEBUG_SHOW_PROMPT) return true;
-  try {
-    const headerCell = sheet.getRange(1, AIA.PREVIEW_COL);
-    if (!String(headerCell.getValue() || "").trim()) {
-      headerCell.setValue("Prompt Preview");
-    }
-  } catch (_) {}
-  const preview = String(promptText || "");
-  const toWrite =
-    preview.length > AIA.PREVIEW_MAX_CHARS
-      ? preview.slice(0, AIA.PREVIEW_MAX_CHARS) + "\n...[truncated]"
-      : preview;
-  sheet.getRange(row, AIA.PREVIEW_COL).setValue(toWrite);
-  const ui = AIA_safeUi_();
-  if (!ui) return true;
-  const res = ui.alert(
-    "Preview: " + title,
-    "Full prompt written to column E (Prompt Preview). Proceed?",
-    ui.ButtonSet.OK_CANCEL
-  );
-  return res === ui.Button.OK;
-}
-
-/* ========= JSON helpers ========= */
-function AIA_extractJsonArray_(text) {
-  if (!text) return [];
-  let t = String(text).trim();
-  const fence =
-    t.match(/```json([\s\S]*?)```/i) || t.match(/```([\s\S]*?)```/);
-  if (fence) t = fence[1].trim();
-  let obj = null;
-  try {
-    obj = JSON.parse(t);
-  } catch (_) {
-    const m = t.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
-    if (m) {
-      try {
-        obj = JSON.parse(m[1]);
-      } catch (_) {}
-    }
-  }
-  if (!obj) return [];
-  if (Array.isArray(obj)) {
-    return obj.filter(function (v) {
-      return v && typeof v === "object";
-    });
-  }
-  if (typeof obj === "object") return [obj];
-  return [];
-}
-
-function AIA_extractJsonObject_(text) {
-  const arr = AIA_extractJsonArray_(text);
-  if (arr.length === 1) return arr[0];
-  if (arr.length > 1) return arr[0];
-  try {
-    return JSON.parse(String(text || ""));
-  } catch (_) {
-    return {};
-  }
-}
-
-function AIA_jsonString_(obj) {
-  try {
-    return JSON.stringify(obj, null, 2);
-  } catch (_) {
-    return "[]";
-  }
-}
-
-/* ========= Guess Name From URL (used by Raw_Data hints) ========= */
-function AIA_guessNameFromUrl_(url) {
-  try {
-    const host = new URL(
-      /^(https?:)?\/\//.test(url) ? url : "http://" + url
-    ).hostname.replace(/^www\./, "");
-    const base = host.split(".")[0];
-    return base
-      ? base
-          .replace(/[-_]/g, " ")
-          .replace(/\s+/g, " ")
-          .trim()
-          .replace(/\b\w/g, function (c) {
-            return c.toUpperCase();
-          })
-      : host;
-  } catch (_) {
-    const host = String(url || "")
-      .replace(/^https?:\/\//, "")
-      .replace(/^www\./, "")
-      .split("/")[0];
-    const base = host.split(".")[0];
-    return base
-      ? base
-          .replace(/[-_]/g, " ")
-          .replace(/\s+/g, " ")
-          .trim()
-          .replace(/\b\w/g, function (c) {
-            return c.toUpperCase();
-          })
-      : host;
-  }
-}
-
-/* ========= Append to MMCrawl ========= */
-function AIA_appendToMMCrawl_(items) {
-  if (!items || !items.length) return 0;
-  const sh = SpreadsheetApp.getActive().getSheetByName(AIA.MMCRAWL_SHEET);
-  if (!sh) throw new Error("Missing tab: " + AIA.MMCRAWL_SHEET);
-  const lastCol = sh.getLastColumn();
-  const headers = sh.getRange(1, 1, 1, lastCol).getValues()[0];
-  const matrix = items.map(function (it) {
-    return AIA_mapItemToRow_(it, headers);
-  });
-  const startRow = sh.getLastRow() + 1;
-  sh.getRange(startRow, 1, matrix.length, lastCol).setValues(matrix);
-  try {
-    if (typeof mmcrawlRemoveDuplicateUrls === "function") {
-      mmcrawlRemoveDuplicateUrls(false);
-    }
-  } catch (_) {}
-  return matrix.length;
-}
-
-function AIA_mapItemToRow_(item, headers) {
-  const row = new Array(headers.length).fill("");
-  const norm = function (v) {
-    return v == null ? "" : String(v).trim();
-  };
-
-  const j = {};
-  Object.keys(item || {}).forEach(function (k) {
-    j[k.toLowerCase()] = item[k];
-  });
-
-  function v() {
-    for (let i = 0; i < arguments.length; i++) {
-      const key = String(arguments[i]).toLowerCase();
-      if (key in j) {
-        const val = norm(j[key]);
-        if (val) return val;
-      }
-    }
-    return "";
-  }
-
-  function hIdx(name) {
-    const canon = String(name).toLowerCase();
-    return headers.findIndex(function (h) {
-      return String(h).toLowerCase() === canon;
-    });
-  }
-
-  function put(name, value) {
-    if (!value) return;
-    const i = hIdx(name);
-    if (i >= 0) row[i] = value;
-  }
-
-  const Hmap = typeof H === "object" && H ? H : {};
-  const CN = Hmap.company || "Company Name";
-  const TS = Hmap.status || "Target Status";
-  const WEB = Hmap.website || "Public Website Homepage URL";
-  const DOM = Hmap.domain || "Domain from URL";
-  const SRC = Hmap.source || "Source";
-  const STR = Hmap.street || "Street Address";
-  const CTY = Hmap.city || "City";
-  const STA = Hmap.state || "State";
-  const ZIP = Hmap.zip || "Zipcode";
-  const PHN = Hmap.phone || "Phone";
-  const IND = Hmap.industries || "Industries served";
-  const PRD = Hmap.products || "Products and services offered";
-
-  put(CN, v("Company Name", "company", "name", "company_name"));
-  put(TS, v("Target Status", "target status", "status"));
-  put(
-    "Status (proposed)",
-    v("Status (proposed)", "status (proposed)", "status_proposed")
-  );
-  put(WEB, v("Public Website Homepage URL", "website", "url", "homepage"));
-  put(DOM, v("Domain from URL", "domain", "host"));
-  put(SRC, v("Source", "source"));
-  put(STR, v("Street Address", "street address", "street", "address"));
-  put(CTY, v("City", "city", "town"));
-  put(STA, v("State", "state", "province", "region code"));
-  put(ZIP, v("Zipcode", "zipcode", "zip", "postal code", "postcode"));
-  put(PHN, v("Phone", "telephone", "phone number"));
-  put(IND, v("Industries served", "industries served", "industries"));
-  put(
-    PRD,
-    v(
-      "Products and services offered",
-      "products and services offered",
-      "products",
-      "services"
-    )
-  );
-
-  put(
-    "Square footage (facility)",
-    v("Square footage (facility)", "facility size", "square footage", "sqft")
-  );
-  put(
-    "Number of employees",
-    v("Number of employees", "# employees", "employees", "headcount")
-  );
-  put(
-    "Estimated Revenues",
-    v("Estimated Revenues", "estimated revenue", "revenue", "revenues")
-  );
-  put(
-    "Years of operation",
-    v("Years of operation", "years", "years in business")
-  );
-  put("Ownership", v("Ownership", "owner", "ownership / owner"));
-  put("Equipment", v("Equipment"));
-  put("CNC 3-axis", v("CNC 3-axis", "cnc 3 axis", "3-axis", "3 axis"));
-  put("CNC 5-axis", v("CNC 5-axis", "cnc 5 axis", "5-axis", "5 axis"));
-  put(
-    "Spares/ Repairs",
-    v("Spares/ Repairs", "spares/repairs", "repairs", "spares")
-  );
-  put("Family business", v("Family business", "family"));
-  put("2nd Address", v("2nd Address", "second address", "address 2"));
-  put("Region", v("Region"));
-  put("Medical", v("Medical"));
-  put(
-    "Notes (Approach/ Contacts/ Info)",
-    v(
-      "Notes (Approach/ Contacts/ Info)",
-      "notes",
-      "notes (approach/contacts/info)"
-    )
-  );
-
-  return row;
-}
-
-/* ========= Append Reject_Company results to "Rejected Companies" ========= */
 /*
 Expected JSON from Reject_Company:
 [
@@ -1578,7 +1074,7 @@ function AIA_notifyNoCandidates_(sheet, row) {
   );
 }
 
-/* ========= NEW: Candidate Source backfill helpers ========= */
+/* ========= NEW: Candidate Source backfill helpers (for Add_MMCrawl only) ========= */
 function AIA_buildCandidateSourceMap_() {
   const sh = SpreadsheetApp.getActive().getSheetByName(AIA.CANDIDATE_SHEET);
   const map = {};
@@ -1622,276 +1118,29 @@ function AIA_lookupSourceByUrl_(candMap, url) {
   return (candMap[key] && candMap[key].source) || "";
 }
 
-/*************************************************
- * Backfill implementation (moved into AI_Agent)
- * Uses:
- *  - Backfill tab (Column_ID, Prompt, Result/logs)
- *  - MMCrawl tab (target dataset)
- *  - AIA_callOpenAI_ for OpenAI calls
- **************************************************/
-
-/* Build Backfill rows cache */
-function Backfill_readRows_() {
-  const ss = SpreadsheetApp.getActive();
-  const sh = ss.getSheetByName(AIA.BACKFILL_SHEET);
-  if (!sh) return [];
-  const last = sh.getLastRow();
-  if (last < 2) return [];
-  const vals = sh.getRange(2, 1, last - 1, 3).getValues();
+/* ========= Candidate sheet readers ========= */
+function AIA_getCandidateRows_() {
+  const sh = SpreadsheetApp.getActive().getSheetByName(AIA.CANDIDATE_SHEET);
+  if (!sh) throw new Error('Sheet "' + AIA.CANDIDATE_SHEET + '" not found.');
+  const lastRow = sh.getLastRow();
+  if (lastRow < 2) return [];
+  const vals = sh.getRange(2, 1, lastRow - 1, 3).getDisplayValues();
   const out = [];
   for (let i = 0; i < vals.length; i++) {
-    const id = String(vals[i][0] || "").trim();
-    const prompt = String(vals[i][1] || "").trim();
-    if (!id) continue;
-    out.push({ id: id, prompt: prompt, row: 2 + i });
+    const row = vals[i].map(function (s) {
+      return String(s || "").trim();
+    });
+    const no = row[0];
+    const url = row[1];
+    const source = row[2];
+    if (!url) continue;
+    out.push({ no: no || String(i + 1), url: url, source: source || "" });
   }
   return out;
 }
 
-function Backfill_noop_() { }
-
-function Backfill_refreshFromMain_() {
-  const ui = AIA_safeUi_();
-  if (!ui) return;
-  ui.alert(
-    "Refresh Backfill Menu",
-    "Backfill submenu is rebuilt automatically when you reload the spreadsheet (which reruns onOpen).",
-    ui.ButtonSet.OK
-  );
-}
-
-/* ===== Core runner (by Backfill row index) ===== */
-function Backfill_runByIndex_(idx1) {
-  const ui = AIA_safeUi_() || SpreadsheetApp.getUi();
-  const ss = SpreadsheetApp.getActive();
-  const back = ss.getSheetByName(AIA.BACKFILL_SHEET);
-  const data = Backfill_readRows_();
-  if (idx1 < 1 || idx1 > data.length) {
-    if (ui) ui.alert("Invalid Backfill menu index.");
-    return;
-  }
-
-  const rowInfo = data[idx1 - 1];
-  const columnId = rowInfo.id;
-  const prompt = rowInfo.prompt;
-  const backfillRow = rowInfo.row;
-
-  const mm = ss.getSheetByName(AIA.MMCRAWL_SHEET);
-  if (!mm) {
-    if (ui) ui.alert('Tab "' + AIA.MMCRAWL_SHEET + '" not found.');
-    return;
-  }
-
-  const lastRow = mm.getLastRow();
-  const lastCol = mm.getLastColumn();
-  if (lastRow <= 1) {
-    if (ui) ui.alert("MMCrawl has no data rows.");
-    return;
-  }
-
-  const headers = mm.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
-  const targetColIdx =
-    typeof getHeaderIndexSmart_ === "function"
-      ? getHeaderIndexSmart_(headers, columnId)
-      : headers.findIndex(function (h) {
-          return String(h).toLowerCase() === String(columnId).toLowerCase();
-        });
-  if (targetColIdx < 0) {
-    if (ui) ui.alert('Header not found in MMCrawl: "' + columnId + '"');
-    return;
-  }
-
-  const idxUrl = Backfill_headerIndexAny_(headers, [
-    "Public Website Homepage URL",
-    "Website",
-    "URL",
-    "Homepage",
-    "Company Website URL",
-  ]);
-  const idxDom = Backfill_headerIndexAny_(headers, [
-    "Domain from URL",
-    "Domain",
-  ]);
-  const idxName = Backfill_headerIndexAny_(headers, [
-    "Company Name",
-    "Name",
-  ]);
-
-  const values = mm.getRange(2, 1, lastRow - 1, lastCol).getValues();
-
-  Backfill_writeCell_(
-    back,
-    backfillRow,
-    3,
-    'Backfilling "' +
-      columnId +
-      '" — ' +
-      new Date().toLocaleString() +
-      "\n"
-  );
-
-  let countUpdated = 0;
-  let countSkipped = 0;
-  let countErrors = 0;
-  const updatedUrls = [];
-
-  if (ui) {
-    ss.toast('Backfilling "' + columnId + '"…', "Backfill", 5);
-  }
-
-  for (let r = 0; r < values.length; r++) {
-    const absRow = 2 + r;
-    const rowObj = {};
-    headers.forEach(function (h, c) {
-      rowObj[String(h)] = values[r][c];
-    });
-
-    const urlForRow =
-      (idxUrl >= 0 ? values[r][idxUrl] || "" : "") ||
-      (idxDom >= 0 ? values[r][idxDom] || "" : "");
-    const nameForRow = idxName >= 0 ? values[r][idxName] || "" : "";
-
-    const userPrompt =
-      String(prompt || "") +
-      "\n\n### Input Row (MMCrawl JSON)\n" +
-      JSON.stringify(rowObj, null, 2) +
-      "\n\n### Output\n" +
-      'Return **one JSON object only** with exactly one key — "' +
-      columnId +
-      '".\n' +
-      '- If you cannot confidently determine a value, return {"' +
-      columnId +
-      '": ""}.\n' +
-      '- For flags like "CNC 3-axis", "CNC 5-axis", "Spares/ Repairs", "Family business", "Medical": return "Yes" or "".\n' +
-      '- For "Equipment": return a single-line normalized equipment string per rules, or the literal string "null" if none.\n' +
-      "- No prose, no markdown, no code-fences.";
-
-    try {
-      const ans =
-        typeof AIA_callOpenAI_ === "function"
-          ? AIA_callOpenAI_(userPrompt)
-          : Backfill_callOpenAI_Fallback_(userPrompt);
-
-      const obj = Backfill_parseOneJsonObject_(ans);
-      let newVal =
-        obj && Object.prototype.hasOwnProperty.call(obj, columnId)
-          ? obj[columnId]
-          : "";
-
-      if (
-        [
-          "CNC 3-axis",
-          "CNC 5-axis",
-          "Spares/ Repairs",
-          "Family business",
-          "Medical",
-        ].includes(columnId)
-      ) {
-        newVal = String(newVal || "").trim();
-        newVal = /^yes$/i.test(newVal) ? "Yes" : "";
-      }
-
-      const curVal = String(values[r][targetColIdx] || "");
-      const newStr = newVal == null ? "" : String(newVal);
-      if (newStr && newStr !== curVal) {
-        mm.getRange(absRow, targetColIdx + 1).setValue(newStr);
-        countUpdated++;
-        updatedUrls.push(
-          (nameForRow ? nameForRow + " — " : "") + (urlForRow || "(no URL)")
-        );
-        Backfill_appendLog_(
-          back,
-          backfillRow,
-          'Row ' + absRow + ': OK — updated to "' + Backfill_preview_(newStr) + '"'
-        );
-      } else {
-        countSkipped++;
-        Backfill_appendLog_(
-          back,
-          backfillRow,
-          "Row " +
-            absRow +
-            ": Skipped — no change or empty result"
-        );
-      }
-    } catch (err) {
-      countErrors++;
-      Backfill_appendLog_(
-        back,
-        backfillRow,
-        "Row " + absRow + ": ERROR — " + String(err)
-      );
-    }
-    Utilities.sleep(180);
-  }
-
-  const summary =
-    "\n— Run complete: \"" +
-    columnId +
-    '" — ' +
-    new Date().toLocaleString() +
-    "\nUpdated: " +
-    countUpdated +
-    "  |  Skipped: " +
-    countSkipped +
-    "  |  Errors: " +
-    countErrors +
-    (updatedUrls.length
-      ? "\nUpdated URLs (" +
-        updatedUrls.length +
-        "):\n- " +
-        updatedUrls.join("\n- ")
-      : "\nNo rows updated.");
-
-  Backfill_appendLog_(back, backfillRow, summary);
-
-  if (ui) {
-    ss.toast(
-      'Backfill "' + columnId + '" finished — ' + countUpdated + " updated",
-      "Backfill",
-      6
-    );
-    ui.alert(
-      "Backfill complete",
-      "Column: " +
-        columnId +
-        "\nUpdated: " +
-        countUpdated +
-        "\nSkipped: " +
-        countSkipped +
-        "\nErrors: " +
-        countErrors +
-        (updatedUrls.length
-          ? "\n\nUpdated URLs (first " +
-            Math.min(updatedUrls.length, 25) +
-            "):\n- " +
-            updatedUrls.slice(0, 25).join("\n- ")
-          : ""),
-      ui.ButtonSet.OK
-    );
-  }
-}
-
-/* ===== Backfill helpers ===== */
-function Backfill_parseOneJsonObject_(text) {
-  if (!text) return {};
-  let t = String(text).trim();
-  const fence =
-    t.match(/```json([\s\S]*?)```/i) || t.match(/```([\s\S]*?)```/);
-  if (fence) t = fence[1].trim();
-  try {
-    return JSON.parse(t);
-  } catch (_) {}
-  const m = t.match(/\{[\s\S]*\}/);
-  if (m) {
-    try {
-      return JSON.parse(m[0]);
-    } catch (_) {}
-  }
-  return {};
-}
-
-function Backfill_callOpenAI_Fallback_(userPrompt) {
+/* ========= OpenAI call (Raw_Data, Add_MMCrawl) ========= */
+function AIA_callOpenAI_(userPrompt) {
   const key =
     PropertiesService.getScriptProperties().getProperty("OPENAI_API_KEY");
   if (!key) {
@@ -1899,107 +1148,285 @@ function Backfill_callOpenAI_Fallback_(userPrompt) {
       'Missing OpenAI API key. Use "AI Integration → Set OpenAI API Key".'
     );
   }
-  const payload = {
-    model: AIA.MODEL,
-    temperature: 0.0,
-    max_tokens: 1200,
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are a precise data analyst. Read a single row of MMCrawl JSON and return one JSON object with exactly one key (the requested column). No prose, no markdown.",
-      },
-      { role: "user", content: userPrompt },
-    ],
-  };
+
   const resp = UrlFetchApp.fetch("https://api.openai.com/v1/chat/completions", {
     method: "post",
     contentType: "application/json",
     muteHttpExceptions: true,
     headers: { Authorization: "Bearer " + key },
-    payload: JSON.stringify(payload),
+    payload: JSON.stringify({
+      model: AIA.MODEL,
+      temperature: AIA.TEMP,
+      max_tokens: AIA.MAX_TOKENS,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You extract company profiles using the provided SOURCE_EXCERPT (site-first grounding) and HINTS parsed from the site. " +
+            'Identity header (Domain, Official Name, Street, City/State ZIP, Phone) must not contain "N/A"; prefer HINTS when available. ' +
+            "You may supplement Employees, Square footage (facility), and Estimated Revenues ONLY if clearly matched public sources refer to the SAME entity (same domain + city/state). " +
+            'When you use public data, annotate provenance in parentheses (e.g., "~80 (public: LinkedIn 2024)", "~$17.9M (public: ZoomInfo 2024)", "50,000 (public: BF 2024)"). ' +
+            "For Square footage (facility), Number of employees, and Estimated Revenues, always provide numeric/currency values and keep distinct datapoints separated by semicolons. " +
+            "The visible tokens before parentheses for these three fields must be numeric/currency only (with optional ~, +, or ranges). " +
+            'Use parentheses for sources and explanations (e.g., "(site)", "(public: LinkedIn 2024)", "(calc from employees)"). ' +
+            "Never average conflicting estimates into a single number; preserve distinct datapoints. " +
+            "For Equipment, aggressively extract and normalize any CNC/EDM/gun drill/laser welder/CMM/tryout press information; only output 'Equipment: null' if no machinery at all is described on the site. " +
+            "Never mix similarly named companies from other states/domains. Return plain text only in the exact Output Format. " +
+            'Never output bare numeric-only values for Square footage (facility), Number of employees, or Estimated Revenues; always include at least one parenthetical source or explanation (e.g., "(site)", "(public: ZoomInfo 2024)", "(estimate)").'
+        },
+        { role: "user", content: userPrompt },
+      ],
+    }),
   });
+
   const code = resp.getResponseCode();
   const text = resp.getContentText();
   if (code < 200 || code >= 300) {
     throw new Error("HTTP " + code + ": " + text);
   }
   const data = JSON.parse(text);
-  const out =
+  const answer =
     data &&
     data.choices &&
     data.choices[0] &&
     data.choices[0].message &&
     data.choices[0].message.content;
-  if (!out) {
-    throw new Error("No content from OpenAI.");
+  if (!answer) {
+    throw new Error("No content returned from OpenAI.");
   }
-  return String(out).trim();
+  return String(answer).trim();
 }
 
-/* Write full value to Backfill!C (overwrite) */
-function Backfill_writeCell_(backSheet, row, col, text) {
-  if (!backSheet) return;
-  backSheet.getRange(row, col).setValue(String(text || ""));
-}
-
-/* Append one line to Backfill!C with newline */
-function Backfill_appendLog_(backSheet, row, line) {
-  if (!backSheet) return;
-  const cell = backSheet.getRange(row, 3);
-  const cur = String(cell.getValue() || "");
-  const next = cur ? cur + "\n" + line : line;
-  cell.setValue(next);
-}
-
-/* Find first matching header by any of the candidate names (case-insensitive) */
-function Backfill_headerIndexAny_(headers, names) {
-  const lc = headers.map(function (h) {
-    return String(h).toLowerCase();
+/* ========= Prompt row locator ========= */
+function AIA_findPromptRow_(id) {
+  const sh = SpreadsheetApp.getActive().getSheetByName(AIA.SHEET_NAME);
+  if (!sh) return 0;
+  const last = sh.getLastRow();
+  if (last < 2) return 0;
+  const colA = sh
+    .getRange(2, 1, last - 1, 1)
+    .getDisplayValues()
+    .map(function (r) {
+      return String(r[0] || "").trim().toLowerCase();
+    });
+  const target = String(id || "").trim().toLowerCase();
+  const idx = colA.findIndex(function (v) {
+    return v === target;
   });
-  for (let i = 0; i < names.length; i++) {
-    const j = lc.indexOf(String(names[i]).toLowerCase());
-    if (j >= 0) return j;
-  }
-  return -1;
+  return idx >= 0 ? 2 + idx : 0;
 }
 
-/* Truncate long values for log */
-function Backfill_preview_(s, n) {
-  n = n || 80;
-  s = String(s || "");
-  return s.length <= n ? s : s.slice(0, n - 1) + "…";
-}
-
-/* Quick sanity check */
-function Backfill_testOpenAI_() {
-  const ui = AIA_safeUi_() || SpreadsheetApp.getUi();
+/* ========= JSON helpers ========= */
+function AIA_extractJsonArray_(text) {
+  if (!text) return [];
+  let t = String(text).trim();
+  const fence =
+    t.match(/```json([\s\S]*?)```/i) || t.match(/```([\s\S]*?)```/);
+  if (fence) t = fence[1].trim();
+  let obj = null;
   try {
-    const s = Backfill_callOpenAI_Fallback_('Return {"ok": true}');
-    ui.alert("OpenAI OK", s, ui.ButtonSet.OK);
-  } catch (e) {
-    ui.alert("OpenAI error", String(e), ui.ButtonSet.OK);
+    obj = JSON.parse(t);
+  } catch (_) {
+    const m = t.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+    if (m) {
+      try {
+        obj = JSON.parse(m[1]);
+      } catch (_) {}
+    }
+  }
+  if (!obj) return [];
+  if (Array.isArray(obj)) {
+    return obj.filter(function (v) {
+      return v && typeof v === "object";
+    });
+  }
+  if (typeof obj === "object") return [obj];
+  return [];
+}
+
+function AIA_extractJsonObject_(text) {
+  const arr = AIA_extractJsonArray_(text);
+  if (arr.length === 1) return arr[0];
+  if (arr.length > 1) return arr[0];
+  try {
+    return JSON.parse(String(text || ""));
+  } catch (_) {
+    return {};
   }
 }
 
-/* ===== Static wrappers (support first 20 Backfill rows) ===== */
-function Backfill_run_1() { Backfill_runByIndex_(1); }
-function Backfill_run_2() { Backfill_runByIndex_(2); }
-function Backfill_run_3() { Backfill_runByIndex_(3); }
-function Backfill_run_4() { Backfill_runByIndex_(4); }
-function Backfill_run_5() { Backfill_runByIndex_(5); }
-function Backfill_run_6() { Backfill_runByIndex_(6); }
-function Backfill_run_7() { Backfill_runByIndex_(7); }
-function Backfill_run_8() { Backfill_runByIndex_(8); }
-function Backfill_run_9() { Backfill_runByIndex_(9); }
-function Backfill_run_10() { Backfill_runByIndex_(10); }
-function Backfill_run_11() { Backfill_runByIndex_(11); }
-function Backfill_run_12() { Backfill_runByIndex_(12); }
-function Backfill_run_13() { Backfill_runByIndex_(13); }
-function Backfill_run_14() { Backfill_runByIndex_(14); }
-function Backfill_run_15() { Backfill_runByIndex_(15); }
-function Backfill_run_16() { Backfill_runByIndex_(16); }
-function Backfill_run_17() { Backfill_runByIndex_(17); }
-function Backfill_run_18() { Backfill_runByIndex_(18); }
-function Backfill_run_19() { Backfill_runByIndex_(19); }
-function Backfill_run_20() { Backfill_runByIndex_(20); }
+function AIA_jsonString_(obj) {
+  try {
+    return JSON.stringify(obj, null, 2);
+  } catch (_) {
+    return "[]";
+  }
+}
+
+/* ========= Guess Name From URL (used by Raw_Data hints) ========= */
+function AIA_guessNameFromUrl_(url) {
+  try {
+    const host = new URL(
+      /^(https?:)?\/\//.test(url) ? url : "http://" + url
+    ).hostname.replace(/^www\./, "");
+    const base = host.split(".")[0];
+    return base
+      ? base
+          .replace(/[-_]/g, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .replace(/\b\w/g, function (c) {
+            return c.toUpperCase();
+          })
+      : host;
+  } catch (_) {
+    const host = String(url || "")
+      .replace(/^https?:\/\//, "")
+      .replace(/^www\./, "")
+      .split("/")[0];
+    const base = host.split(".")[0];
+    return base
+      ? base
+          .replace(/[-_]/g, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .replace(/\b\w/g, function (c) {
+            return c.toUpperCase();
+          })
+      : host;
+  }
+}
+
+/* ========= Append to MMCrawl ========= */
+function AIA_appendToMMCrawl_(items) {
+  if (!items || !items.length) return 0;
+  const sh = SpreadsheetApp.getActive().getSheetByName(AIA.MMCRAWL_SHEET);
+  if (!sh) throw new Error("Missing tab: " + AIA.MMCRAWL_SHEET);
+  const lastCol = sh.getLastColumn();
+  const headers = sh.getRange(1, 1, 1, lastCol).getValues()[0];
+  const matrix = items.map(function (it) {
+    return AIA_mapItemToRow_(it, headers);
+  });
+  const startRow = sh.getLastRow() + 1;
+  sh.getRange(startRow, 1, matrix.length, lastCol).setValues(matrix);
+  try {
+    if (typeof mmcrawlRemoveDuplicateUrls === "function") {
+      mmcrawlRemoveDuplicateUrls(false);
+    }
+  } catch (_) {}
+  return matrix.length;
+}
+
+function AIA_mapItemToRow_(item, headers) {
+  const row = new Array(headers.length).fill("");
+  const norm = function (v) {
+    return v == null ? "" : String(v).trim();
+  };
+
+  const j = {};
+  Object.keys(item || {}).forEach(function (k) {
+    j[k.toLowerCase()] = item[k];
+  });
+
+  function v() {
+    for (let i = 0; i < arguments.length; i++) {
+      const key = String(arguments[i]).toLowerCase();
+      if (key in j) {
+        const val = norm(j[key]);
+        if (val) return val;
+      }
+    }
+    return "";
+  }
+
+  function hIdx(name) {
+    const canon = String(name).toLowerCase();
+    return headers.findIndex(function (h) {
+      return String(h).toLowerCase() === canon;
+    });
+  }
+
+  function put(name, value) {
+    if (!value) return;
+    const i = hIdx(name);
+    if (i >= 0) row[i] = value;
+  }
+
+  const Hmap = typeof H === "object" && H ? H : {};
+  const CN = Hmap.company || "Company Name";
+  const TS = Hmap.status || "Target Status";
+  const WEB = Hmap.website || "Public Website Homepage URL";
+  const DOM = Hmap.domain || "Domain from URL";
+  const SRC = Hmap.source || "Source";
+  const STR = Hmap.street || "Street Address";
+  const CTY = Hmap.city || "City";
+  const STA = Hmap.state || "State";
+  const ZIP = Hmap.zip || "Zipcode";
+  const PHN = Hmap.phone || "Phone";
+  const IND = Hmap.industries || "Industries served";
+  const PRD = Hmap.products || "Products and services offered";
+
+  put(CN, v("Company Name", "company", "name", "company_name"));
+  put(TS, v("Target Status", "target status", "status"));
+  put(
+    "Status (proposed)",
+    v("Status (proposed)", "status (proposed)", "status_proposed")
+  );
+  put(WEB, v("Public Website Homepage URL", "website", "url", "homepage"));
+  put(DOM, v("Domain from URL", "domain", "host"));
+  put(SRC, v("Source", "source"));
+  put(STR, v("Street Address", "street address", "street", "address"));
+  put(CTY, v("City", "city", "town"));
+  put(STA, v("State", "state", "province", "region code"));
+  put(ZIP, v("Zipcode", "zipcode", "zip", "postal code", "postcode"));
+  put(PHN, v("Phone", "telephone", "phone number"));
+  put(IND, v("Industries served", "industries served", "industries"));
+  put(
+    PRD,
+    v(
+      "Products and services offered",
+      "products and services offered",
+      "products",
+      "services"
+    )
+  );
+
+  put(
+    "Square footage (facility)",
+    v("Square footage (facility)", "facility size", "square footage", "sqft")
+  );
+  put(
+    "Number of employees",
+    v("Number of employees", "# employees", "employees", "headcount")
+  );
+  put(
+    "Estimated Revenues",
+    v("Estimated Revenues", "estimated revenue", "revenue", "revenues")
+  );
+  put(
+    "Years of operation",
+    v("Years of operation", "years", "years in business")
+  );
+  put("Ownership", v("Ownership", "owner", "ownership / owner"));
+  put("Equipment", v("Equipment"));
+  put("CNC 3-axis", v("CNC 3-axis", "cnc 3 axis", "3-axis", "3 axis"));
+  put("CNC 5-axis", v("CNC 5-axis", "cnc 5 axis", "5-axis", "5 axis"));
+  put(
+    "Spares/ Repairs",
+    v("Spares/ Repairs", "spares/repairs", "repairs", "spares")
+  );
+  put("Family business", v("Family business", "family"));
+  put("2nd Address", v("2nd Address", "second address", "address 2"));
+  put("Region", v("Region"));
+  put("Medical", v("Medical"));
+  put(
+    "Notes (Approach/ Contacts/ Info)",
+    v(
+      "Notes (Approach/ Contacts/ Info)",
+      "notes",
+      "notes (approach/contacts/info)"
+    )
+  );
+
+  return row;
+}
