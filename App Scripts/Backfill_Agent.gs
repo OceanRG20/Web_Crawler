@@ -1,5 +1,5 @@
 /*************************************************
- * Backfill_Agent.gs — Column-specific Backfill via OpenAI
+ * Backfill_Agent.gs — Column Backfills + News merge
  *
  * CONFIG SHEET: "Backfill"
  *   Row 1 headers:
@@ -8,68 +8,350 @@
  *     C: Result         (optional log for last run)
  *
  * DATA SHEET: "MMCrawl"  (or AIA.MMCRAWL_SHEET if defined)
- *   Row 1: column headers
- *   Row 2+: company rows
  *
- * Script Properties required:
+ * NEWS SHEET: "News Raw"
+ *   Must contain:
+ *     - Company Website URL
+ *     - News Story URL
+ *     - Publication Date
+ *     - Specific Value
+ *
+ * Script Properties required (for GPT columns):
  *   OPENAI_API_KEY  – your OpenAI key
- *
- * Optional global config object:
- *   var AIA = {
- *     MMCRAWL_SHEET: "MMCrawl",
- *     BACKFILL_SHEET: "Backfill",
- *     MODEL: "gpt-4o",
- *   };
  **************************************************/
 
 /** ===== Menu hook (called from main onOpen) ===== */
 function onOpen_Backfill(ui) {
   ui = ui || SpreadsheetApp.getUi();
 
-  const menu = ui.createMenu("Backfill")
-    // one submenu item per backfill column
+  // --- Columns Backfill (Manual) submenu ---
+  const manualSubMenu = ui.createMenu("▶ Columns Backfill (Manual)")
     .addItem("Number of employees", "BF_runBackfill_NumberOfEmployees")
-    .addItem("Estimated Revenues", "BF_runBackfill_EstimatedRevenues"); // NEW
+    .addItem("Estimated Revenues", "BF_runBackfill_EstimatedRevenues")
+    .addItem("Square footage (facility)", "BF_runBackfill_SquareFootage")
+    .addItem("Years of operation", "BF_runBackfill_YearsOfOperation")
+    .addSeparator()
+    .addItem("Equipment + CNC 3 & 5-axis", "BF_runBackfill_EquipmentAndCNC")
+    .addItem("Ownership", "BF_runBackfill_Ownership")
+    .addItem("Spares/ Repairs", "BF_runBackfill_SparesRepairs")
+    .addItem("Family business", "BF_runBackfill_FamilyBusiness")
+    .addItem("2nd Address", "BF_runBackfill_SecondAddress")
+    .addItem("Region", "BF_runBackfill_Region")
+    .addItem("Medical", "BF_runBackfill_Medical");
 
-  menu.addToUi();
+  // --- Backfill main menu ---
+  ui.createMenu("Backfill")
+    .addSubMenu(manualSubMenu)
+    .addSeparator()
+    .addItem("▶ Backfill from News", "BF_runBackfill_FromNews")
+    .addToUi();
+
 }
 
+
 /*************************************************
- * 1) PUBLIC ENTRY FUNCTIONS (one per column)
+ * 1) PUBLIC ENTRY FUNCTIONS (Manual GPT backfills)
  **************************************************/
 
-/**
- * Backfill for the "Number of employees" column.
- * Uses the GPT prompt in Backfill sheet where Column_ID = "Number of employees".
- */
 function BF_runBackfill_NumberOfEmployees() {
   BF_runBackfillForMenu_("Number of employees");
 }
 
-/**
- * Backfill for the "Estimated Revenues" column.
- * Uses the GPT prompt in Backfill sheet where Column_ID = "Estimated Revenues".
- */
 function BF_runBackfill_EstimatedRevenues() {
   BF_runBackfillForMenu_("Estimated Revenues");
 }
 
+function BF_runBackfill_SquareFootage() {
+  BF_runBackfillForMenu_("Square footage (facility)");
+}
+
+function BF_runBackfill_YearsOfOperation() {
+  BF_runBackfillForMenu_("Years of operation");
+}
+
+// combined Equipment + CNC 3/5 axis
+function BF_runBackfill_EquipmentAndCNC() {
+  const ss = SpreadsheetApp.getActive();
+  const ui = SpreadsheetApp.getUi();
+
+  const rangeInfo = BF_promptForRowRange_(ui);
+  if (!rangeInfo) return;
+
+  const startRow = rangeInfo.startRow;
+  const endRow = rangeInfo.endRow;
+
+  const columns = ["Equipment", "CNC 3-axis", "CNC 5-axis"];
+  const backfillSheetName = (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
+  const backfillSheet = ss.getSheetByName(backfillSheetName);
+
+  const results = [];
+
+  columns.forEach(function (colId) {
+    try {
+      const res = BF_runBackfillForColumnId_(colId, startRow, endRow);
+      results.push(colId + ": " + res.rowsProcessed + " rows");
+
+      if (backfillSheet) {
+        const cfgRow = BF_findBackfillConfigRow_(backfillSheet, colId);
+        if (cfgRow > 0) {
+          const logMsg =
+            'Last run for "' + colId + '": rows ' + startRow + "-" + endRow +
+            " (" + res.rowsProcessed + " rows) at " + new Date().toLocaleString();
+          backfillSheet.getRange(cfgRow, 3).setValue(logMsg);
+        }
+      }
+    } catch (e) {
+      Logger.log("Backfill error for " + colId + ": " + e);
+      results.push(colId + ": ERROR - " + e);
+    }
+  });
+
+  ui.alert(
+    "Backfill complete for Equipment + CNC 3 & 5-axis\n" +
+    "MMCrawl rows: " + startRow + "-" + endRow + "\n\n" +
+    results.join("\n")
+  );
+}
+
+// These are still available if you ever want to call individually:
+function BF_runBackfill_Ownership() {
+  BF_runBackfillForMenu_("Ownership");
+}
+
+function BF_runBackfill_SparesRepairs() {
+  BF_runBackfillForMenu_("Spares/ Repairs");
+}
+
+function BF_runBackfill_FamilyBusiness() {
+  BF_runBackfillForMenu_("Family business");
+}
+
+function BF_runBackfill_SecondAddress() {
+  BF_runBackfillForMenu_("2nd Address");
+}
+
+function BF_runBackfill_Region() {
+  BF_runBackfillForMenu_("Region");
+}
+
+function BF_runBackfill_Medical() {
+  BF_runBackfillForMenu_("Medical");
+}
+
 /*************************************************
- * 2) MENU HELPER — ASK ROW RANGE, THEN RUN
+ * 2) Backfill from News (non-GPT)
  **************************************************/
 
-/**
- * Common handler for a menu click for a specific Column_ID.
- */
+function BF_runBackfill_FromNews() {
+  const ss = SpreadsheetApp.getActive();
+  const ui = SpreadsheetApp.getUi();
+
+  const mmSheetName = (typeof AIA !== "undefined" && AIA.MMCRAWL_SHEET) || "MMCrawl";
+  const newsSheetName = "News Raw";
+
+  const mmSheet = ss.getSheetByName(mmSheetName);
+  const newsSheet = ss.getSheetByName(newsSheetName);
+
+  if (!mmSheet) {
+    ui.alert('Data sheet "' + mmSheetName + '" not found.');
+    return;
+  }
+  if (!newsSheet) {
+    ui.alert('News sheet "' + newsSheetName + '" not found.');
+    return;
+  }
+
+  const rangeInfo = BF_promptForRowRange_(ui);
+  if (!rangeInfo) return;
+
+  let startRow = rangeInfo.startRow;
+  let endRow = rangeInfo.endRow;
+
+  const mmLastRow = mmSheet.getLastRow();
+  if (startRow > mmLastRow) {
+    ui.alert("Start row is beyond MMCrawl data.");
+    return;
+  }
+  if (endRow > mmLastRow) endRow = mmLastRow;
+
+  const mmLastCol = mmSheet.getLastColumn();
+  const mmHeaders = mmSheet.getRange(1, 1, 1, mmLastCol).getValues()[0];
+
+  const mmUrlCol = BF_findHeaderIndex_(mmHeaders, [
+    "Company Website URL",
+    "Public Website Homepage URL",
+    "Company Website",
+    "Website"
+  ]);
+  if (mmUrlCol === -1) {
+    ui.alert(
+      'No website column found in MMCrawl. ' +
+      'Expected header like "Company Website URL" or "Public Website Homepage URL".'
+    );
+    return;
+  }
+
+  // Read MMCrawl rows
+  const mmNumRows = mmLastRow - 1;
+  const mmData = mmSheet.getRange(2, 1, mmNumRows, mmLastCol).getValues();
+
+  const targetRowIndexMin = startRow - 2;
+  const targetRowIndexMax = endRow - 2;
+
+  // News Raw setup
+  const newsLastRow = newsSheet.getLastRow();
+  const newsLastCol = newsSheet.getLastColumn();
+  if (newsLastRow < 2) {
+    ui.alert("No data rows found in News Raw.");
+    return;
+  }
+
+  const newsHeaders = newsSheet.getRange(1, 1, 1, newsLastCol).getValues()[0];
+  const newsUrlCol = BF_findHeaderIndex_(newsHeaders, [
+    "Company Website URL",
+    "Public Website Homepage URL",
+    "Company Website",
+    "Website"
+  ]);
+  const newsSpecificCol = BF_findHeaderIndex_(newsHeaders, [
+    "Specific Value",
+    "Specific Values"
+  ]);
+  const newsPubDateCol = BF_findHeaderIndex_(newsHeaders, [
+    "Publication Date",
+    "Publication date",
+    "Pub Date",
+    "Pub date"
+  ]);
+  const newsStoryUrlCol = BF_findHeaderIndex_(newsHeaders, [
+    "News Story URL",
+    "News URL",
+    "Article URL"
+  ]);
+
+  if (newsUrlCol === -1) {
+    ui.alert('Column "Company Website URL" (or equivalent) not found in News Raw.');
+    return;
+  }
+  if (newsSpecificCol === -1) {
+    ui.alert('Column "Specific Value" not found in News Raw.');
+    return;
+  }
+
+  const newsNumRows = newsLastRow - 1;
+  const newsData = newsSheet.getRange(2, 1, newsNumRows, newsLastCol).getValues();
+
+  // Build map: normalized company URL -> [{ specVal, pubYear, storyUrl }]
+  const newsMap = {};
+
+  for (let i = 0; i < newsNumRows; i++) {
+    const row = newsData[i];
+    const url = (row[newsUrlCol] || "").toString().trim();
+    const specVal = (row[newsSpecificCol] || "").toString().trim();
+    if (!url || !specVal) continue;
+
+    let pubYear = "";
+    if (newsPubDateCol !== -1) {
+      const pubStr = (row[newsPubDateCol] || "").toString();
+      const ym = pubStr.match(/\b(19|20)\d{2}\b/);
+      if (ym) pubYear = ym[0];
+    }
+
+    const storyUrl = newsStoryUrlCol !== -1
+      ? (row[newsStoryUrlCol] || "").toString().trim()
+      : "";
+
+    const norm = BF_normalizeUrl_(url);
+    if (!norm) continue;
+
+    if (!newsMap[norm]) newsMap[norm] = [];
+    newsMap[norm].push({ specVal: specVal, pubYear: pubYear, storyUrl: storyUrl });
+  }
+
+  // Label synonyms: Specific Value label -> MMCrawl header
+  const LABEL_SYNONYM = {
+    "Family Ownership": "Family business",
+    "Family ownership": "Family business"
+  };
+
+  let appliedCount = 0;
+  const ssActive = SpreadsheetApp.getActive();
+
+  // Process MMCrawl rows in selected range
+  for (let idx = targetRowIndexMin; idx <= targetRowIndexMax; idx++) {
+    if (idx < 0 || idx >= mmNumRows) continue;
+
+    const sheetRowNumber = idx + 2;
+    const row = mmData[idx];
+
+    const url = (row[mmUrlCol] || "").toString().trim();
+    if (!url) continue;
+
+    const norm = BF_normalizeUrl_(url);
+    if (!norm) continue;
+
+    const newsEntries = newsMap[norm];
+    if (!newsEntries || newsEntries.length === 0) continue; // no news for this company
+
+    ssActive.toast(
+      'Backfill from News – MMCrawl row ' + sheetRowNumber + " of " + endRow,
+      "Backfill from News",
+      3
+    );
+
+    for (let s = 0; s < newsEntries.length; s++) {
+      const specEntry = newsEntries[s];
+      const specVal = specEntry.specVal;
+      const pubYear = specEntry.pubYear;
+      const storyUrl = specEntry.storyUrl;
+
+      // Specific Value format is like:  Label ; "Value"
+      const regex = /([^;]+?)\s*;\s*"([^"]+)"/g;
+      let match;
+      while ((match = regex.exec(specVal)) !== null) {
+        let label = match[1].trim();
+        const rawValue = match[2].trim();
+        if (!label || !rawValue) continue;
+
+        if (LABEL_SYNONYM[label]) {
+          label = LABEL_SYNONYM[label];
+        }
+
+        const colIndex = BF_findHeaderIndexExact_(mmHeaders, label);
+        if (colIndex === -1) continue; // no matching column
+
+        const cleanedValue = BF_simplifyNewsValue_(rawValue, pubYear);
+
+        const changed = BF_applyNewsValueToCell_(
+          mmSheet,
+          sheetRowNumber,
+          colIndex + 1,
+          cleanedValue,
+          storyUrl
+        );
+        if (changed) appliedCount++;
+      }
+    }
+  }
+
+  ssActive.toast("Backfill from News finished.", "Backfill from News", 3);
+  ui.alert(
+    "Backfill from News complete.\n" +
+    "MMCrawl rows processed: " + startRow + "-" + endRow + "\n" +
+    "Values applied to MMCrawl cells: " + appliedCount
+  );
+}
+
+/*************************************************
+ * 3) Menu helper — ask for row range + dispatch
+ **************************************************/
+
 function BF_runBackfillForMenu_(columnId) {
   const ss = SpreadsheetApp.getActive();
   const ui = SpreadsheetApp.getUi();
 
-  // Ask for MMCrawl row range (simple From-To prompt)
   const rangeInfo = BF_promptForRowRange_(ui);
-  if (!rangeInfo) {
-    return; // user cancelled or invalid
-  }
+  if (!rangeInfo) return;
 
   const startRow = rangeInfo.startRow;
   const endRow = rangeInfo.endRow;
@@ -77,7 +359,6 @@ function BF_runBackfillForMenu_(columnId) {
   try {
     const result = BF_runBackfillForColumnId_(columnId, startRow, endRow);
 
-    // Log to Backfill sheet (optional)
     const backfillSheetName = (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
     const backfillSheet = ss.getSheetByName(backfillSheetName);
     if (backfillSheet) {
@@ -86,30 +367,24 @@ function BF_runBackfillForMenu_(columnId) {
         const logMsg =
           "Last run for \"" + columnId + "\": rows " + startRow + "-" + endRow +
           " (" + result.rowsProcessed + " rows) at " + new Date().toLocaleString();
-        backfillSheet.getRange(cfgRow, 3).setValue(logMsg); // column C
+        backfillSheet.getRange(cfgRow, 3).setValue(logMsg);
       }
     }
 
-    ui.alert(
+    SpreadsheetApp.getUi().alert(
       "Backfill complete for \"" + columnId + "\".\n" +
       "MMCrawl rows: " + startRow + "-" + endRow + "\n" +
       "Rows processed: " + result.rowsProcessed
     );
   } catch (e) {
     Logger.log("Backfill error for " + columnId + ": " + e);
-    ui.alert("Backfill failed for \"" + columnId + "\":\n" + e);
+    SpreadsheetApp.getUi().alert("Backfill failed for \"" + columnId + "\":\n" + e);
   }
 }
 
 /**
- * Simple & clean row-range selector.
- *
- * Shows ONE prompt:
- *    "Enter MMCrawl row range (example: 2-50)"
- *
- * Returns:
- *   { startRow, endRow }
- * or null if cancelled/invalid.
+ * Prompt the user for a row range "From-To" and return {startRow, endRow}
+ * Data rows start at 2 (row 1 is header).
  */
 function BF_promptForRowRange_(ui) {
   const ss = SpreadsheetApp.getActive();
@@ -132,9 +407,7 @@ function BF_promptForRowRange_(ui) {
     ui.ButtonSet.OK_CANCEL
   );
 
-  if (resp.getSelectedButton() !== ui.Button.OK) {
-    return null; // cancelled
-  }
+  if (resp.getSelectedButton() !== ui.Button.OK) return null;
 
   const text = resp.getResponseText().trim();
   const match = text.match(/^(\d+)\s*-\s*(\d+)$/);
@@ -146,7 +419,6 @@ function BF_promptForRowRange_(ui) {
   let startRow = parseInt(match[1], 10);
   let endRow = parseInt(match[2], 10);
 
-  // Normalize
   if (endRow < startRow) {
     const tmp = startRow;
     startRow = endRow;
@@ -159,33 +431,21 @@ function BF_promptForRowRange_(ui) {
 }
 
 /*************************************************
- * 3) CORE BACKFILL LOGIC (REUSABLE FOR ANY COLUMN)
+ * 4) Core GPT backfill logic (all manual columns)
+ *    + "by hand" protection
  **************************************************/
 
-/**
- * Backfill a single MMCrawl column by Column_ID over a range of rows.
- * Uses the GPT_Prompt from Backfill sheet for that Column_ID.
- *
- * Shows toast progress: "Backfill 'col' – MMCrawl row X of Y".
- *
- * Returns { rowsProcessed: N }.
- */
 function BF_runBackfillForColumnId_(columnId, startRow, endRow) {
   const ss = SpreadsheetApp.getActive();
   const backfillSheetName = (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
   const mmSheetName = (typeof AIA !== "undefined" && AIA.MMCRAWL_SHEET) || "MMCrawl";
 
   const backfillSheet = ss.getSheetByName(backfillSheetName);
-  if (!backfillSheet) {
-    throw new Error('Config sheet "' + backfillSheetName + '" not found.');
-  }
+  if (!backfillSheet) throw new Error('Config sheet "' + backfillSheetName + '" not found.');
 
   const mmSheet = ss.getSheetByName(mmSheetName);
-  if (!mmSheet) {
-    throw new Error('Data sheet "' + mmSheetName + '" not found.');
-  }
+  if (!mmSheet) throw new Error('Data sheet "' + mmSheetName + '" not found.');
 
-  // Find config row and prompt template for this Column_ID
   const cfgRow = BF_findBackfillConfigRow_(backfillSheet, columnId);
   if (cfgRow < 2) {
     throw new Error('Column_ID "' + columnId + '" not found in Backfill sheet.');
@@ -195,27 +455,20 @@ function BF_runBackfillForColumnId_(columnId, startRow, endRow) {
     throw new Error('GPT_Prompt is blank in Backfill for Column_ID "' + columnId + '".');
   }
 
-  // Clamp row range within MMCrawl actual data
   const lastDataRow = mmSheet.getLastRow();
-  if (startRow > lastDataRow) {
-    return { rowsProcessed: 0 };
-  }
-  if (endRow > lastDataRow) {
-    endRow = lastDataRow;
-  }
-  if (endRow < startRow) {
-    return { rowsProcessed: 0 };
-  }
+  if (startRow > lastDataRow) return { rowsProcessed: 0 };
+  if (endRow > lastDataRow) endRow = lastDataRow;
+  if (endRow < startRow) return { rowsProcessed: 0 };
 
   const lastCol = mmSheet.getLastColumn();
   const headerRow = mmSheet.getRange(1, 1, 1, lastCol).getValues()[0];
 
-  // Find the target column index in MMCrawl by header text
+  // Find target column in MMCrawl
   let targetColIndex = -1;
   for (let c = 0; c < headerRow.length; c++) {
     const headerName = (headerRow[c] || "").toString().trim();
     if (headerName === columnId) {
-      targetColIndex = c + 1;
+      targetColIndex = c + 1; // 1-based
       break;
     }
   }
@@ -227,11 +480,8 @@ function BF_runBackfillForColumnId_(columnId, startRow, endRow) {
   }
 
   const numRows = endRow - startRow + 1;
-  if (numRows <= 0) {
-    return { rowsProcessed: 0 };
-  }
+  if (numRows <= 0) return { rowsProcessed: 0 };
 
-  // Read all rows in one batch
   const rowsValues = mmSheet.getRange(startRow, 1, numRows, lastCol).getValues();
   const resultValues = [];
 
@@ -239,17 +489,23 @@ function BF_runBackfillForColumnId_(columnId, startRow, endRow) {
     const sheetRowNumber = startRow + r;
     const rowData = rowsValues[r];
 
-    // Toast progress so you can see it working row-by-row
-    ss.toast(
+    const existing = rowData[targetColIndex - 1];
+    const existingStr = (existing === null || existing === undefined) ? "" : existing.toString();
+
+    // SPECIAL CASE: Years of operation — if already filled, keep and skip GPT
+    if (columnId === "Years of operation" && existingStr !== "") {
+      resultValues.push([existingStr]);
+      continue;
+    }
+
+    SpreadsheetApp.getActive().toast(
       'Backfill "' + columnId + '" – MMCrawl row ' + sheetRowNumber + " of " + endRow,
       "Backfill progress",
       3
     );
 
-    // Convert MMCrawl row into text: "Header: value"
     const rowText = BF_formatRowForPrompt_(headerRow, rowData, sheetRowNumber);
 
-    // Merge template + rowText
     let systemPrompt = promptTemplate;
     if (systemPrompt.indexOf("<<<ROW_DATA_HERE>>>") !== -1) {
       systemPrompt = systemPrompt.replace("<<<ROW_DATA_HERE>>>", rowText);
@@ -257,75 +513,59 @@ function BF_runBackfillForColumnId_(columnId, startRow, endRow) {
       systemPrompt += "\n\nMMCrawl row:\n" + rowText;
     }
 
-    // Call GPT for this row
-    const cellValue = BF_callOpenAI_Backfill_(systemPrompt, columnId);
+    // Call OpenAI to get new cell value
+    let cellValue = BF_callOpenAI_Backfill_(systemPrompt, columnId);
+
+    // IMPORTANT: protect any client "by hand" notes in existing cell
+    cellValue = BF_mergeByHand_(existingStr, cellValue);
 
     resultValues.push([cellValue]);
   }
 
-  // Write results into MMCrawl target column
+  // Write results back
   mmSheet.getRange(startRow, targetColIndex, numRows, 1).setValues(resultValues);
-
-  // Clear final toast quickly
-  ss.toast("Backfill \"" + columnId + "\" finished.", "Backfill progress", 3);
+  SpreadsheetApp.getActive().toast(
+    'Backfill "' + columnId + '" finished.',
+    "Backfill progress",
+    3
+  );
 
   return { rowsProcessed: numRows };
 }
 
 /**
- * Find the row index in Backfill sheet where Column_ID matches.
- * Returns row number (>=2) or -1 if not found.
+ * Find config row in Backfill sheet for a given Column_ID.
  */
 function BF_findBackfillConfigRow_(backfillSheet, columnId) {
   const lastRow = backfillSheet.getLastRow();
   if (lastRow < 2) return -1;
 
-  const values = backfillSheet.getRange(2, 1, lastRow - 1, 1).getValues(); // A2:A
+  const values = backfillSheet.getRange(2, 1, lastRow - 1, 1).getValues();
   for (let i = 0; i < values.length; i++) {
     const v = (values[i][0] || "").toString().trim();
-    if (v === columnId) {
-      return i + 2; // row index
-    }
+    if (v === columnId) return i + 2;
   }
   return -1;
 }
 
 /*************************************************
- * 4) PROMPT FORMATTING + OPENAI CALL
+ * 5) Prompt formatting + OpenAI call
  **************************************************/
 
-/**
- * Format one MMCrawl row as text for the prompt:
- *   Sheet row: 2
- *   Company Name: Promark Tool and Manufacturing
- *   State: ON
- *   ...
- */
 function BF_formatRowForPrompt_(headers, rowValues, rowNumber) {
   const lines = [];
-  if (rowNumber) {
-    lines.push("Sheet row: " + rowNumber);
-  }
+  if (rowNumber) lines.push("Sheet row: " + rowNumber);
 
   for (let i = 0; i < headers.length; i++) {
     const headerName = (headers[i] || "").toString().trim();
     if (!headerName) continue;
-
     const val = rowValues[i];
-    const valueStr = (val === "" || val === null) ? "" : val.toString();
+    const valueStr = (val === "" || val === null || val === undefined) ? "" : val.toString();
     lines.push(headerName + ": " + valueStr);
   }
-
   return lines.join("\n");
 }
 
-/**
- * Low-level OpenAI call for backfill.
- * - systemPrompt: full column-specific instructions + row data
- * - columnId: used only in the user message
- *
- * Returns: trimmed string for the cell.
- */
 function BF_callOpenAI_Backfill_(systemPrompt, columnId) {
   const apiKey = PropertiesService.getScriptProperties().getProperty("OPENAI_API_KEY");
   if (!apiKey) {
@@ -340,7 +580,7 @@ function BF_callOpenAI_Backfill_(systemPrompt, columnId) {
 
   const payload = {
     model: model,
-    temperature: 0.15, // small flexibility for ranges, still factual
+    temperature: 0.15,
     max_tokens: 80,
     messages: [
       { role: "system", content: systemPrompt },
@@ -382,4 +622,153 @@ function BF_callOpenAI_Backfill_(systemPrompt, columnId) {
     data.choices[0].message.content;
 
   return (answer || "").trim();
+}
+
+/*************************************************
+ * 6) Small utilities
+ **************************************************/
+
+function BF_findHeaderIndex_(headers, candidates) {
+  const lowerCandidates = candidates.map(function (c) { return c.toLowerCase(); });
+  for (let i = 0; i < headers.length; i++) {
+    const h = (headers[i] || "").toString().trim().toLowerCase();
+    if (!h) continue;
+    if (lowerCandidates.indexOf(h) !== -1) return i;
+  }
+  return -1;
+}
+
+function BF_findHeaderIndexExact_(headers, label) {
+  for (let i = 0; i < headers.length; i++) {
+    const h = (headers[i] || "").toString().trim();
+    if (h === label) return i;
+  }
+  return -1;
+}
+
+function BF_normalizeUrl_(url) {
+  if (!url) return "";
+  let s = url.toString().trim().toLowerCase();
+  s = s.replace(/^https?:\/\//, "");
+  s = s.replace(/\/+$/, "");
+  return s;
+}
+
+/**
+ * Simplify raw Specific Value into "Value (News: YEAR)" or "Value (News)".
+ */
+function BF_simplifyNewsValue_(rawValue, pubYear) {
+  let v = (rawValue || "").toString().trim();
+  let year = pubYear || "";
+
+  if (!year) {
+    const ym = v.match(/\b(19|20)\d{2}\b/);
+    if (ym) year = ym[0];
+  }
+
+  // Remove any existing "(News ...)" tags
+  v = v.replace(/\(News[^)]*\)/gi, "").trim();
+
+  // Remove trailing ", YEAR" if it exists
+  if (year) {
+    const reYearComma = new RegExp("[,\\s]*" + year + "\\s*$");
+    v = v.replace(reYearComma, "").trim();
+  }
+
+  // Clean trailing punctuation
+  v = v.replace(/[;,.\s]+$/, "").trim();
+
+  if (!v) v = (rawValue || "").toString().trim();
+
+  if (year) {
+    return v + " (News: " + year + ")";
+  } else {
+    return v + " (News)";
+  }
+}
+
+/**
+ * Apply one cleaned news value into a specific MMCrawl cell,
+ * and hyperlink the word "News" (inside this new segment) to storyUrl.
+ *
+ * Rules:
+ *  - If existing is blank or "refer to site": replace with cleanedValue.
+ *  - Else: append "; cleanedValue" unless already present.
+ * Returns true if text content changed.
+ */
+function BF_applyNewsValueToCell_(sheet, row, col, cleanedValue, storyUrl) {
+  const cell = sheet.getRange(row, col);
+  const currentRaw = (cell.getValue() || "").toString().trim();
+  const isReferToSite = /^refer to site$/i.test(currentRaw);
+  const isEmpty = !currentRaw || isReferToSite;
+
+  let newValue;
+  if (isEmpty) {
+    newValue = cleanedValue;
+  } else if (currentRaw.indexOf(cleanedValue) !== -1) {
+    newValue = currentRaw; // already there
+  } else {
+    newValue = currentRaw + " ; " + cleanedValue;
+  }
+
+  const textChanged = newValue !== currentRaw;
+
+  // If no story URL, just write plain text
+  if (!storyUrl) {
+    if (textChanged) cell.setValue(newValue);
+    return textChanged;
+  }
+
+  // Build rich text where only new segment's "News" word is hyperlinked
+  const builder = SpreadsheetApp.newRichTextValue().setText(newValue);
+
+  const segStart = newValue.length - cleanedValue.length;
+  const segEnd = newValue.length;
+
+  let searchPos = segStart;
+  while (true) {
+    const idx = newValue.indexOf("News", searchPos);
+    if (idx === -1 || idx >= segEnd) break;
+    builder.setLinkUrl(idx, idx + 4, storyUrl);
+    searchPos = idx + 4;
+  }
+
+  cell.setRichTextValue(builder.build());
+  return textChanged;
+}
+
+/**
+ * Preserve any cell content that contains the phrase "by hand".
+ */
+function BF_mergeByHand_(existingStr, newStr) {
+  const existing = (existingStr || "").toString();
+  let updated = (newStr || "").toString();
+
+  if (!existing) {
+    // Nothing to preserve
+    return updated;
+  }
+
+  const hasByHand = existing.toLowerCase().indexOf("by hand") !== -1;
+  if (!hasByHand) {
+    // Normal case: prefer new value, but if GPT returns empty, keep existing
+    return updated || existing;
+  }
+
+  // Existing value includes "by hand" — must NOT be removed
+  if (!updated) {
+    // GPT returned nothing → keep original
+    return existing;
+  }
+
+  if (updated.toLowerCase().indexOf("by hand") !== -1) {
+    // GPT already preserved the note
+    return updated;
+  }
+
+  // Combine original (with "by hand") plus new content
+  if (updated === existing) {
+    return updated;
+  }
+  return existing + " ; " + updated;
 }
