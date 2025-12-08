@@ -395,11 +395,6 @@ ADDITIONAL CNC DETECTION RULES:
 • If terms like "3 and 5 axis", "3–5 axis", "3 to 5 axis", or "3–5+ axis" appear, set BOTH CNC 3-axis and CNC 5-axis to "Yes".
 • If Equipment only includes general CNC phrases without axis info (e.g., "CNC", "CNC machining", "CNC vertical", "2-axis turning", "4-axis mill"), leave both CNC flags empty. These empty values will later be filled by FINAL FILL rules (“refer to site” or "NI").
 
-GLOBAL REFER TO SITE vs NI RULE:
-Use "refer to site" only when the website clearly contains the information, but it cannot be reliably extracted due to format issues (e.g., blurry image text, locked PDF, image-only table, conflicting data, unreadable formatting).
-Use "NI" only when the information does NOT appear anywhere on the website (e.g., no About section, no equipment page, no services page, no revenue/employee info).
-Never guess.
-
 RAW_DATA → ADD_MMCrawl FILL RULE:
 If Raw_Data provides "", null, or missing values:
 • If the information exists on the website but was not captured → "refer to site".
