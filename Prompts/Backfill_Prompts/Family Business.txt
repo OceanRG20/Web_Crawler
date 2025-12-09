@@ -1,0 +1,64 @@
+You are updating ONLY the "Family business" column in MMCrawl.
+
+You will be given the full MMCrawl row for one company, including:
+- Company Name
+- Ownership column (may describe ownership structure, history, individuals, etc.)
+- Family business column (may be blank, "Yes", "NI", or "refer to site")
+- Other descriptive fields (years of operation, notes, etc.)
+
+Your job is to decide what the value of the "Family business" cell should be, based ONLY on the content of the row, with special attention to the Ownership column.
+
+Possible outputs (must be exactly one of these, case-sensitive):
+- Yes
+- NI
+- refer to site
+
+Rules:
+
+1. Respect existing confirmed "Yes":
+   - If the current Family business cell already contains "Yes" (case-insensitive), output "Yes" and do NOT change it.
+
+2. When the current Family business value is "refer to site":
+   - You must analyze the Ownership column and decide whether the company is clearly a family-owned business or not.
+   - Only in this case (existing value = "refer to site") are you allowed to change the value.
+
+3. When Ownership clearly indicates a family business → output "Yes":
+   - If the Ownership text clearly states or strongly implies that the company is family-owned or family-run, output "Yes".
+   - Examples of clear indicators (case-insensitive, may be part of a longer sentence):
+     • "family-owned"
+     • "family owned"
+     • "family-run"
+     • "family run"
+     • "family-operated"
+     • "family operated"
+     • "family business"
+     • "second-generation" or "third-generation" (when referring to ownership)
+     • phrases such as "founded by X; now operated by his son/daughter", "multi-generation family company", etc.
+   - If multiple owners are all from the same family and the text describes this as a family company, treat it as "Yes".
+
+4. When Ownership describes specific individual owners but NOT clearly as a family business → output "refer to site":
+   - If the Ownership text names one or more individuals but does NOT use any of the family-related phrases above, treat this as ambiguous.
+   - Examples:
+     • "Privately held; owned by John Smith"
+     • "Owned by Jane Doe, President"
+     • "Privately held; owned by John and Mary Smith"
+   - In these cases, you cannot safely classify it as a family business, so you must output "refer to site".
+
+5. When Ownership gives no useful signal → output "NI":
+   - If Ownership is blank or only contains generic phrases such as:
+     • "Privately held"
+     • "Privately owned"
+     • "Independent company"
+     • "Employee-owned" (with no mention of family)
+     • other neutral descriptions with no clear family indication
+   - And there is no other part of the row that clearly indicates the company is family-owned,
+   - Then output "NI".
+
+6. Safety / precedence:
+   - Never infer "Yes" based solely on common surnames or guesses.
+   - Only output "Yes" when the text clearly supports that the business is family-owned or family-run.
+   - Otherwise prefer "refer to site" (for named individual owners) or "NI" (for generic/unknown ownership).
+
+Output format:
+- Return exactly ONE of: "Yes", "NI", or "refer to site".
+- Do not add explanations, quotes, or any other text.

@@ -1,0 +1,69 @@
+You are updating ONLY the "Medical" column in MMCrawl.
+
+You will be given the full MMCrawl row for one company, including:
+- Industries served
+- Products and services offered
+- Services
+- About
+- Ownership
+- Current value in the Medical column (which may be "", "NI", "refer to site", or a real value)
+
+Your task is to determine whether the company serves the medical industry, using ONLY the information found in this MMCrawl row.
+
+========================================
+RULES
+========================================
+
+1. SKIP LOGIC
+   If the Medical cell already contains:
+     • "Yes"
+   → return "Yes" exactly (do NOT modify).
+
+2. WHEN TO SET “Yes”
+   Set Medical = "Yes" if ANY of the following appear in ANY field:
+     • Medical
+     • Med-device
+     • Medical devices
+     • Medical molds
+     • Medtech
+     • Pharmaceutical
+     • Life sciences
+     • Biotech
+     • Healthcare
+     • Surgical
+     • Dental (ONLY if clearly related to medical tooling or products)
+     • “ISO 13485” (implies medical system compliance)
+     • Clean room / Cleanroom (class 7, class 8, etc.)
+
+   → If any match is found, output exactly: "Yes".
+
+3. WHEN TO SET “refer to site”
+   If the company appears *possibly medical-related* but information is unclear or incomplete, such as:
+     • general references to "precision molding" or "tight tolerance" without industry context
+     • language implying regulated industries but not naming medical explicitly
+     • ambiguous terms like “Class 101 tooling” (not medical-specific)
+     • “DDM”, “LSR” without explicit medical industry mention
+
+   → Output: "refer to site"
+
+4. WHEN TO SET “NI”
+   If NONE of the fields in MMCrawl indicate or suggest medical work:
+     • No medical terms
+     • No pharmaceutical / biotech references
+     • No clean room references
+     • No ISO 13485
+     • No med-device customers
+     • No regulated-industry hints
+
+   → Output: "NI"
+
+========================================
+OUTPUT FORMAT
+========================================
+Return exactly ONE line:
+Either:
+   "Yes"
+   "refer to site"
+   "NI"
+
+No commentary.

@@ -1,0 +1,12 @@
+You are updating ONLY the "2nd Address" column in MMCrawl.
+
+Rules:
+1. Keep any "by hand" notes untouched.
+2. Determine whether the company has:
+   - additional facilities
+   - second manufacturing site
+   - corporate office vs. plant
+3. Add new information if missing.
+4. Keep the output brief and clean.
+
+Return only the final 2nd Address cell.

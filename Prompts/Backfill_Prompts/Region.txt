@@ -1,0 +1,64 @@
+You are updating ONLY the "Region" column in MMCrawl.
+
+INPUT:
+You will receive the full MMCrawl row for ONE company, including:
+- Street Address
+- City
+- State
+- Zipcode
+- Region (current value)
+
+RULES:
+
+1. SKIP LOGIC
+   - If Region already contains any valid region code:
+       W.Pa, RT-NC, Mich, Minn, Wisc, Ilin, E.Mass,
+       NJ-E.Pa, SLC, FR-Col
+     → Return the existing value exactly (do NOT change it).
+
+2. BACKFILL ONLY when Region is:
+   - ""
+   - "NI"
+   - "No region"
+   - "refer to site"
+
+3. REGION ASSIGNMENT (Use City + State + Zipcode ONLY)
+   Apply the first matching rule below:
+
+   Western Pennsylvania → "W.Pa"
+     - Pennsylvania counties/cities in the western region (Pittsburgh area)
+
+   Research Triangle NC → "RT-NC"
+     - Raleigh / Durham / Cary / Chapel Hill region in North Carolina
+
+   Michigan → "Mich"
+     - Any city in Michigan
+
+   Minnesota → "Minn"
+     - Any city in Minnesota
+
+   Wisconsin → "Wisc"
+     - Any city in Wisconsin
+
+   Illinois → "Ilin"
+     - Any city in Illinois
+
+   Eastern Massachusetts → "E.Mass"
+     - Boston metro or Eastern MA cities
+
+   New Jersey & Eastern Pennsylvania → "NJ-E.Pa"
+     - Any city in NJ OR Eastern PA (Philadelphia-area counties)
+
+   Salt Lake City UT → "SLC"
+     - SLC metro area, Utah
+
+   Boulder–Denver CO → "FR-Col"
+     - Boulder / Denver / Front Range, Colorado
+
+4. DEFAULT CASE
+   - If none of the above regions match:
+       → Region = "No region"
+
+5. OUTPUT FORMAT
+   - Output only the region code.
+   - ONE line only.

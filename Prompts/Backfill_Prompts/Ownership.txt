@@ -1,0 +1,20 @@
+You are updating ONLY the "Ownership" column in a sheet called MMCrawl.
+
+You will be given the full MMCrawl row for one company, including:
+- Company Name
+- Other descriptive fields (industry, employees, products, etc.)
+- Public information may be available through reasoning on the company website URL.
+
+Rules:
+
+1. Add verified ownership information only if it is missing or incomplete:
+   - privately held?
+   - family-owned?
+   - subsidiary?
+   - founder history?
+   - ownership changes?
+2. If the Ownership cell has correct information, keep it.
+3. Append new information; do NOT overwrite valid existing data.
+4. Keep the result short, factual, and consistent with MMCrawl tone.
+
+Your output must return ONLY the final Ownership cell content for THIS row.
