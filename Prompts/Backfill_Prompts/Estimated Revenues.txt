@@ -1,0 +1,145 @@
+You are updating ONLY the "Estimated Revenues" column in a sheet called MMCrawl.
+
+You will be given the full MMCrawl row for one company, including:
+- Company Name
+- Estimated Revenues cell (may be blank or partially filled)
+- Number of employees cell (may be blank or estimated)
+- Facility square footage cell (may be blank or estimated)
+- Other descriptive fields (about text, industries, products, etc.)
+
+Your job is to return the FINAL value that should be written into the "Estimated Revenues" cell for THIS row, following these rules exactly.
+
+GENERAL PRINCIPLES
+- You CANNOT browse the live web, but you MAY use your trained knowledge of business directories, news, and company data up to your training cutoff.
+- Treat each row independently.
+- The final result is a SINGLE cell string that may contain multiple revenue estimates from different sources, separated by semicolons.
+- Always keep the result SHORT, human-readable, and well-tagged by source.
+
+--------------------------------------------------
+STEP 1 — START FROM THE EXISTING CELL (IF ANY)
+--------------------------------------------------
+1) Look at the current "Estimated Revenues" cell:
+   - If it already includes clear values with tags like "(site)", "(public: …)", "(news 2023)", or "(calc …)", preserve those values unless you see a better, more precise way to represent the same information.
+   - If it has an untagged numeric or money-like value that obviously came from the company’s own website scrape, treat it as a site-based value and normalize it to a clean format with the tag "(site)".
+
+--------------------------------------------------
+STEP 2 — IDENTIFY REVENUE FROM NEWS / SITE / PUBLIC SOURCES
+--------------------------------------------------
+Use your trained knowledge to infer possible revenue values for THIS specific company (not for other companies with similar names):
+
+2) NEWS / HIGH-CONFIDENCE FACTUAL DATA
+   - If you recall a direct, factual revenue figure from news, a press release, or a financial statement (e.g. “We expect $14M revenue in 2023”), treat this as a HIGH-CONFIDENCE value.
+   - Format and tag it like:
+       "$14M (news 2023)"
+   - This is the highest-quality source and should be listed FIRST in the final cell.
+
+3) COMPANY-SITE DATA
+   - If you know a revenue number or range explicitly from the company’s own content (site, brochure, PDF), treat that as a site-based value.
+   - Format and tag it like:
+       "$13.8M (site)"
+   - This is also a high-confidence source. In the final cell, it comes after news-based values.
+
+4) PUBLIC DIRECTORY / THIRD-PARTY ESTIMATES
+   - If you recall approximate ranges or values from business databases (ZoomInfo, D&B, etc.), treat them as PUBLIC ESTIMATES.
+   - Keep that information, but treat it as lower-confidence than news or site data.
+   - Format and tag examples:
+       "$5–25M (public: ZI 2023)"
+       "~$12M (public: BF 2024)"
+
+--------------------------------------------------
+STEP 3 — CALCULATED REVENUE FROM EMPLOYEES AND SQFT
+--------------------------------------------------
+If there is no solid “hard” revenue figure, you can compute estimates:
+
+5) EMPLOYEE-BASED CALCULATION (PREFERRED CALC)
+   - If a reasonably good Number of employees value exists (either from the row itself or from your knowledge), compute:
+       employees × 200,000 ≈ estimated revenue in dollars
+   - Round to a clean number (e.g., $11.3M, $12M, $9.5M).
+   - Tag this as:
+       "(calc from employees)"
+   - Example:
+       "$12M (calc from employees)"
+
+6) SQUARE-FOOTAGE-BASED CALCULATION (SECONDARY, VERY ROUGH)
+   - Only use this if there is NO good employee data to base a calculation on.
+   - If facility square footage is present, compute:
+       square_footage × 600 ≈ estimated revenue in dollars
+   - Round to a clean number and tag as:
+       "(calc from sqft)"
+   - Example:
+       "$11.3M (calc from sqft)"
+
+7) PRIORITY BETWEEN EMPLOYEE CALC AND SQFT CALC
+   - EMPLOYEE-based calculation is ALWAYS preferred over sqft-based calculation.
+   - If you have a good employee number or close range, DO NOT add any sqft-based calculation.
+   - Only use sqft-based calc when there is NO usable employee count.
+
+--------------------------------------------------
+STEP 4 — WHEN TO COMBINE VALUES AND WHEN TO SKIP CALC
+--------------------------------------------------
+8) WHEN THERE IS GOOD FACTUAL REVENUE DATA:
+   - If you have a clear, high-confidence revenue value from NEWS or a strong company-source, you may skip calculated values.
+   - Example:
+       "$14M (news 2023)"
+   - Do NOT add employee/sqft calcs unless the factual number is very weak or clearly outdated.
+
+9) WHEN PUBLIC ESTIMATES ARE WEAK (e.g., broad ranges like “~$5M–$10M”):
+   - These are lower-confidence estimates from directories.
+   - If you ALSO have a decent employee count, DO the employee-based calculation and include BOTH in the cell.
+   - Example final cell:
+       "$12M (calc from employees); ~$5M–$10M (public: ZI 2023)"
+
+10) MULTIPLE SOURCES IN ONE CELL:
+   - It is acceptable (and often best) to keep several different revenue values from different sources together in the same cell, separated by semicolons.
+   - Order of values in the cell:
+       1) News-based factual revenue (if any)
+       2) Site-based revenue (if any)
+       3) Employee-based calculation (if used)
+       4) Public directory estimates (ZoomInfo, etc.)
+       5) Sqft-based calculation (ONLY if no employee calc)
+   - Examples:
+       "$14M (news 2023); $13.8M (site)"
+       "$14M (news 2023); $12M (calc from employees); ~$5M–$10M (public: ZI 2023)"
+       "$7.8M (public: BF 2024); $11.3M (calc from sqft)"
+       "$13.8M (site); $7.8M (public: BF 2024)"
+
+--------------------------------------------------
+STEP 5 — WHEN NOTHING IS AVAILABLE
+--------------------------------------------------
+11) If there is:
+   - no clear news revenue,
+   - no site-based revenue,
+   - no reliable public estimate,
+   - no usable employee count,
+   - and no usable square footage,
+   THEN:
+   - Return exactly: "NI"
+
+--------------------------------------------------
+STEP 6 — FORMATTING RULES
+--------------------------------------------------
+12) Money formatting:
+   - Use compact, human-readable formats:
+       "$7.8M", "$12M", "$950k", "$110k", "$1.2B"
+   - You may use approximate symbols (~) or ranges:
+       "~$12M", "$5–25M"
+   - Keep all values in USD unless the context clearly indicates otherwise, but do not add currency labels beyond the "$" sign.
+
+13) Final cell content:
+   - One string only (no line breaks), with semicolons and spaces between multiple values.
+   - Examples:
+       "$13.8M (site); $7.8M (public: BF 2024)"
+       "$5–25M (public: ZI 2023)"
+       "$12M (calc from employees)"
+       "$14M (news 2023); $12M (calc from employees); ~$5M–$10M (public: ZI 2023)"
+       "NI"
+
+14) Do NOT add explanations, reasoning, or extra commentary outside this one cell value.
+
+--------------------------------------------------
+INPUT ROW
+--------------------------------------------------
+Below is the MMCrawl row for this company. Use it, plus your trained knowledge, to apply all the rules above and return only the final Estimated Revenues cell value for this row.
+
+MMCrawl row:
+<<<ROW_DATA_HERE>>>

@@ -1,0 +1,38 @@
+You are updating ONLY the “CNC 3-axis” column in MMCrawl.
+
+You will be given the full MMCrawl row for one company. The most important field for this task is the “Equipment” cell, which may contain:
+- a normalized equipment list,
+- vague equipment text,
+- the phrase “NI”, or
+- the phrase “Refer to Site”.
+
+Your job is to decide what the value of the “CNC 3-axis” cell should be, based ONLY on the content of the Equipment cell.
+
+Output rules (VERY IMPORTANT):
+
+1. You must return exactly one of:
+   - "Yes"
+   - "refer to site"
+   - "NI"
+
+2. Hard rule for “Refer to Site” in Equipment:
+   - If the Equipment cell value is “Refer to Site” or "refer to site" (ignoring case and quotation marks), you MUST output:
+     refer to site
+   - Do not try to infer anything else in this case.
+
+3. Hard rule for “NI” in Equipment:
+   - If the Equipment cell value is exactly “NI” (ignoring case and quotation marks) and there is no other equipment text, you MUST output:
+     NI
+
+4. Otherwise, examine the actual equipment list:
+   - Output “Yes” ONLY if the Equipment cell clearly includes 3-axis machining, such as:
+     - “CNC Mills (3-axis)”
+     - or a specific machine brand+model with explicit 3-axis indication,
+       e.g., “Haas VF-2 (3-axis)”, “Hurco VMX 30i (3-axis VMC)”.
+   - If the Equipment cell mentions “CNC” or “3-axis” in a vague or incomplete way (e.g., only “Makino (3-axis)” with no model or normalized category), you must output:
+     refer to site
+
+5. If no 3-axis capability can be confidently identified from the Equipment text, output:
+   NI
+
+Return only one word: "Yes", "refer to site", or "NI".

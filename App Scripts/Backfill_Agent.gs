@@ -30,14 +30,7 @@ function onOpen_Backfill(ui) {
     .addItem("Estimated Revenues", "BF_runBackfill_EstimatedRevenues")
     .addItem("Square footage (facility)", "BF_runBackfill_SquareFootage")
     .addItem("Years of operation", "BF_runBackfill_YearsOfOperation")
-    .addSeparator()
-    .addItem("Equipment + CNC 3 & 5-axis", "BF_runBackfill_EquipmentAndCNC")
-    .addItem("Ownership", "BF_runBackfill_Ownership")
-    .addItem("Spares/ Repairs", "BF_runBackfill_SparesRepairs")
-    .addItem("Family business", "BF_runBackfill_FamilyBusiness")
-    .addItem("2nd Address", "BF_runBackfill_SecondAddress")
-    .addItem("Region", "BF_runBackfill_Region")
-    .addItem("Medical", "BF_runBackfill_Medical");
+    .addItem("Equipment", "BF_runBackfill_Equipment");
 
   // --- Backfill main menu ---
   ui.createMenu("Backfill")
@@ -45,9 +38,7 @@ function onOpen_Backfill(ui) {
     .addSeparator()
     .addItem("▶ Backfill from News", "BF_runBackfill_FromNews")
     .addToUi();
-
 }
-
 
 /*************************************************
  * 1) PUBLIC ENTRY FUNCTIONS (Manual GPT backfills)
@@ -69,8 +60,12 @@ function BF_runBackfill_YearsOfOperation() {
   BF_runBackfillForMenu_("Years of operation");
 }
 
-// combined Equipment + CNC 3/5 axis
-function BF_runBackfill_EquipmentAndCNC() {
+/**
+ * Equipment backfill (special: uses MMCrawl website URL + site bundle).
+ * - Only touches rows where Equipment is blank, "NI", or "refer to site".
+ * - For other rows, keeps the existing Equipment value.
+ */
+function BF_runBackfill_Equipment() {
   const ss = SpreadsheetApp.getActive();
   const ui = SpreadsheetApp.getUi();
 
@@ -80,73 +75,43 @@ function BF_runBackfill_EquipmentAndCNC() {
   const startRow = rangeInfo.startRow;
   const endRow = rangeInfo.endRow;
 
-  const columns = ["Equipment", "CNC 3-axis", "CNC 5-axis"];
-  const backfillSheetName = (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
-  const backfillSheet = ss.getSheetByName(backfillSheetName);
+  try {
+    const result = BF_runBackfillForColumnId_WithSite_("Equipment", startRow, endRow);
 
-  const results = [];
-
-  columns.forEach(function (colId) {
-    try {
-      const res = BF_runBackfillForColumnId_(colId, startRow, endRow);
-      results.push(colId + ": " + res.rowsProcessed + " rows");
-
-      if (backfillSheet) {
-        const cfgRow = BF_findBackfillConfigRow_(backfillSheet, colId);
-        if (cfgRow > 0) {
-          const logMsg =
-            'Last run for "' + colId + '": rows ' + startRow + "-" + endRow +
-            " (" + res.rowsProcessed + " rows) at " + new Date().toLocaleString();
-          backfillSheet.getRange(cfgRow, 3).setValue(logMsg);
-        }
+    const backfillSheetName =
+      (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
+    const backfillSheet = ss.getSheetByName(backfillSheetName);
+    if (backfillSheet) {
+      const cfgRow = BF_findBackfillConfigRow_(backfillSheet, "Equipment");
+      if (cfgRow > 0) {
+        const logMsg =
+          'Last run for "Equipment": rows ' + startRow + "-" + endRow +
+          " (" + result.rowsProcessed + " rows) at " + new Date().toLocaleString();
+        backfillSheet.getRange(cfgRow, 3).setValue(logMsg);
       }
-    } catch (e) {
-      Logger.log("Backfill error for " + colId + ": " + e);
-      results.push(colId + ": ERROR - " + e);
     }
-  });
 
-  ui.alert(
-    "Backfill complete for Equipment + CNC 3 & 5-axis\n" +
-    "MMCrawl rows: " + startRow + "-" + endRow + "\n\n" +
-    results.join("\n")
-  );
-}
-
-// These are still available if you ever want to call individually:
-function BF_runBackfill_Ownership() {
-  BF_runBackfillForMenu_("Ownership");
-}
-
-function BF_runBackfill_SparesRepairs() {
-  BF_runBackfillForMenu_("Spares/ Repairs");
-}
-
-function BF_runBackfill_FamilyBusiness() {
-  BF_runBackfillForMenu_("Family business");
-}
-
-function BF_runBackfill_SecondAddress() {
-  BF_runBackfillForMenu_("2nd Address");
-}
-
-function BF_runBackfill_Region() {
-  BF_runBackfillForMenu_("Region");
-}
-
-function BF_runBackfill_Medical() {
-  BF_runBackfillForMenu_("Medical");
+    ui.alert(
+      'Backfill complete for "Equipment".\n' +
+      "MMCrawl rows: " + startRow + "-" + endRow + "\n" +
+      "Rows processed (GPT calls): " + result.rowsProcessed
+    );
+  } catch (e) {
+    Logger.log("Backfill error for Equipment: " + e);
+    ui.alert('Backfill failed for "Equipment":\n' + e);
+  }
 }
 
 /*************************************************
- * 2) Backfill from News (non-GPT)
+ * 2) Backfill from News (non-GPT, merges "Specific Value")
  **************************************************/
 
 function BF_runBackfill_FromNews() {
   const ss = SpreadsheetApp.getActive();
   const ui = SpreadsheetApp.getUi();
 
-  const mmSheetName = (typeof AIA !== "undefined" && AIA.MMCRAWL_SHEET) || "MMCrawl";
+  const mmSheetName =
+    (typeof AIA !== "undefined" && AIA.MMCRAWL_SHEET) || "MMCrawl";
   const newsSheetName = "News Raw";
 
   const mmSheet = ss.getSheetByName(mmSheetName);
@@ -257,9 +222,10 @@ function BF_runBackfill_FromNews() {
       if (ym) pubYear = ym[0];
     }
 
-    const storyUrl = newsStoryUrlCol !== -1
-      ? (row[newsStoryUrlCol] || "").toString().trim()
-      : "";
+    const storyUrl =
+      newsStoryUrlCol !== -1
+        ? (row[newsStoryUrlCol] || "").toString().trim()
+        : "";
 
     const norm = BF_normalizeUrl_(url);
     if (!norm) continue;
@@ -294,7 +260,7 @@ function BF_runBackfill_FromNews() {
     if (!newsEntries || newsEntries.length === 0) continue; // no news for this company
 
     ssActive.toast(
-      'Backfill from News – MMCrawl row ' + sheetRowNumber + " of " + endRow,
+      "Backfill from News – MMCrawl row " + sheetRowNumber + " of " + endRow,
       "Backfill from News",
       3
     );
@@ -337,8 +303,13 @@ function BF_runBackfill_FromNews() {
   ssActive.toast("Backfill from News finished.", "Backfill from News", 3);
   ui.alert(
     "Backfill from News complete.\n" +
-    "MMCrawl rows processed: " + startRow + "-" + endRow + "\n" +
-    "Values applied to MMCrawl cells: " + appliedCount
+      "MMCrawl rows processed: " +
+      startRow +
+      "-" +
+      endRow +
+      "\n" +
+      "Values applied to MMCrawl cells: " +
+      appliedCount
   );
 }
 
@@ -359,26 +330,42 @@ function BF_runBackfillForMenu_(columnId) {
   try {
     const result = BF_runBackfillForColumnId_(columnId, startRow, endRow);
 
-    const backfillSheetName = (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
+    const backfillSheetName =
+      (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
     const backfillSheet = ss.getSheetByName(backfillSheetName);
     if (backfillSheet) {
       const cfgRow = BF_findBackfillConfigRow_(backfillSheet, columnId);
       if (cfgRow > 0) {
         const logMsg =
-          "Last run for \"" + columnId + "\": rows " + startRow + "-" + endRow +
-          " (" + result.rowsProcessed + " rows) at " + new Date().toLocaleString();
+          'Last run for "' +
+          columnId +
+          '": rows ' +
+          startRow +
+          "-" +
+          endRow +
+          " (" +
+          result.rowsProcessed +
+          " rows) at " +
+          new Date().toLocaleString();
         backfillSheet.getRange(cfgRow, 3).setValue(logMsg);
       }
     }
 
-    SpreadsheetApp.getUi().alert(
-      "Backfill complete for \"" + columnId + "\".\n" +
-      "MMCrawl rows: " + startRow + "-" + endRow + "\n" +
-      "Rows processed: " + result.rowsProcessed
+    ui.alert(
+      'Backfill complete for "' +
+        columnId +
+        '".\n' +
+        "MMCrawl rows: " +
+        startRow +
+        "-" +
+        endRow +
+        "\n" +
+        "Rows processed: " +
+        result.rowsProcessed
     );
   } catch (e) {
     Logger.log("Backfill error for " + columnId + ": " + e);
-    SpreadsheetApp.getUi().alert("Backfill failed for \"" + columnId + "\":\n" + e);
+    ui.alert('Backfill failed for "' + columnId + '":\n' + e);
   }
 }
 
@@ -388,7 +375,8 @@ function BF_runBackfillForMenu_(columnId) {
  */
 function BF_promptForRowRange_(ui) {
   const ss = SpreadsheetApp.getActive();
-  const mmSheetName = (typeof AIA !== "undefined" && AIA.MMCRAWL_SHEET) || "MMCrawl";
+  const mmSheetName =
+    (typeof AIA !== "undefined" && AIA.MMCRAWL_SHEET) || "MMCrawl";
   const mmSheet = ss.getSheetByName(mmSheetName);
 
   if (!mmSheet) {
@@ -402,7 +390,9 @@ function BF_promptForRowRange_(ui) {
   const resp = ui.prompt(
     "Backfill row range",
     "Enter MMCrawl row range in the form From-To.\n" +
-      "Example: 2-" + exampleEnd + "\n\n" +
+      "Example: 2-" +
+      exampleEnd +
+      "\n\n" +
       "Header row is 1, so first data row is 2.",
     ui.ButtonSet.OK_CANCEL
   );
@@ -431,28 +421,37 @@ function BF_promptForRowRange_(ui) {
 }
 
 /*************************************************
- * 4) Core GPT backfill logic (all manual columns)
- *    + "by hand" protection
+ * 4) Core GPT backfill logic (generic columns)
  **************************************************/
 
-function BF_runBackfillForColumnId_(columnId, startRow, endRow) {
+function BF_runBackfillForColumnId_WithSite_(columnId, startRow, endRow) {
   const ss = SpreadsheetApp.getActive();
-  const backfillSheetName = (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
-  const mmSheetName = (typeof AIA !== "undefined" && AIA.MMCRAWL_SHEET) || "MMCrawl";
+  const backfillSheetName =
+    (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
+  const mmSheetName =
+    (typeof AIA !== "undefined" && AIA.MMCRAWL_SHEET) || "MMCrawl";
 
   const backfillSheet = ss.getSheetByName(backfillSheetName);
-  if (!backfillSheet) throw new Error('Config sheet "' + backfillSheetName + '" not found.');
+  if (!backfillSheet)
+    throw new Error('Config sheet "' + backfillSheetName + '" not found.');
 
   const mmSheet = ss.getSheetByName(mmSheetName);
   if (!mmSheet) throw new Error('Data sheet "' + mmSheetName + '" not found.');
 
   const cfgRow = BF_findBackfillConfigRow_(backfillSheet, columnId);
   if (cfgRow < 2) {
-    throw new Error('Column_ID "' + columnId + '" not found in Backfill sheet.');
+    throw new Error(
+      'Column_ID "' + columnId + '" not found in Backfill sheet.'
+    );
   }
-  const promptTemplate = backfillSheet.getRange(cfgRow, 2).getValue().toString();
+  const promptTemplate = backfillSheet
+    .getRange(cfgRow, 2)
+    .getValue()
+    .toString();
   if (!promptTemplate) {
-    throw new Error('GPT_Prompt is blank in Backfill for Column_ID "' + columnId + '".');
+    throw new Error(
+      'GPT_Prompt is blank in Backfill for Column_ID "' + columnId + '".'
+    );
   }
 
   const lastDataRow = mmSheet.getLastRow();
@@ -474,8 +473,27 @@ function BF_runBackfillForColumnId_(columnId, startRow, endRow) {
   }
   if (targetColIndex === -1) {
     throw new Error(
-      'Column header "' + columnId + '" not found in sheet "' + mmSheetName + '". ' +
-      'Make sure it matches Backfill.Column_ID exactly.'
+      'Column header "' +
+        columnId +
+        '" not found in sheet "' +
+        mmSheetName +
+        '". ' +
+        "Make sure it matches Backfill.Column_ID exactly."
+    );
+  }
+
+  // Website column index (for site bundle)
+  const urlColIndex = BF_findHeaderIndex_(headerRow, [
+    "Company Website URL",
+    "Public Website Homepage URL",
+    "Company Website",
+    "Website"
+  ]);
+  if (urlColIndex === -1) {
+    throw new Error(
+      'Website column not found in "' +
+        mmSheetName +
+        '". Expected header like "Company Website URL" or "Public Website Homepage URL".'
     );
   }
 
@@ -484,27 +502,60 @@ function BF_runBackfillForColumnId_(columnId, startRow, endRow) {
 
   const rowsValues = mmSheet.getRange(startRow, 1, numRows, lastCol).getValues();
   const resultValues = [];
+  let processed = 0;
 
   for (let r = 0; r < numRows; r++) {
     const sheetRowNumber = startRow + r;
     const rowData = rowsValues[r];
 
     const existing = rowData[targetColIndex - 1];
-    const existingStr = (existing === null || existing === undefined) ? "" : existing.toString();
+    const existingStr =
+      existing === null || existing === undefined ? "" : existing.toString();
+    const existingNorm = existingStr.trim().toLowerCase();
 
-    // SPECIAL CASE: Years of operation — if already filled, keep and skip GPT
-    if (columnId === "Years of operation" && existingStr !== "") {
+    const hasRealValue =
+      existingNorm !== "" &&
+      existingNorm !== "ni" &&
+      existingNorm !== "refer to site";
+
+    // If Equipment already has a real value, keep it and skip GPT.
+    if (hasRealValue) {
       resultValues.push([existingStr]);
       continue;
     }
 
+    // Website URL for this row
+    const siteUrl = (rowData[urlColIndex] || "").toString().trim();
+
+    // Show URL in the toast notification
+    const urlMsg = siteUrl ? siteUrl : "(no URL)";
+    const shortUrl =
+      urlMsg.length > 80 ? urlMsg.substring(0, 77) + "..." : urlMsg;
+
     SpreadsheetApp.getActive().toast(
-      'Backfill "' + columnId + '" – MMCrawl row ' + sheetRowNumber + " of " + endRow,
+      'Equipment Backfill\nRow ' +
+        sheetRowNumber +
+        " of " +
+        endRow +
+        "\nURL: " +
+        shortUrl,
       "Backfill progress",
-      3
+      6
     );
 
+
     const rowText = BF_formatRowForPrompt_(headerRow, rowData, sheetRowNumber);
+
+    // Fetch site bundle text (re-use Raw_Data helper).
+    let siteText = "";
+    if (siteUrl && typeof AIA_fetchSiteBundleText_ === "function") {
+      try {
+        const bundle = AIA_fetchSiteBundleText_(siteUrl, 15000);
+        siteText = (bundle && bundle.text) || "";
+      } catch (err) {
+        Logger.log("Equipment site fetch error for " + siteUrl + ": " + err);
+      }
+    }
 
     let systemPrompt = promptTemplate;
     if (systemPrompt.indexOf("<<<ROW_DATA_HERE>>>") !== -1) {
@@ -513,25 +564,213 @@ function BF_runBackfillForColumnId_(columnId, startRow, endRow) {
       systemPrompt += "\n\nMMCrawl row:\n" + rowText;
     }
 
-    // Call OpenAI to get new cell value
-    let cellValue = BF_callOpenAI_Backfill_(systemPrompt, columnId);
+    if (siteText) {
+      systemPrompt +=
+        "\n\n### SITE_TEXT (plain text extracted from " +
+        siteUrl +
+        ")\n" +
+        siteText +
+        "\n\nUse ONLY this SITE_TEXT plus the rules above to decide the final Equipment line.";
+    } else {
+      systemPrompt +=
+        "\n\n(No additional SITE_TEXT was available for this row; if you cannot confirm any equipment, follow the NI / Refer to Site rules.)";
+    }
 
-    // IMPORTANT: protect any client "by hand" notes in existing cell
+    let cellValue = BF_callOpenAI_Backfill_(systemPrompt, columnId);
     cellValue = BF_mergeByHand_(existingStr, cellValue);
 
     resultValues.push([cellValue]);
+    processed++;
   }
 
-  // Write results back
-  mmSheet.getRange(startRow, targetColIndex, numRows, 1).setValues(resultValues);
+  mmSheet
+    .getRange(startRow, targetColIndex, numRows, 1)
+    .setValues(resultValues);
   SpreadsheetApp.getActive().toast(
     'Backfill "' + columnId + '" finished.',
     "Backfill progress",
     3
   );
 
-  return { rowsProcessed: numRows };
+  return { rowsProcessed: processed };
 }
+
+
+/*************************************************
+ * 4b) Core GPT backfill logic WITH SITE TEXT (Equipment)
+ **************************************************/
+
+function BF_runBackfillForColumnId_WithSite_(columnId, startRow, endRow) {
+  const ss = SpreadsheetApp.getActive();
+  const backfillSheetName =
+    (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
+  const mmSheetName =
+    (typeof AIA !== "undefined" && AIA.MMCRAWL_SHEET) || "MMCrawl";
+
+  const backfillSheet = ss.getSheetByName(backfillSheetName);
+  if (!backfillSheet)
+    throw new Error('Config sheet "' + backfillSheetName + '" not found.');
+
+  const mmSheet = ss.getSheetByName(mmSheetName);
+  if (!mmSheet) throw new Error('Data sheet "' + mmSheetName + '" not found.');
+
+  const cfgRow = BF_findBackfillConfigRow_(backfillSheet, columnId);
+  if (cfgRow < 2) {
+    throw new Error(
+      'Column_ID "' + columnId + '" not found in Backfill sheet.'
+    );
+  }
+  const promptTemplate = backfillSheet
+    .getRange(cfgRow, 2)
+    .getValue()
+    .toString();
+  if (!promptTemplate) {
+    throw new Error(
+      'GPT_Prompt is blank in Backfill for Column_ID "' + columnId + '".'
+    );
+  }
+
+  const lastDataRow = mmSheet.getLastRow();
+  if (startRow > lastDataRow) return { rowsProcessed: 0 };
+  if (endRow > lastDataRow) endRow = lastDataRow;
+  if (endRow < startRow) return { rowsProcessed: 0 };
+
+  const lastCol = mmSheet.getLastColumn();
+  const headerRow = mmSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+
+  // Find target column in MMCrawl
+  let targetColIndex = -1;
+  for (let c = 0; c < headerRow.length; c++) {
+    const headerName = (headerRow[c] || "").toString().trim();
+    if (headerName === columnId) {
+      targetColIndex = c + 1; // 1-based
+      break;
+    }
+  }
+  if (targetColIndex === -1) {
+    throw new Error(
+      'Column header "' +
+        columnId +
+        '" not found in sheet "' +
+        mmSheetName +
+        '". ' +
+        "Make sure it matches Backfill.Column_ID exactly."
+    );
+  }
+
+  // Website column index (for site bundle)
+  const urlColIndex = BF_findHeaderIndex_(headerRow, [
+    "Company Website URL",
+    "Public Website Homepage URL",
+    "Company Website",
+    "Website"
+  ]);
+  if (urlColIndex === -1) {
+    throw new Error(
+      'Website column not found in "' +
+        mmSheetName +
+        '". Expected header like "Company Website URL" or "Public Website Homepage URL".'
+    );
+  }
+
+  const numRows = endRow - startRow + 1;
+  if (numRows <= 0) return { rowsProcessed: 0 };
+
+  const rowsValues = mmSheet.getRange(startRow, 1, numRows, lastCol).getValues();
+  const resultValues = [];
+  let processed = 0;
+
+  for (let r = 0; r < numRows; r++) {
+    const sheetRowNumber = startRow + r;
+    const rowData = rowsValues[r];
+
+    const existing = rowData[targetColIndex - 1];
+    const existingStr =
+      existing === null || existing === undefined ? "" : existing.toString();
+    const existingNorm = existingStr.trim().toLowerCase();
+
+    const hasRealValue =
+      existingNorm !== "" &&
+      existingNorm !== "ni" &&
+      existingNorm !== "refer to site";
+
+    // If Equipment already has a real value, keep it and skip GPT.
+    if (hasRealValue) {
+      resultValues.push([existingStr]);
+      continue;
+    }
+
+    SpreadsheetApp.getActive().toast(
+      'Backfill "' +
+        columnId +
+        '" – MMCrawl row ' +
+        sheetRowNumber +
+        " of " +
+        endRow,
+      "Backfill progress",
+      3
+    );
+
+    const rowText = BF_formatRowForPrompt_(headerRow, rowData, sheetRowNumber);
+
+    // Website URL for this row
+    const siteUrl = (rowData[urlColIndex] || "").toString().trim();
+
+    // Fetch site bundle text (re-use Raw_Data helper).
+    let siteText = "";
+    if (siteUrl && typeof AIA_fetchSiteBundleText_ === "function") {
+      try {
+        const bundle = AIA_fetchSiteBundleText_(siteUrl, 15000);
+        siteText = (bundle && bundle.text) || "";
+      } catch (err) {
+        Logger.log("Equipment site fetch error for " + siteUrl + ": " + err);
+      }
+    }
+
+    let systemPrompt = promptTemplate;
+    if (systemPrompt.indexOf("<<<ROW_DATA_HERE>>>") !== -1) {
+      systemPrompt = systemPrompt.replace("<<<ROW_DATA_HERE>>>", rowText);
+    } else {
+      systemPrompt += "\n\nMMCrawl row:\n" + rowText;
+    }
+
+    // Inject SITE_TEXT block so the model actually sees the website content.
+    if (siteText) {
+      systemPrompt +=
+        "\n\n### SITE_TEXT (plain text extracted from " +
+        siteUrl +
+        ")\n" +
+        siteText +
+        "\n\nUse ONLY this SITE_TEXT plus the rules above to decide the final Equipment line.";
+    } else {
+      systemPrompt +=
+        "\n\n(No additional SITE_TEXT was available for this row; if you cannot confirm any equipment, follow the NI / Refer to Site rules.)";
+    }
+
+    // Call OpenAI
+    let cellValue = BF_callOpenAI_Backfill_(systemPrompt, columnId);
+    cellValue = BF_mergeByHand_(existingStr, cellValue);
+
+    resultValues.push([cellValue]);
+    processed++;
+  }
+
+  // Write results back
+  mmSheet
+    .getRange(startRow, targetColIndex, numRows, 1)
+    .setValues(resultValues);
+  SpreadsheetApp.getActive().toast(
+    'Backfill "' + columnId + '" finished.',
+    "Backfill progress",
+    3
+  );
+
+  return { rowsProcessed: processed };
+}
+
+/*************************************************
+ * 5) Backfill config helpers
+ **************************************************/
 
 /**
  * Find config row in Backfill sheet for a given Column_ID.
@@ -549,7 +788,7 @@ function BF_findBackfillConfigRow_(backfillSheet, columnId) {
 }
 
 /*************************************************
- * 5) Prompt formatting + OpenAI call
+ * 6) Prompt formatting + OpenAI call
  **************************************************/
 
 function BF_formatRowForPrompt_(headers, rowValues, rowNumber) {
@@ -560,22 +799,25 @@ function BF_formatRowForPrompt_(headers, rowValues, rowNumber) {
     const headerName = (headers[i] || "").toString().trim();
     if (!headerName) continue;
     const val = rowValues[i];
-    const valueStr = (val === "" || val === null || val === undefined) ? "" : val.toString();
+    const valueStr =
+      val === "" || val === null || val === undefined ? "" : val.toString();
     lines.push(headerName + ": " + valueStr);
   }
   return lines.join("\n");
 }
 
 function BF_callOpenAI_Backfill_(systemPrompt, columnId) {
-  const apiKey = PropertiesService.getScriptProperties().getProperty("OPENAI_API_KEY");
+  const apiKey =
+    PropertiesService.getScriptProperties().getProperty("OPENAI_API_KEY");
   if (!apiKey) {
     throw new Error(
       "OPENAI_API_KEY not set in Script Properties. " +
-      "Set it under: Extensions → Apps Script → Project Settings → Script properties."
+        "Set it under: Extensions → Apps Script → Project Settings → Script properties."
     );
   }
 
-  const model = (typeof AIA !== "undefined" && AIA.MODEL) || "gpt-4o";
+  const model =
+    (typeof AIA !== "undefined" && AIA.MODEL) || "gpt-4o";
   const url = "https://api.openai.com/v1/chat/completions";
 
   const payload = {
@@ -612,7 +854,9 @@ function BF_callOpenAI_Backfill_(systemPrompt, columnId) {
   }
 
   if (data.error) {
-    throw new Error("OpenAI error: " + (data.error.message || JSON.stringify(data.error)));
+    throw new Error(
+      "OpenAI error: " + (data.error.message || JSON.stringify(data.error))
+    );
   }
 
   const answer =
@@ -625,11 +869,13 @@ function BF_callOpenAI_Backfill_(systemPrompt, columnId) {
 }
 
 /*************************************************
- * 6) Small utilities
+ * 7) Small utilities
  **************************************************/
 
 function BF_findHeaderIndex_(headers, candidates) {
-  const lowerCandidates = candidates.map(function (c) { return c.toLowerCase(); });
+  const lowerCandidates = candidates.map(function (c) {
+    return c.toLowerCase();
+  });
   for (let i = 0; i < headers.length; i++) {
     const h = (headers[i] || "").toString().trim().toLowerCase();
     if (!h) continue;

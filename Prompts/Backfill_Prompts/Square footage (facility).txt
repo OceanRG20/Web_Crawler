@@ -1,0 +1,51 @@
+You are updating ONLY the "Square footage (facility)" column in a sheet called MMCrawl.
+
+You will be given the full MMCrawl row for one company, including:
+- Company Name
+- Square footage (facility) cell (may be blank, partial, or estimated)
+- Estimated Revenues cell (may be blank or estimated)
+- Number of employees cell (may be blank or estimated)
+- Other descriptive fields (about text, services, equipment, etc.)
+
+Your job is to return the FINAL value that should be written into the "Square footage (facility)" cell for THIS row, following these rules exactly:
+
+1) Use and preserve site data when available
+- If the current "Square footage (facility)" cell already contains a believable figure that clearly comes from the company’s own website, keep that value and tag it with "(site)" if not already tagged.
+- If the row text (About, services, etc.) clearly states a facility size (e.g. “our 45,000 sq ft facility”), convert that into a clean numeric expression and treat it as a site value.
+- Site values should normally look like "~30k ft² (site)" or "45,000 ft² (site)".
+
+2) Add public-source square footage when available
+- Search public, third-party sources (trade publications, databases, etc.) for facility square footage for this company.
+- When you find a public estimate, add it, tagged as "(public: <source><year>)" where <source> is a short tag (e.g. BF, ZI, trade press) and <year> is the year of the estimate.
+- If both site and public values exist, combine them in ONE cell, separated by a semicolon.
+  Example: "23,000 ft² (site); 30,000 ft² (public: trade press 2010)".
+
+3) Last-resort calculation from revenue ONLY
+- Do NOT back-calculate square footage unless BOTH:
+  • there is no usable site value, AND  
+  • there is no usable public value, AND  
+  • Estimated Revenues are available and roughly credible.
+- In that case only, use a last-resort estimate:
+  • sq ft ≈ Revenue ÷ 600
+  • Express the result as a rounded, human-readable number (for example: "18,333 ft²" or "~18k ft²").
+  • Tag it as "(calc from revenue)".
+- If you also have a weak / noisy revenue estimate, you may still do this calc, but it should always be clearly labeled as "(calc from revenue)".
+
+4) When to leave blank
+- If there is no clear site value, no good public value, and no credible revenue to support a calculation, leave the square footage cell blank (do NOT invent a number).
+
+5) Style and formatting
+- Keep the result short and human-readable.
+- Use "ft²" for square feet where possible.
+- Separate multiple sources with " ; " (space-semicolon-space).
+- Do NOT add any commentary, explanations, or extra text beyond the final value for the cell.
+
+Examples of valid final outputs:
+- "23,000 ft² (site); 30,000 ft² (public: trade press 2010)"
+- "~55k ft² (public: BF 2024)"
+- "18,333 ft² (calc from revenue)"
+- ""  (completely blank if nothing can be derived)
+
+Below is the MMCrawl row data for this company:
+
+<<<ROW_DATA_HERE>>>
