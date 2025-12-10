@@ -1,51 +1,121 @@
-You are updating ONLY the "Square footage (facility)" column in a sheet called MMCrawl.
+You are updating ONLY the "Square footage (facility)" cell for one company in the MMCrawl sheet.
 
-You will be given the full MMCrawl row for one company, including:
-- Company Name
-- Square footage (facility) cell (may be blank, partial, or estimated)
-- Estimated Revenues cell (may be blank or estimated)
-- Number of employees cell (may be blank or estimated)
-- Other descriptive fields (about text, services, equipment, etc.)
+You will be given the FULL MMCrawl row, including:
+- The current Square footage (facility) cell (may contain site info, public info, calculations, or be blank)
+- Estimated Revenues and Number of employees (may be blank)
+- All descriptive fields (About, Services, Equipment, Industries, etc.)
 
-Your job is to return the FINAL value that should be written into the "Square footage (facility)" cell for THIS row, following these rules exactly:
+Your job is to return the FINAL value that should be written into the "Square footage (facility)" cell for THIS row.
 
-1) Use and preserve site data when available
-- If the current "Square footage (facility)" cell already contains a believable figure that clearly comes from the company’s own website, keep that value and tag it with "(site)" if not already tagged.
-- If the row text (About, services, etc.) clearly states a facility size (e.g. “our 45,000 sq ft facility”), convert that into a clean numeric expression and treat it as a site value.
-- Site values should normally look like "~30k ft² (site)" or "45,000 ft² (site)".
+=====================================================
+RULE 0 — NEVER CHANGE THE MEANING
+=====================================================
+• Never delete an existing numeric datapoint.
+• Never invent a new numeric value that is not supported by site text, public sources, or the revenue formula below.
+• You MAY normalize wording/formatting (add “ft²”, change "(estimate)" to "(zoominfo)", fix spacing, standardize separators), but the underlying numbers and provenance must stay the same.
 
-2) Add public-source square footage when available
-- Search public, third-party sources (trade publications, databases, etc.) for facility square footage for this company.
-- When you find a public estimate, add it, tagged as "(public: <source><year>)" where <source> is a short tag (e.g. BF, ZI, trade press) and <year> is the year of the estimate.
-- If both site and public values exist, combine them in ONE cell, separated by a semicolon.
-  Example: "23,000 ft² (site); 30,000 ft² (public: trade press 2010)".
+=====================================================
+RULE 1 — MAXIMUM TWO ITEMS PER CELL
+=====================================================
+The final cell may contain:
+- Up to TWO numeric items (e.g. a site value and a public value, or a site value and a calc-from-revenue value), OR
+- A single token "NI", OR
+- A single token "refer to site".
 
-3) Last-resort calculation from revenue ONLY
-- Do NOT back-calculate square footage unless BOTH:
-  • there is no usable site value, AND  
-  • there is no usable public value, AND  
-  • Estimated Revenues are available and roughly credible.
-- In that case only, use a last-resort estimate:
-  • sq ft ≈ Revenue ÷ 600
-  • Express the result as a rounded, human-readable number (for example: "18,333 ft²" or "~18k ft²").
-  • Tag it as "(calc from revenue)".
-- If you also have a weak / noisy revenue estimate, you may still do this calc, but it should always be clearly labeled as "(calc from revenue)".
+When more than two numeric items are available, keep at most TWO according to this priority:
+1) Site value (highest priority)
+2) Public value
+3) Calc-from-revenue value (lowest priority)
 
-4) When to leave blank
-- If there is no clear site value, no good public value, and no credible revenue to support a calculation, leave the square footage cell blank (do NOT invent a number).
-
-5) Style and formatting
-- Keep the result short and human-readable.
-- Use "ft²" for square feet where possible.
-- Separate multiple sources with " ; " (space-semicolon-space).
-- Do NOT add any commentary, explanations, or extra text beyond the final value for the cell.
-
-Examples of valid final outputs:
-- "23,000 ft² (site); 30,000 ft² (public: trade press 2010)"
-- "~55k ft² (public: BF 2024)"
+Examples of allowed combinations:
+- "23,000 ft² (site); 30,000 ft² (public: BF 2024)"
+- "40,000 ft² (site); 55,000 ft² (calc from revenue)"
+- "~30k ft² (public: ZI 2023)"
 - "18,333 ft² (calc from revenue)"
-- ""  (completely blank if nothing can be derived)
+- "NI"
+- "refer to site"
 
-Below is the MMCrawl row data for this company:
+Disallowed (do NOT output):
+- Three or more numeric items separated by semicolons.
 
+=====================================================
+2) START FROM THE EXISTING CELL (NORMALIZE IF NEEDED)
+=====================================================
+Let “baseline” be the current Square footage (facility) value (may be empty).
+
+If baseline is NOT empty:
+- Preserve all numeric datapoints and their tags.
+- You may clean up formatting:
+  • Ensure each numeric item includes “ft²” somewhere.
+  • Normalize "(estimate)" → "(zoominfo)" when it clearly refers to a ZoomInfo-type estimate.
+  • Standardize separators as:  "<value 1>; <value 2>" (semicolon + single space).
+- Identify which items are:
+  • site items → tagged "(site)"
+  • public items → tagged "(public: ...)"
+  • calc items → tagged "(calc from revenue)" or obviously equivalent.
+- If there are more than two numeric items, keep at most TWO according to the priority:
+  1) keep the best site item
+  2) keep the best public item (if present)
+  3) otherwise, if needed to reach two items, keep ONE calc-from-revenue item
+  Discard any additional, lower-priority items when there would be more than two in total.
+
+If baseline is empty:
+- You will construct the value from rules 3–5.
+
+=====================================================
+3) ADD SITE VALUE IF MISSING
+=====================================================
+Look for facility size in the row text (About, Services, etc.), e.g.:
+- “our 45,000 sq ft facility”
+- “a 30,000-square-foot plant”
+- “20k ft2 shop”
+
+If you find a clear site facility size AND there is no "(site)" item in baseline AND you still have fewer than two total numeric items:
+- Extract and normalize it, e.g. "45,000 ft² (site)" or "~30k ft² (site)".
+- Add it to the value (respecting the max-two-items rule).
+
+=====================================================
+4) ADD PUBLIC VALUE IF MISSING
+=====================================================
+If you can find a credible public estimate for facility size (e.g., BF, ZoomInfo, trade press) AND there is no "(public: ...)" item AND you still have fewer than two total numeric items:
+- Add a new item such as:
+  "~30k ft² (public: BF 2024)"
+  "~25k ft² (public: ZI 2023)"
+
+=====================================================
+5) LAST-RESORT CALCULATION FROM REVENUE
+=====================================================
+Only perform a revenue-based square footage calculation when ALL of the following are true:
+1) There is NO "(site)" item.
+2) There is NO "(public: ...)" item.
+3) Estimated Revenues is available and roughly credible.
+4) You still have fewer than two numeric items.
+
+Then:
+- Approximate square_footage ≈ Revenue ÷ 600
+- Express as:
+  "18,333 ft² (calc from revenue)"
+  or "~18k ft² (calc from revenue)"
+
+=====================================================
+6) WHEN TO RETURN "NI" OR "REFER TO SITE"
+=====================================================
+After applying all steps:
+
+• If you still have ZERO numeric items and there is NO convincing evidence anywhere in the row that the facility size exists or is discussed → return "NI".
+
+• If you still have ZERO numeric items but the row clearly talks about the plant / facility in a way that suggests a size is known but not stated (e.g., “our large multi-building facility”, “multi-plant campus”) → return "refer to site".
+
+• If you have one or two numeric items → return those items only (no "NI" or "refer to site" in combination with numbers).
+
+=====================================================
+7) OUTPUT FORMAT
+=====================================================
+• Output ONE final line only.
+• Use "ft²" for square feet.
+• Separate multiple items with "; " (semicolon + single space).
+• Do NOT output more than TWO numeric items.
+• No commentary or explanation; ONLY the final cell value.
+
+ROW DATA:
 <<<ROW_DATA_HERE>>>
