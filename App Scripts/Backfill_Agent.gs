@@ -27,6 +27,7 @@ function onOpen_Backfill(ui) {
   // --- Columns Backfill (Manual) submenu ---
   const manualSubMenu = ui.createMenu("▶ Columns Backfill (Manual)")
     .addItem("Equipment + CNC 3 & 5-axis", "BF_runBackfill_EquipmentCNCCombo")
+    .addItem("Ownership + Family business", "BF_runBackfill_OwnershipFamilyCombo")
     .addItem("Number of employees", "BF_runBackfill_NumberOfEmployees")
     .addItem("Estimated Revenues", "BF_runBackfill_EstimatedRevenues")
     .addItem("Square footage (facility)", "BF_runBackfill_SquareFootage")
@@ -35,12 +36,13 @@ function onOpen_Backfill(ui) {
     // .addItem("Equipment", "BF_runBackfill_Equipment")
     // .addItem("CNC 3-axis", "BF_runBackfill_CNC3Axis")
     // .addItem("CNC 5-axis", "BF_runBackfill_CNC5Axis")
-    .addItem("Ownership", "BF_runBackfill_Ownership")
+    // .addItem("Ownership", "BF_runBackfill_Ownership")
     .addItem("Spares/ Repairs", "BF_runBackfill_SparesRepairs")
-    .addItem("Family business", "BF_runBackfill_FamilyBusiness")
+    // .addItem("Family business", "BF_runBackfill_FamilyBusiness")
     .addItem("2nd Address", "BF_runBackfill_SecondAddress")
     .addItem("Region", "BF_runBackfill_Region")
     .addItem("Medical", "BF_runBackfill_Medical");
+
 
   // --- Backfill main menu ---
   ui.createMenu("Backfill")
@@ -168,6 +170,60 @@ function BF_runBackfill_EquipmentCNCCombo() {
     throw e;
   }
 }
+
+/**
+ * Combined backfill runner:
+ * 1. Ownership
+ * 2. Family business
+ */
+function BF_runBackfill_OwnershipFamilyCombo() {
+  const ss = SpreadsheetApp.getActive();
+  const ui = SpreadsheetApp.getUi();
+
+  const rangeInfo = BF_promptForRowRange_(ui);
+  if (!rangeInfo) return;
+
+  const startRow = rangeInfo.startRow;
+  const endRow = rangeInfo.endRow;
+
+  try {
+    ui.alert("Starting combined backfill:\nOwnership → Family business");
+
+    // 1) Ownership
+    ss.toast(
+      "Running Ownership backfill… (rows " + startRow + "-" + endRow + ")",
+      "Backfill progress",
+      5
+    );
+    BF_runBackfillForColumnId_("Ownership", startRow, endRow);
+
+    // 2) Family business
+    ss.toast(
+      "Running Family business backfill…",
+      "Backfill progress",
+      5
+    );
+    BF_runBackfillForColumnId_("Family business", startRow, endRow);
+
+    ui.alert(
+      "Combined Backfill Complete.\n" +
+      "Processed rows: " + startRow + " - " + endRow + "\n" +
+      "Steps completed:\n" +
+      " • Ownership\n" +
+      " • Family business"
+    );
+
+    ss.toast(
+      "Ownership + Family business Backfill finished.",
+      "Backfill progress",
+      5
+    );
+  } catch (e) {
+    ui.alert("Error during combined backfill:\n" + e);
+    throw e;
+  }
+}
+
 
 /*************************************************
  * 2) Backfill from News (non-GPT, merges "Specific Value")
@@ -606,6 +662,14 @@ function BF_runBackfillForColumnId_(columnId, startRow, endRow) {
     // Call OpenAI to get new cell value
     let cellValue = BF_callOpenAI_Backfill_(systemPrompt, columnId);
 
+    // Re-order multi-part answers for specific columns:
+    // Best = (site), then (calc ...), then (public: ...)
+    if (columnId === "Number of employees") {
+      cellValue = BF_normalizeEmployeesOrder_(cellValue);
+    } else if (columnId === "Estimated Revenues") {
+      cellValue = BF_normalizeRevenueOrder_(cellValue);
+    }
+
     // IMPORTANT: protect any client "by hand" notes in existing cell
     cellValue = BF_mergeByHand_(existingStr, cellValue);
 
@@ -862,3 +926,65 @@ function BF_mergeByHand_(existingStr, newStr) {
   }
   return existing + " ; " + updated;
 }
+
+/**
+ * Normalize order for "Number of employees" cell.
+ * Priority:
+ *   0: segments tagged with "(site"
+ *   1: segments tagged with "(calc"
+ *   2: segments tagged with "(public:"
+ */
+function BF_normalizeEmployeesOrder_(value) {
+  if (value == null) return value;
+  var trimmed = String(value).trim();
+  if (!trimmed || trimmed === "NI") return trimmed;
+
+  var parts = trimmed.split(/\s*;\s*/).filter(function (p) { return p; });
+  if (parts.length <= 1) return trimmed;
+
+  function rankEmployeePart(p) {
+    var s = p.toLowerCase();
+    if (s.indexOf("(site") !== -1)   return 0; // best
+    if (s.indexOf("(calc") !== -1)   return 1; // middle
+    if (s.indexOf("(public:") !== -1) return 2; // least
+    return 1; // unknown → treat like calc
+  }
+
+  parts.sort(function (a, b) {
+    return rankEmployeePart(a) - rankEmployeePart(b);
+  });
+
+  return parts.join("; ");
+}
+
+/**
+ * Normalize order for "Estimated Revenues" cell.
+ * Priority:
+ *   0: "(news" or "(site"
+ *   1: "(calc"
+ *   2: "(public:"
+ */
+function BF_normalizeRevenueOrder_(value) {
+  if (value == null) return value;
+  var trimmed = String(value).trim();
+  if (!trimmed || trimmed === "NI") return trimmed;
+
+  var parts = trimmed.split(/\s*;\s*/).filter(function (p) { return p; });
+  if (parts.length <= 1) return trimmed;
+
+  function rankRevenuePart(p) {
+    var s = p.toLowerCase();
+    if (s.indexOf("(news") !== -1)  return 0; // best factual
+    if (s.indexOf("(site") !== -1)  return 0; // treat site same as news
+    if (s.indexOf("(calc") !== -1)  return 1;
+    if (s.indexOf("(public:") !== -1) return 2;
+    return 1;
+  }
+
+  parts.sort(function (a, b) {
+    return rankRevenuePart(a) - rankRevenuePart(b);
+  });
+
+  return parts.join("; ");
+}
+

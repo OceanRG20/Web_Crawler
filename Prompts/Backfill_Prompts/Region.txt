@@ -13,7 +13,7 @@ RULES:
 1. SKIP LOGIC
    - If Region already contains any valid region code:
        W.Pa, RT-NC, Mich, Minn, Wisc, Ilin, E.Mass,
-       NJ-E.Pa, SLC, FR-Col
+       NJ-E.Pa, SLC, FR-Col, Canada
      → Return the existing value exactly (do NOT change it).
 
 2. BACKFILL ONLY when Region is:
@@ -55,6 +55,25 @@ RULES:
    Boulder–Denver CO → "FR-Col"
      - Boulder / Denver / Front Range, Colorado
 
+   CANADA → "Canada"
+     Assign "Canada" when ANY of the following are true:
+       - State/Province contains a Canadian province or abbreviation:
+           ON, Ont, Ontario
+           QC, Que, Quebec, Québec
+           BC, British Columbia
+           AB, Alberta
+           MB, Manitoba
+           SK, Saskatchewan
+           NB, New Brunswick
+           NS, Nova Scotia
+           NL, Newfoundland, Newfoundland and Labrador
+           PE, Prince Edward Island
+           YT, Yukon
+           NT, Northwest Territories
+           NU, Nunavut
+       - OR address text contains “Canada”
+       - OR postal code matches Canadian format (e.g., “K1A 0B1”, “V6E 2Y3”)
+
 4. DEFAULT CASE
    - If none of the above regions match:
        → Region = "No region"
@@ -62,3 +81,4 @@ RULES:
 5. OUTPUT FORMAT
    - Output only the region code.
    - ONE line only.
+

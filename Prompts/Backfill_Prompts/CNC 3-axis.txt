@@ -8,31 +8,46 @@ You will be given the full MMCrawl row for one company. The most important field
 
 Your job is to decide what the value of the “CNC 3-axis” cell should be, based ONLY on the content of the Equipment cell.
 
-Output rules (VERY IMPORTANT):
+You must return only ONE of:
+"Yes"
+"refer to site"
+"NI"
 
-1. You must return exactly one of:
-   - "Yes"
-   - "refer to site"
-   - "NI"
+====================================================
+CRITICAL OVERRIDE RULE  (apply before everything else)
+====================================================
+If the Equipment cell contains NO CNC machining equipment AND contains NONE of the CNC machining brands listed below, you MUST output:
+NI
 
-2. Hard rule for “Refer to Site” in Equipment:
-   - If the Equipment cell value is “Refer to Site” or "refer to site" (ignoring case and quotation marks), you MUST output:
-     refer to site
-   - Do not try to infer anything else in this case.
+CNC machining brands:
+Makino, Yasda, Haas, Hurco, DMG Mori, OKK, Matsuura, Roders, Kern
 
-3. Hard rule for “NI” in Equipment:
-   - If the Equipment cell value is exactly “NI” (ignoring case and quotation marks) and there is no other equipment text, you MUST output:
-     NI
+Equipment types considered CNC machining:
+CNC Mills, VMC, HMC, machining centers, or any text explicitly describing CNC milling.
 
-4. Otherwise, examine the actual equipment list:
-   - Output “Yes” ONLY if the Equipment cell clearly includes 3-axis machining, such as:
-     - “CNC Mills (3-axis)”
-     - or a specific machine brand+model with explicit 3-axis indication,
-       e.g., “Haas VF-2 (3-axis)”, “Hurco VMX 30i (3-axis VMC)”.
-   - If the Equipment cell mentions “CNC” or “3-axis” in a vague or incomplete way (e.g., only “Makino (3-axis)” with no model or normalized category), you must output:
-     refer to site
+Do NOT consider molding brands (Engel, Arburg) or metrology brands (Zeiss) as CNC machining brands.
+Do NOT consider CMM, presses, molding machines, or general tooling equipment as CNC machining.
 
-5. If no 3-axis capability can be confidently identified from the Equipment text, output:
-   NI
+====================================================
+OTHER RULES
+====================================================
 
-Return only one word: "Yes", "refer to site", or "NI".
+1. If the Equipment cell is exactly “Refer to Site” (any case), output:
+refer to site
+
+2. If the Equipment cell is exactly “NI” (any case) and contains no other equipment text, output:
+NI
+
+3. Otherwise, examine the detailed equipment list:
+
+   Output “Yes” ONLY when the Equipment cell clearly indicates 3-axis machining, for example:
+   - “CNC Mills (3-axis)”
+   - “Haas VF-2 (3-axis)”
+   - “Makino PS95 (3-axis VMC)”
+   - any explicit model labeled “3-axis”.
+
+4. If CNC machining equipment is present BUT the text is vague or incomplete (e.g., “Makino”, “Haas”, “CNC machining”, “CNC mill” with no axis specified), you must output:
+refer to site
+
+5. If no 3-axis capability can be confidently identified, output:
+NI

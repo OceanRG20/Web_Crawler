@@ -8,39 +8,50 @@ You will be given the full MMCrawl row for one company, including:
 
 Your job is to return the FINAL value that should be written into the "Number of employees" cell for THIS row, following these rules exactly:
 
-1) Start from the CURRENT value in the Number of employees column:
-   - If it already contains a site-based value (for example a value scraped from the company’s own website), keep that value and tag it with " (site)" if not already tagged.
+====================================================
+PRIORITY ORDER (MANDATORY)
+1) Site-based value (highest accuracy)
+2) Calculated value (medium accuracy)
+3) Public / 3rd-party estimate (least accurate)
+Always output values in this exact order.
+====================================================
+
+1) START WITH EXISTING SITE VALUE  
+   - If the cell already contains a site-derived value, keep it and tag with "(site)" if not already tagged.  
    - Example: "50" → "50 (site)"
 
-2) Use your general knowledge of public business data (directories such as ZoomInfo, LinkedIn ranges, etc.) to estimate a realistic current headcount for THIS specific company:
-   - If you can infer a specific number or range from public-type information, add a second value in the same cell, tagged as "(public: BF 2024)".
-   - Example: "~45 (public: BF 2024)"
-   - Treat this as a rough but defensible public-data estimate, not an exact count.
+2) ADD CALCULATED EMPLOYEE COUNT (IF NEEDED)  
+   - Use ONLY when:
+       • no site value exists, OR  
+       • the calculated value adds meaningful clarity.  
+   - Calculation formula:  
+       employees ≈ revenue_dollars ÷ 200,000  
+   - Round to the nearest whole number.  
+   - Tag as "(calc from revenue_site)".  
+   - This MUST appear **after site values** and **before public estimates**.
 
-3) Combine site and public values when both exist:
-   - Use a semicolon and a space between them.
-   - Example final cell: "35+ (site); ~45 (public: BF 2024)"
+3) ADD PUBLIC / 3RD-PARTY EMPLOYEE ESTIMATE  
+   - If you can infer a plausible public estimate (ZoomInfo-type data), tag as:  
+       "~40 (public: BF 2024)"  
+   - Public estimates must always appear LAST.
 
-4) If there is NO reliable site value and NO realistic public estimate, but the Estimated Revenues cell is non-blank:
-   - Use the revenue to back-calculate an approximate employee count:
-       employees ≈ (revenue in dollars) ÷ 200,000
-   - Round to the nearest whole number.
-   - Return a single value with the tag "(calc from revenue_site)".
-   - Example: "69 (calc from revenue_site)"
+4) COMBINING VALUES  
+   - Separate each value with "; "  
+   - Required output order:  
+       1) site  
+       2) calc  
+       3) public  
+   - Example final outputs:  
+       "50 (site); 69 (calc from revenue_site)"  
+       "50 (site); ~70 (public: BF 2024)"  
+       "50 (site); 69 (calc from revenue_site); ~70 (public: BF 2024)"  
+       "69 (calc from revenue_site)"  
+       "69 (calc from revenue_site); ~70 (public: BF 2024)"
 
-5) If there is already a clear, tagged combination (e.g., "50 (site); ~70 (public: BF 2024)"), you may keep it as-is unless you see an obviously better public estimate.
+5) WHEN NOTHING CAN BE DETERMINED  
+   - If no site, no calc, and no public signals exist → output "" (blank).
 
-6) If you truly cannot infer ANY plausible value (no site signal, no believable public estimate, no usable revenue), return an empty string (blank). Do NOT write "unknown" or "n/a".
-
-7) Output format rules:
-   - Keep the result SHORT and human-readable.
-   - Use one cell string only, e.g.:
-       "35+ (site); ~45 (public: BF 2024)"
-       "69 (calc from revenue_site)"
-       "50 (site)"
-   - Do NOT add any explanation, notes, or extra text outside that one cell value.
-
-Below is the MMCrawl row for this company. Use it to apply the rules above and return only the final Number of employees cell value for this row.
+Return ONLY the final Number of employees cell value.
 
 MMCrawl row:
 <<<ROW_DATA_HERE>>>
