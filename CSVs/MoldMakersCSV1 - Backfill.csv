@@ -1,2115 +1,756 @@
-Column_ID,Prompt_Content,Result
-Target Status,"You are an AI data analyst assisting with automated column backfilling in a structured dataset (MMCrawl sheet).
-
-## Objective
-Given one MMCrawl row (company record) as input, determine the correct **Target Status** code using the classification rules below.
-
-You must return a **pure JSON object** containing only:
-{ ""Target Status"": ""..."" }
-
-## Target Status Rules
-| Code | Meaning | Criteria |
-|------|----------|----------|
-| **CY** | Confirmed Target (Yes) | U.S.-based; privately held or family-owned; advanced moldmaking capabilities (e.g., Makino, Yasda, Sodick, 5-axis CNC, LSR, Class 101); serves high-value industries such as Medical, Aerospace, or Defense; typically <100 employees or <$25M revenue. |
-| **C?** | Potential Target (Maybe) | Appears relevant (mold/tooling/manufacturing) but lacks sufficient info about ownership, equipment, or industry focus. Needs manual confirmation. |
-| **CX** | Excluded (No) | Clearly outside target scope — e.g., mass-production molder, multinational firm, overseas HQ, or high-volume plastic parts producer. Not precision toolmaker. |
-| **C** | Candidate (Neutral) | Default when data is insufficient; keep for future review. |
-
-## Input Format
-You will receive exactly **one** MMCrawl row as JSON, with all standard columns (Company Name, Ownership, Industries served, Equipment, etc.).
-
-## Output Format
-Return only a single valid JSON object:
-{ ""Target Status"": ""CY"" }
-
-## Guidelines
-- Use “CY” for clear precision moldmakers (Medical/Aerospace/Defense, advanced equipment).
-- Use “CX” for mass or overseas producers.
-- Use “C?” if unclear or incomplete.
-- Default to “C” otherwise.
-- **No commentary, no markdown, no explanation — only valid JSON.**
-","Backfilling ""Target Status"" — 11/11/2025, 10:20:42 PM
-
-Row 2: Skipped — no change or empty result
-Row 3: Skipped — no change or empty result
-Row 4: Skipped — no change or empty result
-
-— Run complete: ""Target Status"" — 11/11/2025, 10:20:47 PM
-Updated: 0  |  Skipped: 3  |  Errors: 0
-No rows updated."
-Status (proposed),"You are an AI data analyst assisting with automated column backfilling in a structured dataset (MMCrawl sheet).
-
-## Objective
-Given one MMCrawl row (company record) as input, generate a concise justification for the company’s **Target Status** classification.
-
-You must return a **pure JSON object** containing only:
-{ ""Status (proposed)"": ""..."" }
-
-## Input Format
-You will receive exactly one MMCrawl row as JSON.
-
-## Output Format
-Return only one valid JSON object, for example:
-{ ""Status (proposed)"": ""High-precision LSR and medical moldmaker — strong fit"" }
-
-## Guidelines
-- Write one short phrase or sentence explaining the Target Status.
-- Examples:
-  - ""High-precision LSR and medical moldmaker — strong fit""
-  - ""Large-scale packaging molder — exclude""
-  - ""Needs manual check — limited ownership data""
-  - ""Privately held precision mold shop in Michigan — strong fit""
-- If reasoning cannot be clearly inferred, return:
-{ ""Status (proposed)"": """" }
-- **No commentary, no markdown, no explanation — only valid JSON.**
-","Backfilling ""Status (proposed)"" — 11/11/2025, 10:20:57 PM
-
-Row 2: OK — updated to ""Privately held, precision tooling and mold-making company — strong fit""
-Row 3: Skipped — no change or empty result
-Row 4: OK — updated to ""Privately held, family-owned medical mold shop — strong fit""
-
-— Run complete: ""Status (proposed)"" — 11/11/2025, 10:21:01 PM
-Updated: 2  |  Skipped: 1  |  Errors: 0
-Updated URLs (2):
-- 1 Source Design — http://1-sourcedesign.com/
-- M.R. Mold & Engineering Corp. — http://www.mrmold.com"
-Equipment,"You are an AI data analyst assisting with automated column backfilling in a structured dataset (MMCrawl sheet).
-
-## Objective
-Given one MMCrawl row (company record) as input, extract and normalize a single-line summary of the company’s **capital equipment**.
-
-You must return a **pure JSON object** containing only:
-{ ""Equipment"": ""..."" }
-
-## Equipment Normalization Rules
-- Provide a single normalized line listing only **capital equipment**:
-  - CNC mills, EDM, gun drill/deep-hole drill, laser welder, CMM/metrology, and injection molding tryout presses.
-- Format: “Brand Model (Type/Axis) ×qty; …”  
-- List most advanced machines first; maximum 10 items.
-- Axis inference:
-  - Only infer axis if explicitly stated or if the model is widely known.
-  - Default VMC/HMC to “(3-axis)” when unspecified.
-
-## Inclusion
-- CNC Mills (3-axis, 4-axis, 5-axis, VMC, HMC, gantry, graphite)
-- EDMs (Wire, Sinker, Hole-Popper/Fast Hole)
-- Gun Drill / Deep Hole Drill
-- Laser Welders (e.g., Alpha Laser, Trumpf)
-- CMM / Metrology Systems (Zeiss, Mitutoyo, Hexagon)
-- Injection Molding Tryout Presses (Arburg, Engel, Wittmann, Van Dorn)
-
-## Exclusion
-- Software, hand tools, grinders, saws
-- Generic phrases (“state-of-the-art machines”)
-- Non-capital equipment
-
-## Input Format
-You will receive exactly one MMCrawl row as JSON, including “Products and services offered” and “Equipment” text if available.
-
-## Output Format
-Return only one valid JSON object, for example:
-{ ""Equipment"": ""Makino D200Z (5-axis) ×2; Sodick AG60L (Sinker EDM); Zeiss Contura (CMM)"" }
-
-If no valid capital equipment found → return exactly:
-{ ""Equipment"": """" }
-
-## Guidelines
-- Keep results concise and standardized.
-- Ensure output contains only valid JSON — no commentary, no markdown, no explanation.
-","Backfilling ""Equipment"" — 11/28/2025, 4:52:40 AM
-
-Row 2: Skipped — no change or empty result
-Row 3: OK — updated to ""null""
-Row 4: OK — updated to ""null""
-Row 5: OK — updated to ""null""
-Row 6: OK — updated to ""null""
-
-— Run complete: ""Equipment"" — 11/28/2025, 4:52:47 AM
-Updated: 4  |  Skipped: 1  |  Errors: 0
-Updated URLs (4):
-- Reardon Machine Company, INC — https://reardonmachine.com/
-- Burger & Brown Engineering, Inc. — https://www.burgereng.com/
-- Excel Tool & Mfg. — https://www.exceltool.com/
-- De Boer Tool — https://deboertool.com/"
-CNC 3-axis,"You are an AI data analyst assisting with automated column backfilling in a structured dataset (MMCrawl sheet).
-
-## Objective
-Given one MMCrawl row (company record) as input, determine whether the company operates **CNC 3-axis** machinery.
-
-You must return a **pure JSON object** containing only:
-{ ""CNC 3-axis"": ""..."" }
-
-## Rules
-- Return ""Yes"" if any 3-axis CNC, VMC, or HMC equipment is listed or implied.
-- Otherwise return an empty string.
-
-## Input Format
-One MMCrawl row as JSON.
-
-## Output Format
-Example:
-{ ""CNC 3-axis"": ""Yes"" }
-
-If not detected:
-{ ""CNC 3-axis"": """" }
-
-**No commentary, no markdown, no explanation — only valid JSON.**
-","Backfilling ""CNC 3-axis"" — 11/28/2025, 4:53:00 AM
-
-Row 2: Skipped — no change or empty result
-Row 3: OK — updated to ""Yes""
-Row 4: OK — updated to ""Yes""
-Row 5: Skipped — no change or empty result
-Row 6: Skipped — no change or empty result
-
-— Run complete: ""CNC 3-axis"" — 11/28/2025, 4:53:09 AM
-Updated: 2  |  Skipped: 3  |  Errors: 0
-Updated URLs (2):
-- Reardon Machine Company, INC — https://reardonmachine.com/
-- Burger & Brown Engineering, Inc. — https://www.burgereng.com/"
-CNC 5-axis,"You are an AI data analyst assisting with automated column backfilling in a structured dataset (MMCrawl sheet).
-
-## Objective
-Given one MMCrawl row (company record) as input, determine whether the company operates **CNC 5-axis** machinery.
-
-You must return a **pure JSON object** containing only:
-{ ""CNC 5-axis"": ""..."" }
-
-## Rules
-- Return ""Yes"" if equipment includes 5-axis, Yasda, Makino, Kern, or similar advanced machines.
-- Otherwise return an empty string.
-
-## Input Format
-One MMCrawl row as JSON.
-
-## Output Format
-Example:
-{ ""CNC 5-axis"": ""Yes"" }
-
-If not detected:
-{ ""CNC 5-axis"": """" }
-
-**No commentary, no markdown, no explanation — only valid JSON.**
-","Backfilling ""CNC 5-axis"" — 11/28/2025, 4:53:28 AM
-
-Row 2: Skipped — no change or empty result
-Row 3: Skipped — no change or empty result
-Row 4: Skipped — no change or empty result
-Row 5: Skipped — no change or empty result
-Row 6: Skipped — no change or empty result
-
-— Run complete: ""CNC 5-axis"" — 11/28/2025, 4:53:35 AM
-Updated: 0  |  Skipped: 5  |  Errors: 0
-No rows updated."
-Spares/ Repairs,"You are an AI data analyst assisting with automated column backfilling in a structured dataset (MMCrawl sheet).
-
-## Objective
-Given one MMCrawl row (company record) as input, determine if the company provides **mold repair, maintenance, or spare parts** services.
-
-You must return a **pure JSON object** containing only:
-{ ""Spares/ Repairs"": ""..."" }
-
-## Rules
-- Return ""Yes"" if the company mentions “repair,” “maintenance,” “refurbish,” “mold repair,” or “spare parts.”
-- Otherwise return an empty string.
-
-## Input Format
-One MMCrawl row as JSON.
-
-## Output Format
-Example:
-{ ""Spares/ Repairs"": ""Yes"" }
-
-If not detected:
-{ ""Spares/ Repairs"": """" }
-
-**No commentary, no markdown, no explanation — only valid JSON.**","Backfilling ""Spares/ Repairs"" — 11/10/2025, 12:10:20 PM
-
-Row 2: Skipped — no change or empty result
-Row 3: Skipped — no change or empty result
-Row 4: Skipped — no change or empty result
-Row 5: Skipped — no change or empty result
-Row 6: Skipped — no change or empty result
-Row 7: Skipped — no change or empty result
-Row 8: Skipped — no change or empty result
-Row 9: Skipped — no change or empty result
-Row 10: Skipped — no change or empty result
-Row 11: Skipped — no change or empty result
-Row 12: Skipped — no change or empty result
-Row 13: Skipped — no change or empty result
-Row 14: Skipped — no change or empty result
-Row 15: Skipped — no change or empty result
-Row 16: Skipped — no change or empty result
-Row 17: Skipped — no change or empty result
-Row 18: Skipped — no change or empty result
-Row 19: Skipped — no change or empty result
-Row 20: Skipped — no change or empty result
-Row 21: Skipped — no change or empty result
-Row 22: Skipped — no change or empty result
-Row 23: Skipped — no change or empty result
-Row 24: Skipped — no change or empty result
-Row 25: Skipped — no change or empty result
-Row 26: Skipped — no change or empty result
-Row 27: Skipped — no change or empty result
-Row 28: Skipped — no change or empty result
-Row 29: Skipped — no change or empty result
-Row 30: Skipped — no change or empty result
-Row 31: Skipped — no change or empty result
-Row 32: Skipped — no change or empty result
-Row 33: Skipped — no change or empty result
-Row 34: Skipped — no change or empty result
-Row 35: Skipped — no change or empty result
-Row 36: Skipped — no change or empty result
-Row 37: Skipped — no change or empty result
-Row 38: Skipped — no change or empty result
-Row 39: Skipped — no change or empty result
-Row 40: Skipped — no change or empty result
-Row 41: Skipped — no change or empty result
-Row 42: Skipped — no change or empty result
-Row 43: Skipped — no change or empty result
-Row 44: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29961, Requested 758. Please try again in 1.438s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 45: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29371, Requested 768. Please try again in 278ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 46: Skipped — no change or empty result
-Row 47: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 745. Please try again in 1.49s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 48: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 770. Please try again in 1.54s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 49: Skipped — no change or empty result
-Row 50: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29970, Requested 777. Please try again in 1.494s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 51: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 759. Please try again in 1.518s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 52: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 767. Please try again in 1.534s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 53: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 776. Please try again in 1.552s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 54: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 764. Please try again in 1.528s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 55: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 760. Please try again in 1.52s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 56: Skipped — no change or empty result
-Row 57: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 768. Please try again in 1.536s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 58: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 765. Please try again in 1.53s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 59: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 766. Please try again in 1.532s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 60: Skipped — no change or empty result
-Row 61: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 770. Please try again in 1.54s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 62: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 761. Please try again in 1.522s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 63: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 767. Please try again in 1.534s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 64: Skipped — no change or empty result
-Row 65: Skipped — no change or empty result
-Row 66: Skipped — no change or empty result
-Row 67: Skipped — no change or empty result
-Row 68: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 769. Please try again in 1.538s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 69: Skipped — no change or empty result
-Row 70: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 760. Please try again in 1.52s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 71: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 757. Please try again in 1.514s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 72: Skipped — no change or empty result
-Row 73: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 739. Please try again in 1.478s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 74: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 751. Please try again in 1.502s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 75: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 760. Please try again in 1.52s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 76: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 756. Please try again in 1.512s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 77: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 749. Please try again in 1.498s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 78: Skipped — no change or empty result
-Row 79: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 773. Please try again in 1.546s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 80: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 757. Please try again in 1.514s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 81: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 754. Please try again in 1.508s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 82: Skipped — no change or empty result
-Row 83: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 737. Please try again in 1.474s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 84: Skipped — no change or empty result
-Row 85: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 752. Please try again in 1.504s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 86: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 744. Please try again in 1.488s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 87: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 752. Please try again in 1.504s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 88: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 743. Please try again in 1.486s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 89: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 832. Please try again in 1.664s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 90: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 774. Please try again in 1.548s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 91: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29806, Requested 786. Please try again in 1.184s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 92: Skipped — no change or empty result
-Row 93: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 742. Please try again in 1.484s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 94: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 783. Please try again in 1.566s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 95: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 749. Please try again in 1.498s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 96: Skipped — no change or empty result
-Row 97: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 778. Please try again in 1.556s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 98: Skipped — no change or empty result
-Row 99: Skipped — no change or empty result
-Row 100: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 764. Please try again in 1.528s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 101: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 781. Please try again in 1.562s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 102: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29493, Requested 742. Please try again in 469ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 103: Skipped — no change or empty result
-Row 104: Skipped — no change or empty result
-Row 105: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 768. Please try again in 1.536s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 106: Skipped — no change or empty result
-Row 107: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 782. Please try again in 1.564s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 108: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 771. Please try again in 1.542s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 109: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 791. Please try again in 1.582s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 110: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 768. Please try again in 1.536s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 111: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 758. Please try again in 1.516s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 112: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 773. Please try again in 1.546s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 113: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 772. Please try again in 1.544s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 114: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 767. Please try again in 1.534s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 115: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29242, Requested 763. Please try again in 10ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 116: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 780. Please try again in 1.56s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 117: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 782. Please try again in 1.564s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 118: Skipped — no change or empty result
-Row 119: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 774. Please try again in 1.548s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 120: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 766. Please try again in 1.532s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 121: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 779. Please try again in 1.558s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 122: Skipped — no change or empty result
-Row 123: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 779. Please try again in 1.558s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 124: Skipped — no change or empty result
-Row 125: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29511, Requested 773. Please try again in 568ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 126: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 770. Please try again in 1.54s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 127: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 765. Please try again in 1.53s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 128: Skipped — no change or empty result
-Row 129: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 771. Please try again in 1.542s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 130: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29334, Requested 780. Please try again in 228ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 131: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 769. Please try again in 1.538s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 132: Skipped — no change or empty result
-Row 133: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 786. Please try again in 1.572s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 134: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 764. Please try again in 1.528s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 135: Skipped — no change or empty result
-Row 136: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 774. Please try again in 1.548s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 137: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29772, Requested 765. Please try again in 1.074s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 138: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 757. Please try again in 1.514s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 139: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 753. Please try again in 1.506s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 140: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 754. Please try again in 1.508s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 141: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 746. Please try again in 1.492s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 142: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 769. Please try again in 1.538s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 143: Skipped — no change or empty result
-Row 144: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 801. Please try again in 1.602s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 145: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29239, Requested 771. Please try again in 20ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 146: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 760. Please try again in 1.52s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 147: Skipped — no change or empty result
-Row 148: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 760. Please try again in 1.52s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 149: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 745. Please try again in 1.49s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 150: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 768. Please try again in 1.536s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 151: Skipped — no change or empty result
-Row 152: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 759. Please try again in 1.518s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 153: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 776. Please try again in 1.552s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 154: Skipped — no change or empty result
-Row 155: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 751. Please try again in 1.502s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 156: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 748. Please try again in 1.496s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 157: Skipped — no change or empty result
-Row 158: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 752. Please try again in 1.504s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 159: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 749. Please try again in 1.498s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 160: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 746. Please try again in 1.492s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 161: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 752. Please try again in 1.504s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 162: Skipped — no change or empty result
-Row 163: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 748. Please try again in 1.496s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 164: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 768. Please try again in 1.536s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 165: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29307, Requested 771. Please try again in 156ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 166: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 777. Please try again in 1.554s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 167: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29339, Requested 774. Please try again in 226ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 168: Skipped — no change or empty result
-Row 169: Skipped — no change or empty result
-Row 170: Skipped — no change or empty result
-Row 171: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 798. Please try again in 1.596s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 172: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 797. Please try again in 1.594s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 173: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 743. Please try again in 1.486s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 174: Skipped — no change or empty result
-Row 175: Skipped — no change or empty result
-Row 176: Skipped — no change or empty result
-Row 177: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 781. Please try again in 1.562s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 178: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 738. Please try again in 1.476s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 179: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 794. Please try again in 1.588s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 180: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 804. Please try again in 1.608s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 181: Skipped — no change or empty result
-Row 182: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 764. Please try again in 1.528s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 183: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 754. Please try again in 1.508s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 184: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29538, Requested 807. Please try again in 690ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 185: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29209, Requested 814. Please try again in 46ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 186: Skipped — no change or empty result
-Row 187: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 842. Please try again in 1.684s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 188: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29419, Requested 770. Please try again in 378ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 189: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 799. Please try again in 1.598s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 190: Skipped — no change or empty result
-Row 191: Skipped — no change or empty result
-Row 192: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 828. Please try again in 1.656s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 193: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 791. Please try again in 1.582s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 194: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29251, Requested 789. Please try again in 80ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 195: Skipped — no change or empty result
-Row 196: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 786. Please try again in 1.572s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 197: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 771. Please try again in 1.542s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 198: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 797. Please try again in 1.594s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 199: Skipped — no change or empty result
-Row 200: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 782. Please try again in 1.564s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 201: Skipped — no change or empty result"
-Family business,"You are an AI data analyst assisting with automated column backfilling in a structured dataset (MMCrawl sheet).
-
-## Objective
-Given one MMCrawl row (company record) as input, detect whether the company is **family-owned**.
-
-You must return a **pure JSON object** containing only:
-{ ""Family business"": ""..."" }
-
-## Rules
-- Return ""Yes"" if the company description includes any of:
-  “family-owned,” “family business,” “second generation,” or “run by the [surname] family.”
-- Otherwise return an empty string.
-
-## Input Format
-One MMCrawl row as JSON.
-
-## Output Format
-Example:
-{ ""Family business"": ""Yes"" }
-
-If not detected:
-{ ""Family business"": """" }
-
-**No commentary, no markdown, no explanation — only valid JSON.**
-","Starting backfill for ""Family business""...
-Row 2 — updated: Family business
-Row 3 — updated: Family business
-Row 4 — updated: Family business
-Row 5 — updated: Family business
-Row 6 — updated: Family business
-
-Done. Updated rows: 5
-Updated URL list (5):
-- https://www.beaconmedtech.com
-- https://www.die-moldtool.com
-- https://www.triumphtool.com
-- https://www.precisionmoldsupplies.com
-- https://www.cirtecmed.com"
-2nd Address,"You are an AI data analyst assisting with automated column backfilling in a structured dataset (MMCrawl sheet).
-
-## Objective
-Given one MMCrawl row (company record) as input, identify any **secondary company addresses or facilities** beyond the main location.
-
-You must return a **pure JSON object** containing only:
-{ ""2nd Address"": ""..."" }
-
-## Rules
-- Return the additional address if multiple locations or branches are mentioned.
-- If no additional location, return an empty string.
-
-## Input Format
-One MMCrawl row as JSON.
-
-## Output Format
-Example:
-{ ""2nd Address"": ""123 Tooling Dr, Grand Rapids, MI"" }
-
-If not detected:
-{ ""2nd Address"": """" }
-
-**No commentary, no markdown, no explanation — only valid JSON.**
-",
-Region,"You are an AI data analyst assisting with automated column backfilling in a structured dataset (MMCrawl sheet).
-
-## Objective
-Given one MMCrawl row (company record) as input, determine the correct **Region** code using the location data — specifically the `City`, `State`, and `Zipcode` fields — according to the region assignment rules below.
-
-You must return a **pure JSON object** containing only:
-{ ""Region"": ""..."" }
-
-## Region Assignment Rules
-- Western Pennsylvania → `W.Pa`
-- Research Triangle (North Carolina) → `RT-NC`
-- Michigan → `Mich`
-- Minnesota → `Minn`
-- Wisconsin → `Wisc`
-- Illinois → `Ilin`
-- Boston area / Eastern Massachusetts → `E.Mass`
-- New Jersey & Eastern Pennsylvania → `NJ-E.Pa`
-- Salt Lake City metro area, Utah → `SLC`
-- Boulder–Denver metro area, Colorado → `FR-Col`
-- **Canada** (if postal code contains letters, e.g. `T9E 8T3`) → `Canada`
-- Else → `No region`
-
-## Input Format
-You will receive exactly **one** MMCrawl row as JSON, with keys corresponding to column headers:
-{
-  ""Company Name"": ""Acme Tool & Mold, Inc."",
-  ""Target Status"": """",
-  ""Status (proposed)"": """",
-  ""Public Website Homepage URL"": ""https://acmetool.com"",
-  ""Domain from URL"": ""acmetool.com"",
-  ""Source"": ""Perplexity"",
-  ""Street Address"": ""155 Franklin Rd, Suite 250"",
-  ""City"": ""Pittsburgh"",
-  ""State"": ""PA"",
-  ""Zipcode"": ""15219"",
-  ""Phone"": ""(412) 555-0188"",
-  ""Industries served"": ""Automotive, Medical"",
-  ""Products and services offered"": ""Tool and die making, injection mold design"",
-  ""Square footage (facility)"": ""20,000 ft²"",
-  ""Number of employees"": ""45"",
-  ""Estimated Revenues"": ""$5M"",
-  ""Years of operation"": ""25"",
-  ""Ownership"": ""Privately held"",
-  ""Equipment"": """",
-  ""CNC 3-axis"": """",
-  ""CNC 5-axis"": """",
-  ""Spares/ Repairs"": """",
-  ""Family business"": """",
-  ""2nd Address"": """",
-  ""Region"": """",
-  ""Medical"": ""Yes""
-}
-
-## Output Format
-Return **only** a single valid JSON object:
-{ ""Region"": ""W.Pa"" }
-
-## Guidelines
-- Determine the correct region from `City`, `State`, and `Zipcode`.
-- Use `Zipcode` and `City` to disambiguate overlapping cases (e.g., Eastern vs Western Pennsylvania).
-- If the company is Canadian (postal code with letters), output `""Canada""`.
-- If the location doesn’t fit any defined region, output `""No region""`.
-- **No commentary, no markdown, no explanation** — only valid JSON.","Backfilling ""Region"" — 11/28/2025, 9:02:22 AM
-
-Row 2: Skipped — no change or empty result
-Row 3: Skipped — no change or empty result
-Row 4: Skipped — no change or empty result
-Row 5: Skipped — no change or empty result
-Row 6: OK — updated to ""Canada""
-
-— Run complete: ""Region"" — 11/28/2025, 9:02:31 AM
-Updated: 1  |  Skipped: 4  |  Errors: 0
-Updated URLs (1):
-- De Boer Tool — https://deboertool.com/"
-Medical,"You are an AI analyst.
-
-## Objective
-Determine if the company serves the **medical or healthcare-related industry**.
-
-Return only:
-{ ""Medical"": ""Yes"" }
-
-## Criteria for ""Yes""
-Mark “Yes” if any of the following terms appear in **Industries served** or **Products and services offered**:
-- Medical, Medical Devices, Healthcare
-- Pharma, Pharmaceutical, Drug, Drug Delivery Device
-- Medicine, Implants, Prostheses
-- Surgical, Surgery, Diagnostic, Infusion Pump
-- Ophthalmology, Dental, Radiology
-- CGMP, QMS, Clinical, Cardiovascular, Biotech
-
-Otherwise, return an empty string.
-Return only JSON.
-","Backfilling ""Medical"" — 11/28/2025, 4:54:23 AM
-
-Row 2: Skipped — no change or empty result
-Row 3: Skipped — no change or empty result
-Row 4: Skipped — no change or empty result
-Row 5: Skipped — no change or empty result
-Row 6: Skipped — no change or empty result
-
-— Run complete: ""Medical"" — 11/28/2025, 4:54:29 AM
-Updated: 0  |  Skipped: 5  |  Errors: 0
-No rows updated."
-Square footage (facility),"You are an AI data analyst assisting with automated column backfilling in a structured dataset (MMCrawl sheet).
-
-You will receive ONE MMCrawl row as JSON. Your task is to decide the correct value for the column ""Square footage (facility)"".
-
-## Key principles
-
-1. **Primary source is the existing field**:
-   - Look first at row[""Square footage (facility)""].
-   - If it already contains a sensible value (e.g. ""~30000 (estimate)"", ""23,000 sq ft (site)"", ""~50,000 (public: BF 2024)""), simply return it unchanged.
-
-2. **When the field is blank/NI**:
-   - Search other text fields in the JSON (About, Ownership, Products and services offered, Notes, etc.) for explicit facility sizes such as:
-     - ""28,000 sq ft"", ""50,000 square-foot facility"", ""10500 sqft"", ""40k sq ft"", ""30,000–35,000 sq ft"".
-   - If you find a clear size, copy it into the output. Preserve any units (sq ft, sqft, ft²) and any parenthetical source/notes if present.
-   - If you find only vague phrases (""large facility"", ""small shop"") with no numeric size, DO NOT infer; treat as unknown.
-
-3. **Formatting / normalization rules**
-   - Preserve existing tilde ""~"" when already there.
-   - Keep commas or not exactly as in the source; do not invent extra precision.
-   - Example transformations:
-     - ""28000 sq ft (estimate)"" → ""28000 sq ft (estimate)"" (unchanged)
-     - ""~50000 ft² (public: BF 2024)"" → ""~50000 ft² (public: BF 2024)"" (unchanged)
-   - Do NOT convert to metric.
-
-4. **No guessing**
-   - Do NOT estimate size from employee count, revenue, or number of machines.
-   - If you cannot find any explicit numeric size, return an empty string """".
-
-## Output
-
-Return exactly one JSON object:
-
-{ ""Square footage (facility)"": ""<value or empty>"" }","Backfilling ""Square footage (facility)"" — 11/16/2025, 9:48:42 PM
-
-Row 2: Skipped — no change or empty result
-Row 3: Skipped — no change or empty result
-Row 4: Skipped — no change or empty result
-Row 5: Skipped — no change or empty result
-Row 6: Skipped — no change or empty result
-Row 7: Skipped — no change or empty result
-Row 8: Skipped — no change or empty result
-Row 9: Skipped — no change or empty result
-Row 10: Skipped — no change or empty result
-Row 11: Skipped — no change or empty result
-Row 12: Skipped — no change or empty result
-Row 13: Skipped — no change or empty result
-Row 14: Skipped — no change or empty result
-Row 15: Skipped — no change or empty result
-Row 16: Skipped — no change or empty result
-Row 17: Skipped — no change or empty result
-Row 18: Skipped — no change or empty result
-Row 19: Skipped — no change or empty result
-Row 20: Skipped — no change or empty result
-Row 21: Skipped — no change or empty result
-Row 22: Skipped — no change or empty result
-Row 23: Skipped — no change or empty result
-Row 24: Skipped — no change or empty result
-Row 25: Skipped — no change or empty result
-Row 26: Skipped — no change or empty result
-Row 27: Skipped — no change or empty result
-Row 28: Skipped — no change or empty result
-Row 29: Skipped — no change or empty result
-Row 30: Skipped — no change or empty result
-Row 31: Skipped — no change or empty result
-Row 32: Skipped — no change or empty result
-Row 33: Skipped — no change or empty result
-Row 34: Skipped — no change or empty result
-Row 35: Skipped — no change or empty result
-Row 36: Skipped — no change or empty result
-Row 37: Skipped — no change or empty result
-Row 38: Skipped — no change or empty result
-Row 39: Skipped — no change or empty result
-Row 40: Skipped — no change or empty result
-Row 41: Skipped — no change or empty result
-Row 42: Skipped — no change or empty result
-Row 43: Skipped — no change or empty result
-Row 44: Skipped — no change or empty result
-Row 45: Skipped — no change or empty result
-Row 46: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 28856, Requested 1317. Please try again in 346ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 47: Skipped — no change or empty result
-Row 48: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29109, Requested 1326. Please try again in 870ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 49: Skipped — no change or empty result
-Row 50: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29377, Requested 1252. Please try again in 1.258s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 51: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29127, Requested 1314. Please try again in 882ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 52: Skipped — no change or empty result
-Row 53: Skipped — no change or empty result
-Row 54: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 1312. Please try again in 2.624s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 55: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29681, Requested 1256. Please try again in 1.874s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 56: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29780, Requested 1297. Please try again in 2.154s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 57: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29082, Requested 1292. Please try again in 748ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 58: Skipped — no change or empty result
-Row 59: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29440, Requested 1246. Please try again in 1.372s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 60: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29055, Requested 1252. Please try again in 614ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 61: Skipped — no change or empty result
-Row 62: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29014, Requested 1266. Please try again in 560ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 63: Skipped — no change or empty result
-Row 64: Skipped — no change or empty result
-Row 65: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 1301. Please try again in 2.602s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 66: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29575, Requested 1360. Please try again in 1.87s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 67: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29238, Requested 1326. Please try again in 1.128s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 68: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 28871, Requested 1264. Please try again in 270ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 69: Skipped — no change or empty result
-Row 70: Skipped — no change or empty result
-Row 71: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 1278. Please try again in 2.556s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 72: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29461, Requested 1369. Please try again in 1.66s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 73: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29230, Requested 1313. Please try again in 1.086s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 74: Skipped — no change or empty result
-Row 75: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 28967, Requested 1242. Please try again in 418ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 76: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29079, Requested 1333. Please try again in 824ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 77: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 28726, Requested 1313. Please try again in 78ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 78: Skipped — no change or empty result
-Row 79: Skipped — no change or empty result
-Row 80: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29474, Requested 1253. Please try again in 1.454s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 81: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29133, Requested 1300. Please try again in 866ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 82: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 28818, Requested 1408. Please try again in 452ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 83: Skipped — no change or empty result
-Row 84: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 28666, Requested 1338. Please try again in 8ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 85: Skipped — no change or empty result
-Row 86: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 28835, Requested 1259. Please try again in 188ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 87: Skipped — no change or empty result
-Row 88: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29288, Requested 1290. Please try again in 1.156s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 89: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 28957, Requested 1259. Please try again in 432ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 90: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29089, Requested 1339. Please try again in 856ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 91: Skipped — no change or empty result
-Row 92: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 28858, Requested 1294. Please try again in 304ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 93: Skipped — no change or empty result
-Row 94: Skipped — no change or empty result
-Row 95: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 1322. Please try again in 2.644s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 96: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 30000, Requested 1312. Please try again in 2.624s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 97: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29497, Requested 1306. Please try again in 1.606s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 98: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29202, Requested 1224. Please try again in 852ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 99: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 28868, Requested 1275. Please try again in 286ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 100: Skipped — no change or empty result
-Row 101: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29027, Requested 1320. Please try again in 694ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 102: Skipped — no change or empty result
-Row 103: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29238, Requested 1288. Please try again in 1.052s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 104: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 28863, Requested 1309. Please try again in 344ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 105: Skipped — no change or empty result
-Row 106: Skipped — no change or empty result
-Row 107: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29827, Requested 1309. Please try again in 2.272s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 108: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29361, Requested 1296. Please try again in 1.314s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 109: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29100, Requested 1274. Please try again in 748ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 110: Skipped — no change or empty result
-Row 111: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29347, Requested 1288. Please try again in 1.27s. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 112: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 28826, Requested 1317. Please try again in 286ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 113: Skipped — no change or empty result
-Row 114: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 28878, Requested 1311. Please try again in 378ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-Row 115: Skipped — no change or empty result
-Row 116: ERROR — Error: HTTP 429: {
-    ""error"": {
-        ""message"": ""Rate limit reached for gpt-4o in organization org-4R2xYP720mz7Qoc5UCkeKMzg on tokens per min (TPM): Limit 30000, Used 29089, Requested 1265. Please try again in 708ms. Visit https://platform.openai.com/account/rate-limits to learn more."",
-        ""type"": ""tokens"",
-        ""param"": null,
-        ""code"": ""rate_limit_exceeded""
-    }
-}
-
-
-— Run complete: ""Square footage (facility)"" — 11/16/2025, 9:50:47 PM
-Updated: 0  |  Skipped: 70  |  Errors: 45
-No rows updated."
-Number of employees,"You are an AI data analyst assisting with automated column backfilling in a structured dataset (MMCrawl sheet).
-
-You will receive ONE MMCrawl row as JSON. Your task is to decide the correct value for the column ""Number of employees"".
-
-## Key principles
-
-1. **Primary source is the existing field**:
-   - Examine row[""Number of employees""].
-   - If it already has a usable value like:
-     - ""45+ (site)""
-     - ""~50 (estimate)""
-     - ""30 (site); ~35 (public: LinkedIn 2024)""
-     then simply return that value unchanged.
-
-2. **When the field is blank/NI**:
-   - Look through other fields (About, Ownership, Products and services offered, Notes, etc.) for explicit staff/headcount mentions:
-     - ""12 employees"", ""team of 20"", ""40-person operation"", ""staff of 30"", ""20–25 employees"", ""~50 employees"".
-   - Convert those into the same style:
-     - Keep the numeric part and any +, ~, or range as written.
-     - Attach an appropriate simple source in parentheses if clearly stated (e.g. ""(site)"", ""(public: LinkedIn 2024)"").
-   - If you only see vague terms (""small team"", ""dozens of employees"") with no clear number, you may return:
-     - ""dozens"" or ""hundreds"" (text) **only if that exact word appears**.
-   - Otherwise, if no clear count, return """".
-
-3. **No numeric guessing**
-   - Do NOT infer headcount from revenue, square footage, or number of CNC machines.
-   - If employees are not explicitly stated or obviously implied, leave it blank.
-
-## Output
-
-Return exactly one JSON object:
-
-{ ""Number of employees"": ""<value or empty>"" }
-",
-Estimated Revenues,"You are an AI data analyst assisting with automated column backfilling in a structured dataset (MMCrawl sheet).
-
-You will receive ONE MMCrawl row as JSON. Your task is to decide the correct value for the column ""Estimated Revenues"".
-
-Your main job is to **normalize the existing value** and avoid fabrication.
-
-## Step 1 — Use the existing field whenever possible
-
-1. Read row[""Estimated Revenues""].
-2. If it already looks well-formed, simply return it unchanged. Examples of “already good”:
-   - ""~5M (estimate)""
-   - ""~7.5M (public: ZoomInfo 2024)""
-   - ""$10–15M (public: ZoomInfo 2024)""
-   - ""~500K–750K (estimate)""
-
-Only try to transform when the value is a **plain large number** like:
-   - ""10000000 (estimate)""
-   - ""2000000 (site)""
-   - ""50000000 (public: D&B 2023)""
-
-## Step 2 — Normalization rules for plain large numbers
-
-When the value starts with a bare integer amount in dollars (no M/K/million words):
-
-1. Extract the first numeric token before any spaces or ""("".
-   - Example: ""10000000 (estimate)"" → 10000000.
-
-2. If the number is **one million or more**, convert to **millions with a leading tilde**:
-   - 1000000 → ""~1M""
-   - 2000000 → ""~2M""
-   - 10500000 → ""~10.5M""
-   - 50000000 → ""~50M""
-
-   Use at most one decimal place; drop .0.
-
-3. Preserve any existing parenthetical source/explanation after it:
-   - ""10000000 (estimate)"" → ""~10M (estimate)""
-   - ""2000000 (public: ZoomInfo 2024)"" → ""~2M (public: ZoomInfo 2024)""
-
-4. If the number is clearly less than one million, keep as-is (do NOT convert to K unless it already has K).
-
-## Step 3 — When field is blank/NI
-
-If row[""Estimated Revenues""] is empty or ""NI"":
-
-- Look in other fields for explicit revenue phrases like:
-  - ""$10M in annual revenue"", ""revenue of 12 million"", ""$8–10 million"", ""under $5M"".
-- If you find a clear statement, convert it to a compact ""~XM"" or ""~X–YM"" form and, if a source is obvious (e.g. ZoomInfo, D&B), you may include that in parentheses.
-- If you cannot find any explicit revenue range, return """".
-
-## Hard limits
-
-- **No guessing from employees, square footage, machines, or vague phrases.**
-- If you are not confident, it is better to leave this empty.
-
-## Output
-
-Return exactly one JSON object:
-
-{ ""Estimated Revenues"": ""<value or empty>"" }
-","Backfilling ""Estimated Revenues"" — 11/28/2025, 4:53:49 AM
-
-Row 2: Skipped — no change or empty result
-Row 3: Skipped — no change or empty result
-Row 4: Skipped — no change or empty result
-Row 5: Skipped — no change or empty result
-Row 6: Skipped — no change or empty result
-
-— Run complete: ""Estimated Revenues"" — 11/28/2025, 4:53:55 AM
-Updated: 0  |  Skipped: 5  |  Errors: 0
-No rows updated."
+Column_ID,GPT_Prompt,Result
+Number of employees,"You are updating ONLY the ""Number of employees"" column in a sheet called MMCrawl.
+
+You will be given the full MMCrawl row for one company, including:
+- Company Name
+- Existing Number of employees cell (may be blank)
+- Estimated Revenues cell (may be blank)
+- Any other descriptive fields (industries, products, about text, etc.)
+
+Your job is to return the FINAL value that should be written into the ""Number of employees"" cell for THIS row, following these rules exactly:
+
+====================================================
+PRIORITY ORDER (MANDATORY)
+1) Site-based value (highest accuracy)
+2) Calculated value (medium accuracy)
+3) Public / 3rd-party estimate (least accurate)
+Always output values in this exact order.
+====================================================
+
+1) START WITH EXISTING SITE VALUE  
+   - If the cell already contains a site-derived value, keep it and tag with ""(site)"" if not already tagged.  
+   - Example: ""50"" → ""50 (site)""
+
+2) ADD CALCULATED EMPLOYEE COUNT (IF NEEDED)  
+   - Use ONLY when:
+       • no site value exists, OR  
+       • the calculated value adds meaningful clarity.  
+   - Calculation formula:  
+       employees ≈ revenue_dollars ÷ 200,000  
+   - Round to the nearest whole number.  
+   - Tag as ""(calc from revenue_site)"".  
+   - This MUST appear **after site values** and **before public estimates**.
+
+3) ADD PUBLIC / 3RD-PARTY EMPLOYEE ESTIMATE  
+   - If you can infer a plausible public estimate (ZoomInfo-type data), tag as:  
+       ""~40 (public: BF 2024)""  
+   - Public estimates must always appear LAST.
+
+4) COMBINING VALUES  
+   - Separate each value with ""; ""  
+   - Required output order:  
+       1) site  
+       2) calc  
+       3) public  
+   - Example final outputs:  
+       ""50 (site); 69 (calc from revenue_site)""  
+       ""50 (site); ~70 (public: BF 2024)""  
+       ""50 (site); 69 (calc from revenue_site); ~70 (public: BF 2024)""  
+       ""69 (calc from revenue_site)""  
+       ""69 (calc from revenue_site); ~70 (public: BF 2024)""
+
+5) WHEN NOTHING CAN BE DETERMINED  
+   - If no site, no calc, and no public signals exist → output """" (blank).
+
+Return ONLY the final Number of employees cell value.
+
+MMCrawl row:
+<<<ROW_DATA_HERE>>>
+","Last run for ""Number of employees"": rows 2-11 (10 rows) at 12/10/2025, 1:36:58 PM"
+Estimated Revenues,"You are updating ONLY the ""Estimated Revenues"" column in a sheet called MMCrawl.
+
+You will be given the full MMCrawl row for one company, including:
+- Company Name
+- Estimated Revenues cell (may be blank or partially filled)
+- Number of employees cell (may be blank or estimated)
+- Facility square footage cell (may be blank or estimated)
+- Other descriptive fields (about text, industries, products, etc.)
+
+Your job is to return the FINAL value that should be written into the ""Estimated Revenues"" cell for THIS row.
+
+====================================================
+MANDATORY PRIORITY ORDER FOR FINAL OUTPUT
+1) Site-based revenue (highest credibility)
+2) Calculated revenue (medium credibility)
+3) Public / third-party estimates (lowest credibility)
+
+Values must ALWAYS appear in this exact order in the final cell.
+====================================================
+
+STEP 1 — START WITH EXISTING DATA  
+- Preserve any valid site-based value and tag it as ""(site)"".  
+- If multiple site values exist, keep them first in the output.
+
+STEP 2 — NEWS-BASED VALUES (IF ANY)  
+- If confident revenue appears in news/press → treat as equivalent to site accuracy.  
+- Tag as ""(news YYYY)"" and place BEFORE site values.
+
+FINAL ORDER SO FAR:
+1) News  
+2) Site  
+
+STEP 3 — CALCULATED REVENUE (EMPLOYEES → REVENUE)  
+- Use ONLY when needed (no strong site/news value OR adds clarity).  
+- Formula:  
+    revenue ≈ employees × 200,000  
+- Round to clean values (e.g., ""$12M"").  
+- Tag: ""(calc from employees)""  
+- This MUST appear AFTER site/news and BEFORE public estimates.
+
+STEP 4 — CALCULATED REVENUE (SQFT → REVENUE)  
+- Use ONLY when:  
+    • no usable employee count exists, AND  
+    • square footage is available.  
+- Formula:  
+    revenue ≈ sqft × 600  
+- Tag: ""(calc from sqft)""  
+- Also placed BEFORE public estimates.
+
+STEP 5 — PUBLIC DIRECTORY ESTIMATES  
+- ZoomInfo/D&B/etc.  
+- Tag: ""(public: ZI 2023)"" or ""(public: BF 2024)""  
+- These ALWAYS appear LAST.
+
+====================================================
+FINAL OUTPUT ORDER EXAMPLES
+====================================================
+""$14M (news 2023); $13.8M (site); $12M (calc from employees); ~$5–10M (public: ZI 2023)""
+""~$8M (site); ~$12M (calc from employees)""
+""$12M (calc from employees); ~$5–10M (public: ZI 2023)""
+""$8–15M (public: BF 2024)""   (if only public data exists)
+""$11M (calc from sqft)""      (if only sqft calc is possible)
+""NI""                         (if no data at all)
+
+====================================================
+If absolutely NO revenue information can be inferred, return exactly:
+NI
+
+Return only ONE cell string.
+
+MMCrawl row:
+<<<ROW_DATA_HERE>>>
+","Last run for ""Estimated Revenues"": rows 2-11 (10 rows) at 12/10/2025, 1:37:31 PM"
+Square footage (facility),"You are updating ONLY the ""Square footage (facility)"" cell for one company in the MMCrawl sheet.
+
+You will be given the FULL MMCrawl row, including:
+- The current Square footage (facility) cell (may contain site info, public info, calculations, or be blank)
+- Estimated Revenues and Number of employees (may be blank)
+- All descriptive fields (About, Services, Equipment, Industries, etc.)
+
+Your job is to return the FINAL value that should be written into the ""Square footage (facility)"" cell for THIS row.
+
+=====================================================
+RULE 0 — NEVER CHANGE THE MEANING
+=====================================================
+• Never delete an existing numeric datapoint.
+• Never invent a new numeric value that is not supported by site text, public sources, or the revenue formula below.
+• You MAY normalize wording/formatting (add “ft²”, change ""(estimate)"" to ""(zoominfo)"", fix spacing, standardize separators), but the underlying numbers and provenance must stay the same.
+
+=====================================================
+RULE 1 — MAXIMUM TWO ITEMS PER CELL
+=====================================================
+The final cell may contain:
+- Up to TWO numeric items (e.g. a site value and a public value, or a site value and a calc-from-revenue value), OR
+- A single token ""NI"", OR
+- A single token ""refer to site"".
+
+When more than two numeric items are available, keep at most TWO according to this priority:
+1) Site value (highest priority)
+2) Public value
+3) Calc-from-revenue value (lowest priority)
+
+Examples of allowed combinations:
+- ""23,000 ft² (site); 30,000 ft² (public: BF 2024)""
+- ""40,000 ft² (site); 55,000 ft² (calc from revenue)""
+- ""~30k ft² (public: ZI 2023)""
+- ""18,333 ft² (calc from revenue)""
+- ""NI""
+- ""refer to site""
+
+Disallowed (do NOT output):
+- Three or more numeric items separated by semicolons.
+
+=====================================================
+2) START FROM THE EXISTING CELL (NORMALIZE IF NEEDED)
+=====================================================
+Let “baseline” be the current Square footage (facility) value (may be empty).
+
+If baseline is NOT empty:
+- Preserve all numeric datapoints and their tags.
+- You may clean up formatting:
+  • Ensure each numeric item includes “ft²” somewhere.
+  • Normalize ""(estimate)"" → ""(zoominfo)"" when it clearly refers to a ZoomInfo-type estimate.
+  • Standardize separators as:  ""<value 1>; <value 2>"" (semicolon + single space).
+- Identify which items are:
+  • site items → tagged ""(site)""
+  • public items → tagged ""(public: ...)""
+  • calc items → tagged ""(calc from revenue)"" or obviously equivalent.
+- If there are more than two numeric items, keep at most TWO according to the priority:
+  1) keep the best site item
+  2) keep the best public item (if present)
+  3) otherwise, if needed to reach two items, keep ONE calc-from-revenue item
+  Discard any additional, lower-priority items when there would be more than two in total.
+
+If baseline is empty:
+- You will construct the value from rules 3–5.
+
+=====================================================
+3) ADD SITE VALUE IF MISSING
+=====================================================
+Look for facility size in the row text (About, Services, etc.), e.g.:
+- “our 45,000 sq ft facility”
+- “a 30,000-square-foot plant”
+- “20k ft2 shop”
+
+If you find a clear site facility size AND there is no ""(site)"" item in baseline AND you still have fewer than two total numeric items:
+- Extract and normalize it, e.g. ""45,000 ft² (site)"" or ""~30k ft² (site)"".
+- Add it to the value (respecting the max-two-items rule).
+
+=====================================================
+4) ADD PUBLIC VALUE IF MISSING
+=====================================================
+If you can find a credible public estimate for facility size (e.g., BF, ZoomInfo, trade press) AND there is no ""(public: ...)"" item AND you still have fewer than two total numeric items:
+- Add a new item such as:
+  ""~30k ft² (public: BF 2024)""
+  ""~25k ft² (public: ZI 2023)""
+
+=====================================================
+5) LAST-RESORT CALCULATION FROM REVENUE
+=====================================================
+Only perform a revenue-based square footage calculation when ALL of the following are true:
+1) There is NO ""(site)"" item.
+2) There is NO ""(public: ...)"" item.
+3) Estimated Revenues is available and roughly credible.
+4) You still have fewer than two numeric items.
+
+Then:
+- Approximate square_footage ≈ Revenue ÷ 600
+- Express as:
+  ""18,333 ft² (calc from revenue)""
+  or ""~18k ft² (calc from revenue)""
+
+=====================================================
+6) WHEN TO RETURN ""NI"" OR ""REFER TO SITE""
+=====================================================
+After applying all steps:
+
+• If you still have ZERO numeric items and there is NO convincing evidence anywhere in the row that the facility size exists or is discussed → return ""NI"".
+
+• If you still have ZERO numeric items but the row clearly talks about the plant / facility in a way that suggests a size is known but not stated (e.g., “our large multi-building facility”, “multi-plant campus”) → return ""refer to site"".
+
+• If you have one or two numeric items → return those items only (no ""NI"" or ""refer to site"" in combination with numbers).
+
+=====================================================
+7) OUTPUT FORMAT
+=====================================================
+• Output ONE final line only.
+• Use ""ft²"" for square feet.
+• Separate multiple items with ""; "" (semicolon + single space).
+• Do NOT output more than TWO numeric items.
+• No commentary or explanation; ONLY the final cell value.
+
+ROW DATA:
+<<<ROW_DATA_HERE>>>
+","Last run for ""Square footage (facility)"": rows 2-19 (9 rows) at 12/9/2025, 10:57:37 AM"
+Years of operation,"You are updating ONLY the ""Years of operation"" column in a sheet called MMCrawl.
+
+You will be given the full MMCrawl row for one company, including:
+- Company Name
+- Public Website Homepage URL (company site URL)
+- Years of operation cell (may be blank or already filled)
+- Founding year or history notes (if any)
+- Any other descriptive fields (about text, industries, products, ownership, etc.)
+
+Your job is to return the FINAL value that should be written into the ""Years of operation"" cell for THIS row, following these rules exactly:
+
+1) Respect existing values
+- If the ""Years of operation"" cell in this row is ALREADY filled with a non-empty value, simply return that existing value unchanged.
+- Only try to calculate or estimate years of operation when the cell is currently blank.
+
+2) What ""Years of operation"" means
+- ""Years of operation"" is the number of years the company has been operating (age of the company).
+- If you see a statement like ""founded in 1971"", convert that into an approximate years-of-operation figure.
+- Use a reasonable current year (for example, 2024–2025) when doing the subtraction. You do NOT need to state the founding year in the cell, only the years of operation.
+
+3) Use the website URL as the primary source
+- Focus first on the company’s own website (Public Website Homepage URL).
+- Use any clues from the row or from that site such as:
+  • “Founded in 1966”
+  • “Serving customers for over 30 years”
+  • “Celebrating 50 years in business”
+- Convert such statements into a concise numeric or approximate years-of-operation value, e.g.:
+  • ""59""   (if founded ~1966 and assuming current year ~2025)
+  • ""30+""  (if the wording says “over 30 years” but not exact)
+
+4) If no clear years-of-operation can be derived
+- If the row and company website do NOT provide enough information to confidently estimate years of operation, return exactly:
+  NI
+
+5) Output format
+- Return ONLY the final value for the cell:
+  • Either a concise numeric-style value like ""35"", ""30+"", ""50+"", etc.
+  • Or ""NI"" if nothing reliable can be determined.
+- Do NOT add words like ""years"", ""years in business"", ""founded"", or any extra commentary.
+
+Below is the MMCrawl row data for this company:
+
+<<<ROW_DATA_HERE>>>","Last run for ""Years of operation"": rows 2-19 (9 rows) at 12/9/2025, 11:01:30 AM"
+Ownership,"You are updating ONLY the ""Ownership"" column in a sheet called MMCrawl.
+
+You will be given the full MMCrawl row for one company, including:
+- Company Name
+- Other descriptive fields (industry, employees, products, etc.)
+- Public information may be available through reasoning on the company website URL.
+
+Rules:
+
+1. Add verified ownership information only if it is missing or incomplete:
+   - privately held?
+   - family-owned?
+   - subsidiary?
+   - founder history?
+   - ownership changes?
+2. If the Ownership cell has correct information, keep it.
+3. Append new information; do NOT overwrite valid existing data.
+4. Keep the result short, factual, and consistent with MMCrawl tone.
+
+Your output must return ONLY the final Ownership cell content for THIS row.
+","Last run for ""Ownership"": rows 2-19 (9 rows) at 12/9/2025, 11:09:18 AM"
+Equipment,"You are a professional analyst. Your ONLY job is to extract and normalize the company’s real capital equipment from its official website.
+
+INPUT:
+- You will be given one company HOME PAGE URL.
+
+TASK:
+Visit and analyze the company’s website. Extract ONLY real equipment actually shown or stated on the site.
+
+VALID EQUIPMENT INCLUDES:
+- CNC machines (3-axis, 4-axis, 5-axis)
+- Wire EDM, Sinker EDM, Hole-popper EDM
+- Gun drills
+- Injection molding tryout presses
+- CMM / metrology systems
+- Named brands such as Makino, Yasda, Kern, Haas, Sodick, DMG Mori, OKK, Zeiss, Engel, Arburg.
+(If Makino, Yasda, or Kern appear anywhere, always include them.)
+
+EXTRACTION PRIORITY (in this exact order):
+1. Brand + Model + Axis/Type + Quantity  
+   Format: Brand Model (axis/type) ×qty
+2. Brand + Machine Type (if model not shown)  
+   Example: Haas (3-axis VMC)
+3. Normalized categories (only if explicitly listed), such as:  
+   - CNC Mills (3-axis)  
+   - CNC Mills (5-axis)  
+   - Wire EDM  
+   - Sinker EDM  
+   - Hole-Popper EDM  
+   - Gun Drill  
+   - Injection Molding Tryout Presses  
+   - CMM / Metrology Systems
+
+RULES:
+- Only extract equipment visible on the company’s own site (text, equipment list, PDF, or clear machine photos).
+- Do NOT include vague capabilities (“CNC machining”, “modern equipment”, “state-of-the-art machines”, grinders, hand tools, software, robots).
+- Axis labels must ONLY be used when explicitly stated or visible.
+- Use ×qty only if explicitly stated; otherwise omit quantity.
+
+DECISION RULE:
+- If you can extract at least one valid item → return the normalized equipment list.
+
+OUTPUT RULES:
+- Output ONE single line only.
+- Separate multiple equipment items with ""; "".
+- Output must be EXACTLY one of:
+  • normalized equipment list  
+
+
+Return only the final one-line equipment output. Nothing else.
+","Last run for ""Equipment"": rows 2-29 (28 rows) at 12/9/2025, 4:44:05 AM"
+CNC 3-axis,"You are updating ONLY the “CNC 3-axis” column in MMCrawl.
+
+You will be given the full MMCrawl row for one company. The most important field for this task is the “Equipment” cell, which may contain:
+- a normalized equipment list,
+- vague equipment text,
+- the phrase “NI”, or
+- the phrase “Refer to Site”.
+
+Your job is to decide what the value of the “CNC 3-axis” cell should be, based ONLY on the content of the Equipment cell.
+
+You must return only ONE of:
+""Yes""
+""refer to site""
+""NI""
+
+====================================================
+CRITICAL OVERRIDE RULE  (apply before everything else)
+====================================================
+If the Equipment cell contains NO CNC machining equipment AND contains NONE of the CNC machining brands listed below, you MUST output:
+NI
+
+CNC machining brands:
+Makino, Yasda, Haas, Hurco, DMG Mori, OKK, Matsuura, Roders, Kern
+
+Equipment types considered CNC machining:
+CNC Mills, VMC, HMC, machining centers, or any text explicitly describing CNC milling.
+
+Do NOT consider molding brands (Engel, Arburg) or metrology brands (Zeiss) as CNC machining brands.
+Do NOT consider CMM, presses, molding machines, or general tooling equipment as CNC machining.
+
+====================================================
+OTHER RULES
+====================================================
+
+1. If the Equipment cell is exactly “Refer to Site” (any case), output:
+refer to site
+
+2. If the Equipment cell is exactly “NI” (any case) and contains no other equipment text, output:
+NI
+
+3. Otherwise, examine the detailed equipment list:
+
+   Output “Yes” ONLY when the Equipment cell clearly indicates 3-axis machining, for example:
+   - “CNC Mills (3-axis)”
+   - “Haas VF-2 (3-axis)”
+   - “Makino PS95 (3-axis VMC)”
+   - any explicit model labeled “3-axis”.
+
+4. If CNC machining equipment is present BUT the text is vague or incomplete (e.g., “Makino”, “Haas”, “CNC machining”, “CNC mill” with no axis specified), you must output:
+refer to site
+
+5. If no 3-axis capability can be confidently identified, output:
+NI
+","Last run for ""CNC 3-axis"": rows 2-29 (28 rows) at 12/9/2025, 5:59:23 AM"
+CNC 5-axis,"You are updating ONLY the “CNC 5-axis” column in MMCrawl.
+
+You will be given the full MMCrawl row for one company. The most important field for this task is the “Equipment” cell, which may contain:
+- a normalized equipment list,
+- vague equipment text,
+- the phrase “NI”, or
+- the phrase “Refer to Site”.
+
+Your job is to decide what the value of the “CNC 5-axis” cell should be, based ONLY on the content of the Equipment cell.
+
+You must return only ONE of:
+""Yes""
+""refer to site""
+""NI""
+
+====================================================
+CRITICAL OVERRIDE RULE  (apply before everything else)
+====================================================
+If the Equipment cell contains NO CNC machining equipment AND contains NONE of the CNC machining brands listed below, you MUST output:
+NI
+
+CNC machining brands:
+Makino, Yasda, Haas, Hurco, DMG Mori, OKK, Matsuura, Roders, Kern
+
+Equipment types considered CNC machining:
+CNC Mills, VMC, HMC, machining centers, or any text explicitly describing CNC milling.
+
+Do NOT consider molding brands (Engel, Arburg) or metrology brands (Zeiss) as CNC machining brands.
+Do NOT consider CMM, presses, molding machines, or general tooling equipment as CNC machining.
+
+====================================================
+OTHER RULES
+====================================================
+
+1. If the Equipment cell is exactly “Refer to Site” (any case), output:
+refer to site
+
+2. If the Equipment cell is exactly “NI” (any case) and contains no other equipment text, output:
+NI
+
+3. Otherwise, examine the detailed equipment list:
+
+   Output “Yes” ONLY when the Equipment cell clearly indicates 5-axis machining, for example:
+   - “CNC Mills (5-axis)”
+   - “Makino D200Z (5-axis)”
+   - “Matsuura MX-520 (5-axis)”
+   - “Haas UMC-750 (5-axis)”
+   - any explicit model labeled “5-axis”.
+
+4. If CNC machining equipment is present BUT the text is vague or incomplete (e.g., “Makino (5-axis)” with no model or category, or a machine brand without axis), you must output:
+refer to site
+
+5. If no 5-axis capability can be confidently identified, output:
+NI
+","Last run for ""CNC 5-axis"": rows 2-29 (28 rows) at 12/9/2025, 6:00:09 AM"
+Spares/ Repairs,"You are updating ONLY the ""Spares/Repairs"" column.
+
+Rules:
+1. Never modify or delete ""by hand"" content.
+2. Determine whether the company offers:
+   - repairs
+   - refurbishing
+   - maintenance
+   - spare components or parts
+3. Output:
+   - ""Yes""
+   - ""NI""
+   - OR append additional notes if needed, preserving existing data.
+
+Return only the final cell.
+","Last run for ""Spares/ Repairs"": rows 2-19 (9 rows) at 12/9/2025, 11:13:34 AM"
+Family business,"
+You are updating ONLY the ""Family business"" column in MMCrawl.
+
+You will be given the full MMCrawl row for one company, including:
+- Company Name
+- Ownership column (may describe ownership structure, history, individuals, etc.)
+- Family business column (may be blank, ""Yes"", ""NI"", or ""refer to site"")
+- Other descriptive fields (years of operation, notes, etc.)
+
+Your job is to decide what the value of the ""Family business"" cell should be, based ONLY on the content of the row, with special attention to the Ownership column.
+
+Possible outputs (must be exactly one of these, case-sensitive):
+- Yes
+- NI
+- refer to site
+
+Rules:
+
+1. Respect existing confirmed ""Yes"":
+   - If the current Family business cell already contains ""Yes"" (case-insensitive), output ""Yes"" and do NOT change it.
+
+2. When the current Family business value is ""refer to site"":
+   - You must analyze the Ownership column and decide whether the company is clearly a family-owned business or not.
+   - Only in this case (existing value = ""refer to site"") are you allowed to change the value.
+
+3. When Ownership clearly indicates a family business → output ""Yes"":
+   - If the Ownership text clearly states or strongly implies that the company is family-owned or family-run, output ""Yes"".
+   - Examples of clear indicators (case-insensitive, may be part of a longer sentence):
+     • ""family-owned""
+     • ""family owned""
+     • ""family-run""
+     • ""family run""
+     • ""family-operated""
+     • ""family operated""
+     • ""family business""
+     • ""second-generation"" or ""third-generation"" (when referring to ownership)
+     • phrases such as ""founded by X; now operated by his son/daughter"", ""multi-generation family company"", etc.
+   - If multiple owners are all from the same family and the text describes this as a family company, treat it as ""Yes"".
+
+4. When Ownership describes specific individual owners but NOT clearly as a family business → output ""refer to site"":
+   - If the Ownership text names one or more individuals but does NOT use any of the family-related phrases above, treat this as ambiguous.
+   - Examples:
+     • ""Privately held; owned by John Smith""
+     • ""Owned by Jane Doe, President""
+     • ""Privately held; owned by John and Mary Smith""
+   - In these cases, you cannot safely classify it as a family business, so you must output ""refer to site"".
+
+5. When Ownership gives no useful signal → output ""NI"":
+   - If Ownership is blank or only contains generic phrases such as:
+     • ""Privately held""
+     • ""Privately owned""
+     • ""Independent company""
+     • ""Employee-owned"" (with no mention of family)
+     • other neutral descriptions with no clear family indication
+   - And there is no other part of the row that clearly indicates the company is family-owned,
+   - Then output ""NI"".
+
+6. Safety / precedence:
+   - Never infer ""Yes"" based solely on common surnames or guesses.
+   - Only output ""Yes"" when the text clearly supports that the business is family-owned or family-run.
+   - Otherwise prefer ""refer to site"" (for named individual owners) or ""NI"" (for generic/unknown ownership).
+
+Output format:
+- Return exactly ONE of: ""Yes"", ""NI"", or ""refer to site"".
+- Do not add explanations, quotes, or any other text.
+","Last run for ""Family business"": rows 2-19 (9 rows) at 12/9/2025, 11:11:54 AM"
+2nd Address,"You are updating ONLY the ""2nd Address"" column in MMCrawl.
+
+You will be given the full MMCrawl row for one company, including:
+- Company Name
+- Street Address, City, State, Zipcode (primary address)
+- Any description fields (About, Services, Industries, Ownership, etc.)
+
+Your job is to determine whether the company has a TRUE, DISTINCT second physical address.
+
+==========================
+RULES (EXTREMELY IMPORTANT)
+==========================
+
+1. Output must be EXACTLY ONE of:
+   - A real second address (full street, city, state, zip)
+   - """"    (completely blank)
+
+2. Never output “NI”, “None”, “refer to site”, or any explanation.
+   The client requires that the column remain blank in almost all cases.
+
+3. A valid second address MUST:
+   - Be explicitly shown in the MMCrawl row text, or
+   - Represent a completely separate facility location (different city or different street address).
+
+4. Do NOT infer or guess a second address from:
+   - References to multiple buildings on the same property
+   - Regions served
+   - Multiple departments or divisions
+   - Shipping/receiving addresses unless they give a DIFFERENT full address
+
+5. If the MMCrawl row shows only one address, or the information is unclear:
+   OUTPUT: """"
+
+6. Formatting:
+   - Provide the address exactly as shown or cleaned (e.g., “123 Main St, Houston, TX 77001”).
+   - Do not add tags, notes, or explanations.
+
+Return only the final 2nd Address value for this row.
+
+MMCrawl row:
+<<<ROW_DATA_HERE>>>
+","Last run for ""2nd Address"": rows 12-15 (4 rows) at 12/10/2025, 2:40:44 PM"
+Region,"You are updating ONLY the ""Region"" column in MMCrawl.
+
+INPUT:
+You will receive the full MMCrawl row for ONE company, including:
+- Street Address
+- City
+- State
+- Zipcode
+- Region (current value)
+
+RULES:
+
+1. SKIP LOGIC
+   - If Region already contains any valid region code:
+       W.Pa, RT-NC, Mich, Minn, Wisc, Ilin, E.Mass,
+       NJ-E.Pa, SLC, FR-Col, Canada
+     → Return the existing value exactly (do NOT change it).
+
+2. BACKFILL ONLY when Region is:
+   - """"
+   - ""NI""
+   - ""No region""
+   - ""refer to site""
+
+3. REGION ASSIGNMENT (Use City + State + Zipcode ONLY)
+   Apply the first matching rule below:
+
+   Western Pennsylvania → ""W.Pa""
+     - Pennsylvania counties/cities in the western region (Pittsburgh area)
+
+   Research Triangle NC → ""RT-NC""
+     - Raleigh / Durham / Cary / Chapel Hill region in North Carolina
+
+   Michigan → ""Mich""
+     - Any city in Michigan
+
+   Minnesota → ""Minn""
+     - Any city in Minnesota
+
+   Wisconsin → ""Wisc""
+     - Any city in Wisconsin
+
+   Illinois → ""Ilin""
+     - Any city in Illinois
+
+   Eastern Massachusetts → ""E.Mass""
+     - Boston metro or Eastern MA cities
+
+   New Jersey & Eastern Pennsylvania → ""NJ-E.Pa""
+     - Any city in NJ OR Eastern PA (Philadelphia-area counties)
+
+   Salt Lake City UT → ""SLC""
+     - SLC metro area, Utah
+
+   Boulder–Denver CO → ""FR-Col""
+     - Boulder / Denver / Front Range, Colorado
+
+   CANADA → ""Canada""
+     Assign ""Canada"" when ANY of the following are true:
+       - State/Province contains a Canadian province or abbreviation:
+           ON, Ont, Ontario
+           QC, Que, Quebec, Québec
+           BC, British Columbia
+           AB, Alberta
+           MB, Manitoba
+           SK, Saskatchewan
+           NB, New Brunswick
+           NS, Nova Scotia
+           NL, Newfoundland, Newfoundland and Labrador
+           PE, Prince Edward Island
+           YT, Yukon
+           NT, Northwest Territories
+           NU, Nunavut
+       - OR address text contains “Canada”
+       - OR postal code matches Canadian format (e.g., “K1A 0B1”, “V6E 2Y3”)
+
+4. DEFAULT CASE
+   - If none of the above regions match:
+       → Region = ""No region""
+
+5. OUTPUT FORMAT
+   - Output only the region code.
+   - ONE line only.
+
+","Last run for ""Region"": rows 2-5 (3 rows) at 12/10/2025, 2:52:50 PM"
+Medical,"You are updating ONLY the ""Medical"" column in MMCrawl.
+
+You will be given the full MMCrawl row for one company, including:
+- Industries served
+- Products and services offered
+- Services
+- About
+- Ownership
+- Current value in the Medical column (which may be """", ""NI"", ""refer to site"", or a real value)
+
+Your task is to determine whether the company serves the medical industry, using ONLY the information found in this MMCrawl row.
+
+========================================
+RULES
+========================================
+
+1. SKIP LOGIC
+   If the Medical cell already contains:
+     • ""Yes""
+   → return ""Yes"" exactly (do NOT modify).
+
+2. WHEN TO SET “Yes”
+   Set Medical = ""Yes"" if ANY of the following appear in ANY field:
+     • Medical
+     • Med-device
+     • Medical devices
+     • Medical molds
+     • Medtech
+     • Pharmaceutical
+     • Life sciences
+     • Biotech
+     • Healthcare
+     • Surgical
+     • Dental (ONLY if clearly related to medical tooling or products)
+     • “ISO 13485” (implies medical system compliance)
+     • Clean room / Cleanroom (class 7, class 8, etc.)
+
+   → If any match is found, output exactly: ""Yes"".
+
+3. WHEN TO SET “refer to site”
+   If the company appears *possibly medical-related* but information is unclear or incomplete, such as:
+     • general references to ""precision molding"" or ""tight tolerance"" without industry context
+     • language implying regulated industries but not naming medical explicitly
+     • ambiguous terms like “Class 101 tooling” (not medical-specific)
+     • “DDM”, “LSR” without explicit medical industry mention
+
+   → Output: ""refer to site""
+
+4. WHEN TO SET “NI”
+   If NONE of the fields in MMCrawl indicate or suggest medical work:
+     • No medical terms
+     • No pharmaceutical / biotech references
+     • No clean room references
+     • No ISO 13485
+     • No med-device customers
+     • No regulated-industry hints
+
+   → Output: ""NI""
+
+========================================
+OUTPUT FORMAT
+========================================
+Return exactly ONE line:
+Either:
+   ""Yes""
+   ""refer to site""
+   ""NI""
+
+No commentary.
+","Last run for ""Medical"": rows 2-19 (9 rows) at 12/9/2025, 11:24:48 AM"
