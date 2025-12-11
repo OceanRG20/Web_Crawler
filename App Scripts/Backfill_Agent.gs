@@ -49,6 +49,8 @@ function onOpen_Backfill(ui) {
     .addSubMenu(manualSubMenu)
     .addSeparator()
     .addItem("▶ Backfill from News", "BF_runBackfill_FromNews")
+    .addSeparator()
+    .addItem("▶ Update Rule Backfill…", "BF_showUpdateRuleDialog") 
     .addToUi();
 }
 
@@ -430,6 +432,88 @@ function BF_runBackfill_FromNews() {
   );
 }
 
+/** Open the "Update Rule Backfill" dialog */
+function BF_showUpdateRuleDialog() {
+  const ui = SpreadsheetApp.getUi();
+
+  // Load the HTML file named "Update_Backfill.html"
+  const html = HtmlService
+    .createHtmlOutputFromFile("Update_Backfill")
+    .setWidth(420)
+    .setHeight(520);
+
+  ui.showModalDialog(html, "Update Rule Backfill");
+}
+
+/**
+ * Return list of Column_ID values from Backfill sheet.
+ */
+function BF_getBackfillColumns() {
+  var ss = SpreadsheetApp.getActive();
+  var name = (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) return [];
+
+  var last = sheet.getLastRow();
+  if (last < 2) return [];
+
+  var rows = sheet.getRange(2, 1, last - 1, 1).getValues();
+  var list = [];
+  rows.forEach(r => {
+    var v = (r[0] || "").toString().trim();
+    if (v) list.push(v);
+  });
+  return list;
+}
+
+/**
+ * Get stored rule for selected Column_ID.
+ */
+function BF_getBackfillPrompt(columnId) {
+  var ss = SpreadsheetApp.getActive();
+  var name = (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) return "";
+
+  var cfgRow = BF_findBackfillConfigRow_(sheet, columnId);
+  if (cfgRow < 2) return "";
+
+  return (sheet.getRange(cfgRow, 2).getValue() || "").toString();
+}
+
+/**
+ * Save/update rule.
+ */
+function BF_saveBackfillPrompt(columnId, text) {
+  var ss = SpreadsheetApp.getActive();
+  var name = (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) return "Backfill sheet not found.";
+
+  var cfgRow = BF_findBackfillConfigRow_(sheet, columnId);
+  if (cfgRow < 2) return 'Column_ID "' + columnId + '" not found.';
+
+  sheet.getRange(cfgRow, 2).setValue(text || "");
+  return 'Prompt saved for "' + columnId + '".';
+}
+
+/**
+ * Delete prompt.
+ */
+function BF_deleteBackfillPrompt(columnId) {
+  var ss = SpreadsheetApp.getActive();
+  var name = (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) return "Backfill sheet not found.";
+
+  var cfgRow = BF_findBackfillConfigRow_(sheet, columnId);
+  if (cfgRow < 2) return 'Column_ID "' + columnId + '" not found.';
+
+  sheet.getRange(cfgRow, 2).clearContent();
+  return 'Prompt deleted for "' + columnId + '".';
+}
+
+
 /*************************************************
  * 3) Menu helper — ask for row range + dispatch
  **************************************************/
@@ -596,6 +680,33 @@ function BF_runBackfillForColumnId_(columnId, startRow, endRow) {
       resultValues.push([existingStr]);
       continue;
     }
+
+      // === SPECIAL CASE: 2nd Address (client rule) ===
+  if (columnId === "2nd Address") {
+    const trimmed = existingStr.trim();
+    const lower   = trimmed.toLowerCase();
+
+    // Treat these as "no usable 2nd address":
+    //  - empty
+    //  - "NI" / "ni" / "Refer to Site" variants
+    //  - literal "" (two quote characters)
+    const isEmptyLike =
+      !trimmed ||
+      lower === "ni" ||
+      lower === '"ni"' ||
+      lower === "refer to site" ||
+      lower === '"refer to site"' ||
+      trimmed === '""';
+
+    if (isEmptyLike) {
+      // Force a true blank cell
+      resultValues.push([""]);
+    } else {
+      // Real 2nd address already present → keep it
+      resultValues.push([existingStr]);
+    }
+    continue; // skip GPT for this column
+  }
 
     // SPECIAL CASE: Equipment — only re-fill when empty / NI / refer to site
     if (columnId === "Equipment") {

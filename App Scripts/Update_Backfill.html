@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+    }
+    .container {
+      padding: 16px 20px 20px 20px;
+    }
+    h2 {
+      text-align: center;
+      font-size: 18px;
+      margin-top: 0;
+    }
+    label {
+      font-size: 12px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    select, textarea {
+      width: 100%;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    select {
+      height: 28px;
+      margin-bottom: 10px;
+    }
+    textarea {
+      height: 260px;
+      resize: vertical;
+      padding: 6px;
+    }
+    .buttons {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+    button {
+      padding: 6px 14px;
+      font-size: 12px;
+    }
+    #status {
+      margin-top: 8px;
+      font-size: 13px;          /* bigger font */
+      font-weight: 600;         /* a bit bolder */
+      color: #007700;
+      min-height: 18px;         /* keeps area stable when empty */
+      visibility: hidden;       /* hidden until used */
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Update Rule Backfill</h2>
+
+    <label for="columnSelect">Column name</label>
+    <select id="columnSelect"></select>
+
+    <br><br>
+
+    <label for="promptBox">Please write here your updating rule…</label>
+    <textarea id="promptBox" placeholder="Please write here your updating rule…"></textarea>
+
+    <div class="buttons">
+      <button onclick="onReturn()">Return</button>
+      <button onclick="onSave()">Update rule</button>
+      <button onclick="google.script.host.close()">Close</button>
+    </div>
+
+    <div id="status"></div>
+  </div>
+
+  <script>
+    // Helper to show / clear status messages
+    function showStatus(text, options) {
+      var el = document.getElementById("status");
+      options = options || {};
+      if (text) {
+        el.textContent = text;
+        el.style.visibility = "visible";
+        el.style.color = options.loading ? "#555555" : "#007700";
+      } else {
+        el.textContent = "";
+        el.style.visibility = "hidden";
+      }
+
+      if (options.autoClear) {
+        setTimeout(function () {
+          showStatus("");
+        }, options.autoClear);
+      }
+    }
+
+    // Load columns into dropdown
+    function loadColumns() {
+      google.script.run
+        .withSuccessHandler(function(columns) {
+          var sel = document.getElementById('columnSelect');
+          sel.innerHTML = "";
+          (columns || []).forEach(function(col) {
+            var o = document.createElement("option");
+            o.value = col;
+            o.textContent = col;
+            sel.appendChild(o);
+          });
+          if (columns && columns.length > 0) {
+            loadPrompt();
+          }
+        })
+        .BF_getBackfillColumns();
+    }
+
+    // Load stored rule
+    function loadPrompt() {
+      var col = document.getElementById("columnSelect").value;
+      if (!col) return;
+
+      google.script.run
+        .withSuccessHandler(function(text) {
+          document.getElementById("promptBox").value = text || "";
+          showStatus(""); // clear status
+        })
+        .BF_getBackfillPrompt(col);
+    }
+
+    // Save updated rule
+    function onSave() {
+      var col = document.getElementById("columnSelect").value;
+      var text = document.getElementById("promptBox").value;
+
+      // show loading state
+      showStatus("Saving…", { loading: true });
+
+      google.script.run
+        .withSuccessHandler(function(msg) {
+          // show returned message briefly, then hide
+          showStatus(msg, { autoClear: 3000 });
+        })
+        .BF_saveBackfillPrompt(col, text);
+    }
+
+    // Restore previous saved prompt (return to original state)
+    function onReturn() {
+      var col = document.getElementById("columnSelect").value;
+      if (!col) return;
+
+      showStatus("Reverting…", { loading: true });
+
+      google.script.run
+        .withSuccessHandler(function(text) {
+          document.getElementById("promptBox").value = text || "";
+          showStatus("Reverted to saved version.", { autoClear: 3000 });
+        })
+        .BF_getBackfillPrompt(col);
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      document.getElementById("columnSelect").addEventListener("change", loadPrompt);
+      loadColumns();
+    });
+  </script>
+</body>
+</html>
