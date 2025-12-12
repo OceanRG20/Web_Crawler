@@ -29,7 +29,7 @@ const AutoFilter = (() => {
       .addToUi();
   }
 
-  /** UI actions (global for menu wiring) **/
+  /** UI actions **/
   function AutoFilter_openFilterDialog() {
     const lastPrompt =
       PropertiesService.getScriptProperties().getProperty(
@@ -52,7 +52,6 @@ const AutoFilter = (() => {
     return runAutoFilterInternal(promptText.trim());
   }
 
-  // Minimal internal function placeholder used only to ensure columns exist
   function runAutoFilterInternal(_promptText) {
     const key = PropertiesService.getScriptProperties().getProperty(
       AUTO_FILTER_CONFIG.OPENAI_KEY_PROP
@@ -60,8 +59,7 @@ const AutoFilter = (() => {
     if (!key) throw new Error("Missing OPENAI_API_KEY in Script properties.");
 
     const sh = getSheet();
-    const dataRange = sh.getDataRange();
-    const values = dataRange.getValues();
+    const values = sh.getDataRange().getValues();
     if (values.length < 2) throw new Error("No data rows found.");
 
     const headers = values[0].map(String);
@@ -85,10 +83,7 @@ const AutoFilter = (() => {
     }
 
     const sh = getSheet();
-    const hdrs = sh
-      .getRange(1, 1, 1, sh.getLastColumn())
-      .getValues()[0]
-      .map(String);
+    const hdrs = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
     const idxFlag = hdrs.indexOf(AUTO_FILTER_CONFIG.COL_FILTER_FLAG);
     const idxFail = hdrs.indexOf(AUTO_FILTER_CONFIG.COL_FAILED_CRITERIA);
 
@@ -105,20 +100,9 @@ const AutoFilter = (() => {
     const batches = chunk(records, AUTO_FILTER_CONFIG.MAX_ROWS_PER_BATCH);
     if (batchIndex >= batches.length) {
       applyYesFilter(sh, idxFlag + 1);
-      const flagVals = totalRows
-        ? sh
-            .getRange(2, idxFlag + 1, totalRows, 1)
-            .getValues()
-            .flat()
-        : [];
-      const yesCount = flagVals.filter(
-        (v) => String(v).trim().toLowerCase() === "yes"
-      ).length;
-      const noCount = flagVals.filter(
-        (v) => String(v).trim().toLowerCase() === "no"
-      ).length;
-      const msg = `Filtering complete. ✅ Yes: ${yesCount}  ❌ No: ${noCount}`;
-      return { done: true, progress: 100, message: msg };
+      const counts = getFlagCountsInternal(sh, idxFlag);
+      const msg = `Filtering complete. ✅ Yes: ${counts.yes}  ❌ No: ${counts.no}`;
+      return { done: true, progress: 100, message: msg, yes: counts.yes, no: counts.no };
     }
 
     const sys = buildSystemPrompt();
@@ -133,12 +117,10 @@ const AutoFilter = (() => {
     }
 
     const results = new Map();
-    parsed.forEach((rec) => {
+    parsed.forEach(rec => {
       const rn = Number(rec.__rowNumber);
       const flag = String(rec.MeetsCriteria ?? rec.meets_criteria ?? "").trim();
-      const failed = String(
-        rec.FailedCriteria ?? rec.failed_criteria ?? ""
-      ).trim();
+      const failed = String(rec.FailedCriteria ?? rec.failed_criteria ?? "").trim();
       if (!isFinite(rn)) return;
       results.set(rn, {
         flag: /^yes$/i.test(flag) ? "Yes" : "No",
@@ -147,17 +129,9 @@ const AutoFilter = (() => {
     });
 
     const startRow = batchIndex * AUTO_FILTER_CONFIG.MAX_ROWS_PER_BATCH + 2;
-    const endRow = Math.min(
-      startRow + AUTO_FILTER_CONFIG.MAX_ROWS_PER_BATCH - 1,
-      sh.getLastRow()
-    );
+    const endRow = Math.min(startRow + AUTO_FILTER_CONFIG.MAX_ROWS_PER_BATCH - 1, sh.getLastRow());
     if (endRow >= startRow) {
-      const batchRange = sh.getRange(
-        startRow,
-        1,
-        endRow - startRow + 1,
-        sh.getLastColumn()
-      );
+      const batchRange = sh.getRange(startRow, 1, endRow - startRow + 1, sh.getLastColumn());
       const batchVals = batchRange.getValues();
       for (let r = 0; r < batchVals.length; r++) {
         const rn = startRow + r;
@@ -170,36 +144,27 @@ const AutoFilter = (() => {
       batchRange.setValues(batchVals);
     }
 
-    const progress = batches.length
-      ? Math.round(((batchIndex + 1) / batches.length) * 100)
-      : 100;
-    return {
-      done: false,
-      progress,
-      message: `Filtering ${progress}% complete…`,
-    };
+    const progress = batches.length ? Math.round(((batchIndex + 1) / batches.length) * 100) : 100;
+    return { done: false, progress, message: `Filtering ${progress}% complete…` };
   }
 
-  /** NEW: Show Filtered logic **/
+  /** NEW: counts + show filtered **/
+  function AutoFilter_getFlagCounts() {
+    const sh = getSheet();
+    const hdrs = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    const idxFlag = hdrs.indexOf(AUTO_FILTER_CONFIG.COL_FILTER_FLAG);
+    if (idxFlag === -1) return { hasFlags: false, yes: 0, no: 0, total: 0 };
+    return getFlagCountsInternal(sh, idxFlag);
+  }
+
   function AutoFilter_applyYesFilter() {
     const sh = getSheet();
-    const hdrs = sh
-      .getRange(1, 1, 1, sh.getLastColumn())
-      .getValues()[0]
-      .map(String);
+    const hdrs = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
     const idxFlag = hdrs.indexOf(AUTO_FILTER_CONFIG.COL_FILTER_FLAG);
     if (idxFlag === -1) throw new Error("AI Filter Flag column not found.");
 
-    const totalRows = Math.max(0, sh.getLastRow() - 1);
-    if (totalRows === 0) throw new Error("No data rows found.");
-
-    const values = sh
-      .getRange(2, idxFlag + 1, totalRows, 1)
-      .getValues()
-      .flat();
-    const hasValues = values.some((v) => String(v).trim().length > 0);
-    if (!hasValues)
-      throw new Error("No AI Filter results found — please run filter first.");
+    const counts = getFlagCountsInternal(sh, idxFlag);
+    if (!counts.hasFlags) throw new Error("No AI Filter results found — please run filter first.");
 
     applyYesFilter(sh, idxFlag + 1);
     return `Filter applied. Showing only 'Yes' rows.`;
@@ -207,10 +172,7 @@ const AutoFilter = (() => {
 
   function AutoFilter_clearFilterFlags() {
     const sh = getSheet();
-    const headers = sh
-      .getRange(1, 1, 1, sh.getLastColumn())
-      .getValues()[0]
-      .map(String);
+    const headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
     const idxFlag = headers.indexOf(AUTO_FILTER_CONFIG.COL_FILTER_FLAG);
     const idxFail = headers.indexOf(AUTO_FILTER_CONFIG.COL_FAILED_CRITERIA);
     if (idxFlag === -1 && idxFail === -1) return "Nothing to clear.";
@@ -238,9 +200,7 @@ const AutoFilter = (() => {
   /** Helpers **/
   function getSheet() {
     const ss = SpreadsheetApp.getActive();
-    return (
-      ss.getSheetByName(AUTO_FILTER_CONFIG.SHEET_NAME) || ss.getActiveSheet()
-    );
+    return ss.getSheetByName(AUTO_FILTER_CONFIG.SHEET_NAME) || ss.getActiveSheet();
   }
 
   function ensureColumnExists(sh, headers, name) {
@@ -321,6 +281,20 @@ No commentary outside JSON.
     }
   }
 
+  function getFlagCountsInternal(sh, idxFlagZeroBased) {
+    const totalRows = Math.max(0, sh.getLastRow() - 1);
+    if (totalRows === 0) return { hasFlags: false, yes: 0, no: 0, total: 0 };
+    const vals = sh.getRange(2, idxFlagZeroBased + 1, totalRows, 1).getValues().flat();
+    let yes = 0, no = 0, has = false;
+    vals.forEach(v => {
+      const s = String(v).trim().toLowerCase();
+      if (s) has = true;
+      if (s === "yes") yes++;
+      else if (s === "no") no++;
+    });
+    return { hasFlags: has, yes, no, total: totalRows };
+  }
+
   function applyYesFilter(sh, colIndex1) {
     const filter =
       sh.getFilter() ||
@@ -340,25 +314,15 @@ No commentary outside JSON.
     AutoFilter_clearFilterFlags,
     AutoFilter_removeSheetFilter,
     AutoFilter_applyYesFilter,
+    AutoFilter_getFlagCounts,
   };
 })();
 
 /** Global wrappers **/
-function AutoFilter_openFilterDialog() {
-  AutoFilter.AutoFilter_openFilterDialog();
-}
-function AutoFilter_runAutoFilterFromClient(promptText) {
-  return AutoFilter.AutoFilter_runAutoFilterFromClient(promptText);
-}
-function AutoFilter_runAutoFilterBatch(promptText, batchIndex) {
-  return AutoFilter.AutoFilter_runAutoFilterBatch(promptText, batchIndex);
-}
-function AutoFilter_clearFilterFlags() {
-  return AutoFilter.AutoFilter_clearFilterFlags();
-}
-function AutoFilter_removeSheetFilter() {
-  return AutoFilter.AutoFilter_removeSheetFilter();
-}
-function AutoFilter_applyYesFilter() {
-  return AutoFilter.AutoFilter_applyYesFilter();
-}
+function AutoFilter_openFilterDialog() { AutoFilter.AutoFilter_openFilterDialog(); }
+function AutoFilter_runAutoFilterFromClient(promptText) { return AutoFilter.AutoFilter_runAutoFilterFromClient(promptText); }
+function AutoFilter_runAutoFilterBatch(promptText, batchIndex) { return AutoFilter.AutoFilter_runAutoFilterBatch(promptText, batchIndex); }
+function AutoFilter_clearFilterFlags() { return AutoFilter.AutoFilter_clearFilterFlags(); }
+function AutoFilter_removeSheetFilter() { return AutoFilter.AutoFilter_removeSheetFilter(); }
+function AutoFilter_applyYesFilter() { return AutoFilter.AutoFilter_applyYesFilter(); }
+function AutoFilter_getFlagCounts() { return AutoFilter.AutoFilter_getFlagCounts(); }
