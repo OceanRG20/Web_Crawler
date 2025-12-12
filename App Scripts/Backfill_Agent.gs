@@ -33,9 +33,9 @@ function onOpen_Backfill(ui) {
     .addItem("Square footage (facility)", "BF_runBackfill_SquareFootage")
     .addItem("Years of operation", "BF_runBackfill_YearsOfOperation")
     .addSeparator()
-    // .addItem("Equipment", "BF_runBackfill_Equipment")
-    // .addItem("CNC 3-axis", "BF_runBackfill_CNC3Axis")
-    // .addItem("CNC 5-axis", "BF_runBackfill_CNC5Axis")
+    .addItem("Equipment", "BF_runBackfill_Equipment")
+    .addItem("CNC 3-axis", "BF_runBackfill_CNC3Axis")
+    .addItem("CNC 5-axis", "BF_runBackfill_CNC5Axis")
     // .addItem("Ownership", "BF_runBackfill_Ownership")
     .addItem("Spares/ Repairs", "BF_runBackfill_SparesRepairs")
     // .addItem("Family business", "BF_runBackfill_FamilyBusiness")
@@ -50,7 +50,7 @@ function onOpen_Backfill(ui) {
     .addSeparator()
     .addItem("▶ Backfill from News", "BF_runBackfill_FromNews")
     .addSeparator()
-    .addItem("▶ Update Rule Backfill…", "BF_showUpdateRuleDialog") 
+    .addItem("▶ Update Rule Backfill…", "BF_showUpdateRuleSidebar") 
     .addToUi();
 }
 
@@ -445,57 +445,167 @@ function BF_showUpdateRuleDialog() {
   ui.showModalDialog(html, "Update Rule Backfill");
 }
 
+function BF_showUpdateRuleSidebar() {
+  const html = HtmlService.createHtmlOutputFromFile("Update_Backfill")
+    .setTitle("Update Rule Backfill");
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+
 /**
  * Return list of Column_ID values from Backfill sheet.
  */
 function BF_getBackfillColumns() {
-  var ss = SpreadsheetApp.getActive();
-  var name = (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
-  var sheet = ss.getSheetByName(name);
-  if (!sheet) return [];
+  const ss = SpreadsheetApp.getActive();
+  const backfillSheetName = (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
+  const sh = ss.getSheetByName(backfillSheetName);
+  if (!sh) throw new Error('Config sheet "' + backfillSheetName + '" not found.');
 
-  var last = sheet.getLastRow();
-  if (last < 2) return [];
+  const lastRow = sh.getLastRow();
+  if (lastRow < 2) return [];
 
-  var rows = sheet.getRange(2, 1, last - 1, 1).getValues();
-  var list = [];
-  rows.forEach(r => {
-    var v = (r[0] || "").toString().trim();
-    if (v) list.push(v);
-  });
-  return list;
+  const vals = sh.getRange(2, 1, lastRow - 1, 1).getValues();
+  return vals
+    .map(r => (r[0] || "").toString().trim())
+    .filter(s => s);
 }
 
 /**
  * Get stored rule for selected Column_ID.
  */
 function BF_getBackfillPrompt(columnId) {
-  var ss = SpreadsheetApp.getActive();
-  var name = (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
-  var sheet = ss.getSheetByName(name);
-  if (!sheet) return "";
+  const ss = SpreadsheetApp.getActive();
+  const backfillSheetName = (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
+  const sh = ss.getSheetByName(backfillSheetName);
+  if (!sh) throw new Error('Config sheet "' + backfillSheetName + '" not found.');
 
-  var cfgRow = BF_findBackfillConfigRow_(sheet, columnId);
-  if (cfgRow < 2) return "";
-
-  return (sheet.getRange(cfgRow, 2).getValue() || "").toString();
+  const row = BF_findBackfillConfigRow_(sh, columnId);
+  if (row < 2) return "";
+  return (sh.getRange(row, 2).getValue() || "").toString();
 }
 
 /**
  * Save/update rule.
  */
-function BF_saveBackfillPrompt(columnId, text) {
-  var ss = SpreadsheetApp.getActive();
-  var name = (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
-  var sheet = ss.getSheetByName(name);
-  if (!sheet) return "Backfill sheet not found.";
+function BF_saveBackfillPrompt(columnId, newPrompt) {
+  const ss = SpreadsheetApp.getActive();
+  const backfillSheetName = (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
+  const sh = ss.getSheetByName(backfillSheetName);
+  if (!sh) throw new Error('Config sheet "' + backfillSheetName + '" not found.');
 
-  var cfgRow = BF_findBackfillConfigRow_(sheet, columnId);
-  if (cfgRow < 2) return 'Column_ID "' + columnId + '" not found.';
+  const row = BF_findBackfillConfigRow_(sh, columnId);
+  if (row < 2) throw new Error('Column_ID "' + columnId + '" not found in Backfill sheet.');
 
-  sheet.getRange(cfgRow, 2).setValue(text || "");
+  sh.getRange(row, 2).setValue((newPrompt || "").toString());
   return 'Prompt saved for "' + columnId + '".';
 }
+
+/**
+ * AI rewrite the existing Backfill prompt using a user "plan",
+ * then SAVE the updated prompt back into Backfill!B for that Column_ID.
+ *
+ * Returns: { updatedPrompt: string, message: string }
+ */
+function BF_aiRewriteAndSavePrompt(columnId, planText) {
+  columnId = (columnId || "").toString().trim();
+  planText = (planText || "").toString().trim();
+
+  if (!columnId) throw new Error("Missing columnId.");
+  if (!planText) throw new Error("Plan text is empty.");
+
+  const ss = SpreadsheetApp.getActive();
+  const backfillSheetName = (typeof AIA !== "undefined" && AIA.BACKFILL_SHEET) || "Backfill";
+  const backfillSheet = ss.getSheetByName(backfillSheetName);
+  if (!backfillSheet) throw new Error('Config sheet "' + backfillSheetName + '" not found.');
+
+  const cfgRow = BF_findBackfillConfigRow_(backfillSheet, columnId);
+  if (cfgRow < 2) throw new Error('Column_ID "' + columnId + '" not found in Backfill sheet.');
+
+  const currentPrompt = (backfillSheet.getRange(cfgRow, 2).getValue() || "").toString();
+
+  // Build a strict instruction to rewrite but preserve existing structure.
+  const systemPrompt =
+    "You are updating a Google Sheets backfill GPT prompt.\n" +
+    "Goal: rewrite the CURRENT PROMPT by applying the USER UPDATE PLAN.\n\n" +
+    "CRITICAL RULES:\n" +
+    "1) Output ONLY the final updated prompt text. No commentary, no markdown.\n" +
+    "2) Preserve the overall structure, intent, and column scope.\n" +
+    "3) If the prompt includes placeholders like <<<ROW_DATA_HERE>>> you MUST preserve them.\n" +
+    "4) Keep it copy-paste ready for the Backfill sheet.\n" +
+    "5) Apply the user plan precisely; do not invent unrelated rules.\n";
+
+  const userPrompt =
+    "COLUMN_ID:\n" + columnId + "\n\n" +
+    "CURRENT PROMPT:\n" +
+    "-----BEGIN CURRENT PROMPT-----\n" + currentPrompt + "\n-----END CURRENT PROMPT-----\n\n" +
+    "USER UPDATE PLAN:\n" +
+    "-----BEGIN PLAN-----\n" + planText + "\n-----END PLAN-----\n\n" +
+    "Now produce the UPDATED PROMPT.";
+
+  const updated = BF_callOpenAI_UpdateRule_(systemPrompt, userPrompt).trim();
+
+  // Save
+  backfillSheet.getRange(cfgRow, 2).setValue(updated);
+
+  return {
+    updatedPrompt: updated,
+    message: 'Updated and saved for "' + columnId + '".'
+  };
+}
+
+function BF_callOpenAI_UpdateRule_(systemPrompt, userPrompt) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty("OPENAI_API_KEY");
+  if (!apiKey) {
+    throw new Error(
+      "OPENAI_API_KEY not set in Script Properties. " +
+      "Set it under: Extensions → Apps Script → Project Settings → Script properties."
+    );
+  }
+
+  const model = (typeof AIA !== "undefined" && AIA.MODEL) || "gpt-4o";
+  const url = "https://api.openai.com/v1/chat/completions";
+
+  const payload = {
+    model: model,
+    temperature: 0.2,
+    max_tokens: 2500,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt }
+    ]
+  };
+
+  const options = {
+    method: "post",
+    contentType: "application/json",
+    headers: { Authorization: "Bearer " + apiKey },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+
+  const resp = UrlFetchApp.fetch(url, options);
+  const text = resp.getContentText();
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    throw new Error("Failed to parse OpenAI response: " + text);
+  }
+
+  if (data.error) {
+    throw new Error("OpenAI error: " + (data.error.message || JSON.stringify(data.error)));
+  }
+
+  const answer =
+    data.choices &&
+    data.choices[0] &&
+    data.choices[0].message &&
+    data.choices[0].message.content;
+
+  return (answer || "").trim();
+}
+
 
 /**
  * Delete prompt.
