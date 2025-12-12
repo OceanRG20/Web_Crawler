@@ -118,27 +118,73 @@
 
     @keyframes spin{ to{ transform:rotate(360deg); } }
 
-    .row2{
-      display:flex;
-      gap:10px;
-      margin-top:8px;
-      align-items:flex-end;
-    }
-    .row2 .grow{
-      flex:1;
-      min-width:0;
-    }
-    .row2 .btnCol{
-      flex:0 0 auto;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
     .hint{
       font-size:11px;
       color:#444;
       margin-top:2px;
     }
+
+    /* =========================
+       Quick Backfill (Range UI)
+       ========================= */
+    .quickBox{
+      margin-top:12px;
+      background:#fff;
+      border:1px solid #d9d9d9;
+      border-radius:6px; /* square-ish but clean */
+      padding:10px;
+    }
+    .quickTitle{
+      font-size:12px;
+      font-weight:700;
+      margin:0 0 8px 0;
+    }
+    .quickRow{
+      margin-bottom:8px;
+    }
+    .quickLabel{
+      font-size:11px;
+      color:#555;
+      margin-bottom:3px;
+    }
+    .quickValue{
+      font-size:12px;
+      font-weight:600;
+      color:#111;
+      word-break:break-word;
+      line-height:1.2;
+    }
+    .rangeRow{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:nowrap;
+    }
+    .rangeRow input{
+      width:88px;
+      padding:4px 6px;
+      font-size:12px;
+      border:1px solid #c9c9c9;
+      border-radius:4px;
+      box-sizing:border-box;
+    }
+    .rangeSep{
+      font-size:12px;
+      color:#555;
+      flex:0 0 auto;
+    }
+    .applyBtn{
+      padding:6px 12px;
+      font-size:12px;
+      border:none;
+      border-radius:4px;
+      background:#1a73e8;
+      color:#fff;
+      cursor:pointer;
+      width:88px;
+    }
+    .applyBtn:hover{ background:#1666cc; }
+    .applyBtn:disabled{ opacity:0.55; cursor:default; }
   </style>
 </head>
 
@@ -151,26 +197,41 @@
 
     <label for="promptBox">Current prompt (saved in Backfill)</label>
     <textarea id="promptBox" placeholder="Prompt..."></textarea>
-
-
+    <div id="statusWrap">
+      <div id="spinner"></div>
+      <div id="status"></div>
+    </div>
     <div class="grow">
       <label for="planBox">Please write your update plan (thinking rule)</label>
       <textarea id="planBox" placeholder="Write changes only. Example: enforce order site → calc → public. Ensure blanks stay blank..."></textarea>
       <div class="hint">Update (AI) will rewrite the prompt and SAVE it to Backfill automatically.</div>
     </div>
 
-
     <div class="buttons">
       <button id="btnReturn" onclick="onReturn()">Return</button>
       <button id="btnAiUpdate" class="primary" onclick="onAiUpdate()">Update (AI)</button>
       <button id="btnClose" onclick="google.script.host.close()">Close</button>
-
     </div>
 
+    <!-- ✅ Quick Backfill Range Part -->
+    <div class="quickBox">
+      <div class="quickTitle">Quick Backfill</div>
 
-    <div id="statusWrap">
-      <div id="spinner"></div>
-      <div id="status"></div>
+      <div class="quickRow">
+        <div class="quickLabel">Current column</div>
+        <div class="quickValue" id="currentColumnLabel">—</div>
+      </div>
+
+      <div class="quickRow">
+        <div class="quickLabel">Row range</div>
+        <div class="rangeRow">
+          <input type="number" id="rowFrom" min="2" placeholder="From (≥2)">
+          <span class="rangeSep">to</span>
+          <input type="number" id="rowTo" min="2" placeholder="To (≥2)">
+        </div>
+      </div>
+
+      <button id="btnApply" class="applyBtn" onclick="onQuickApply()">Apply</button>
     </div>
   </div>
 
@@ -183,12 +244,14 @@
       const status = document.getElementById("status");
       const btnReturn = document.getElementById("btnReturn");
       const btnAiUpdate = document.getElementById("btnAiUpdate");
+      const btnApply = document.getElementById("btnApply");
 
       if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
 
       spinner.classList.toggle("show", !!isBusy);
       btnReturn.disabled = !!isBusy;
       btnAiUpdate.disabled = !!isBusy;
+      btnApply.disabled = !!isBusy;
 
       if (msg){
         status.textContent = msg;
@@ -200,6 +263,11 @@
         status.textContent = "";
         status.classList.remove("show");
       }
+    }
+
+    function syncCurrentColumnLabel_(){
+      const col = document.getElementById("columnSelect").value || "—";
+      document.getElementById("currentColumnLabel").textContent = col;
     }
 
     function loadColumns(){
@@ -215,6 +283,8 @@
             o.textContent = col;
             sel.appendChild(o);
           });
+
+          syncCurrentColumnLabel_();
 
           if (columns && columns.length > 0){
             loadPrompt();
@@ -233,7 +303,9 @@
       const col = document.getElementById("columnSelect").value;
       if (!col) return;
 
+      syncCurrentColumnLabel_();
       setBusy(true, "Loading…");
+
       google.script.run
         .withSuccessHandler(function(text){
           lastLoadedPrompt = text || "";
@@ -248,7 +320,6 @@
     }
 
     function onReturn(){
-      // Return = reload from sheet (the saved version)
       document.getElementById("planBox").value = "";
       loadPrompt();
       setBusy(false, "Reverted.");
@@ -281,8 +352,50 @@
         .BF_aiRewriteAndSavePrompt(col, plan);
     }
 
+    /* =========================
+       Quick Backfill Apply
+       Requires a server function:
+         BF_quickBackfillApply(columnId, startRow, endRow)
+       ========================= */
+    function onQuickApply(){
+      const col = document.getElementById("columnSelect").value;
+      const from = parseInt(document.getElementById("rowFrom").value || "", 10);
+      const to = parseInt(document.getElementById("rowTo").value || "", 10);
+
+      if (!col){
+        setBusy(false, "No column selected.");
+        return;
+      }
+      if (!from || from < 2){
+        setBusy(false, "From must be ≥ 2.");
+        return;
+      }
+      if (!to || to < 2){
+        setBusy(false, "To must be ≥ 2.");
+        return;
+      }
+
+      const startRow = Math.min(from, to);
+      const endRow = Math.max(from, to);
+
+      setBusy(true, `Backfilling ${startRow}-${endRow}…`);
+      google.script.run
+        .withSuccessHandler(function(msg){
+          setBusy(false, msg || "Backfill done.");
+        })
+        .withFailureHandler(function(err){
+          setBusy(false, "Backfill failed.");
+          console.error(err);
+        })
+        .BF_quickBackfillApply(col, startRow, endRow);
+    }
+
     document.addEventListener("DOMContentLoaded", function(){
-      document.getElementById("columnSelect").addEventListener("change", loadPrompt);
+      const colSel = document.getElementById("columnSelect");
+      colSel.addEventListener("change", function(){
+        syncCurrentColumnLabel_();
+        loadPrompt();
+      });
       loadColumns();
     });
   </script>

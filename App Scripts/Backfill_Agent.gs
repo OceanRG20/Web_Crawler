@@ -1209,3 +1209,24 @@ function BF_normalizeRevenueOrder_(value) {
   return parts.join("; ");
 }
 
+
+/**
+ * Sidebar action: run the standard backfill engine for a column + row range.
+ * Returns { rowsProcessed: number }
+ */
+function BF_quickBackfillApply(columnId, startRow, endRow) {
+  startRow = parseInt(startRow, 10);
+  endRow = parseInt(endRow, 10);
+
+  if (!columnId) throw new Error("Missing columnId.");
+  if (!startRow || !endRow) throw new Error("Invalid row range.");
+  if (startRow < 2) startRow = 2;
+  if (endRow < 2) endRow = 2;
+  if (endRow < startRow) {
+    const t = startRow; startRow = endRow; endRow = t;
+  }
+
+  // Reuse your existing core runner
+  return BF_runBackfillForColumnId_(columnId, startRow, endRow);
+}
+
