@@ -29,7 +29,7 @@
       color:#222;
     }
 
-    select, textarea{
+    select, textarea, input{
       width:100%;
       box-sizing:border-box;
       font-family: Arial, sans-serif;
@@ -48,10 +48,8 @@
       padding:8px;
       line-height:1.35;
       font-size:12px;
+      height:420px;
     }
-
-    #promptBox{ height:360px; }
-    #planBox{ height:110px; }
 
     .buttons{
       margin-top:10px;
@@ -81,6 +79,7 @@
       cursor:default;
     }
 
+    /* Status area */
     #statusWrap{
       margin-top:10px;
       min-height:22px;
@@ -100,7 +99,6 @@
       text-overflow:ellipsis;
       max-width:100%;
     }
-
     #status.show{ opacity:1; }
 
     #spinner{
@@ -113,78 +111,72 @@
       animation:spin 0.8s linear infinite;
       flex:0 0 auto;
     }
-
     #spinner.show{ display:inline-block; }
 
     @keyframes spin{ to{ transform:rotate(360deg); } }
 
-    .hint{
-      font-size:11px;
-      color:#444;
-      margin-top:2px;
-    }
-
-    /* =========================
-       Quick Backfill (Range UI)
-       ========================= */
-    .quickBox{
+    /* Quick Backfill box */
+    .qb{
       margin-top:12px;
       background:#fff;
       border:1px solid #d9d9d9;
-      border-radius:6px; /* square-ish but clean */
+      border-radius:0;          /* square corners (per your request) */
       padding:10px;
     }
-    .quickTitle{
-      font-size:12px;
+    .qbTitle{
       font-weight:700;
-      margin:0 0 8px 0;
-    }
-    .quickRow{
-      margin-bottom:8px;
-    }
-    .quickLabel{
-      font-size:11px;
-      color:#555;
-      margin-bottom:3px;
-    }
-    .quickValue{
       font-size:12px;
-      font-weight:600;
-      color:#111;
-      word-break:break-word;
-      line-height:1.2;
+      margin-bottom:6px;
     }
-    .rangeRow{
+    .qbRow{
       display:flex;
       align-items:center;
       gap:8px;
-      flex-wrap:nowrap;
-    }
-    .rangeRow input{
-      width:88px;
-      padding:4px 6px;
       font-size:12px;
-      border:1px solid #c9c9c9;
-      border-radius:4px;
-      box-sizing:border-box;
-    }
-    .rangeSep{
-      font-size:12px;
-      color:#555;
-      flex:0 0 auto;
-    }
-    .applyBtn{
-      padding:6px 12px;
-      font-size:12px;
-      border:none;
-      border-radius:4px;
-      background:#1a73e8;
-      color:#fff;
+      margin:6px 0;
+      flex-wrap:wrap;           /* prevents “hidden” overflow */
       cursor:pointer;
-      width:88px;
     }
-    .applyBtn:hover{ background:#1666cc; }
-    .applyBtn:disabled{ opacity:0.55; cursor:default; }
+    .qbLabel{
+      min-width:92px;
+      color:#222;
+      font-weight:600;
+    }
+    .qbValue{
+      font-weight:700;
+      color:#111;
+      flex:1;
+      min-width:160px;
+    }
+
+    .rangeWrap{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      width:100%;
+      flex-wrap:wrap;           /* prevents clipping */
+    }
+    .rangeWrap input{
+      height:28px;
+      padding:2px 8px;
+      width:120px;              /* stable sizing */
+      border-radius:0;          /* square corners */
+    }
+    .rangeWrap .to{
+      width:auto;
+      font-weight:700;
+      color:#333;
+    }
+
+    .qbActions{
+      margin-top:8px;
+      display:flex;
+      justify-content:flex-start;
+    }
+    .qbActions button{
+      min-width:92px;
+      border-radius:0;          /* square corners */
+    }
   </style>
 </head>
 
@@ -195,44 +187,51 @@
     <label for="columnSelect">Column name</label>
     <select id="columnSelect"></select>
 
-    <label for="promptBox">Current prompt (saved in Backfill)</label>
-    <textarea id="promptBox" placeholder="Prompt..."></textarea>
+    <label for="promptBox">Current prompt (editable)</label>
+    <textarea id="promptBox" placeholder="Edit the prompt here..."></textarea>
+    <!-- Main buttons -->
+    <div class="buttons">
+      <button id="btnReturn" onclick="onReturn()">Return</button>
+      <button id="btnSave" class="primary" onclick="onSave()">Save</button>
+      <button id="btnClose" onclick="google.script.host.close()">Close</button>
+    </div>
+
     <div id="statusWrap">
       <div id="spinner"></div>
       <div id="status"></div>
     </div>
-    <div class="grow">
-      <label for="planBox">Please write your update plan (thinking rule)</label>
-      <textarea id="planBox" placeholder="Write changes only. Example: enforce order site → calc → public. Ensure blanks stay blank..."></textarea>
-      <div class="hint">Update (AI) will rewrite the prompt and SAVE it to Backfill automatically.</div>
-    </div>
 
-    <div class="buttons">
-      <button id="btnReturn" onclick="onReturn()">Return</button>
-      <button id="btnAiUpdate" class="primary" onclick="onAiUpdate()">Update (AI)</button>
-      <button id="btnClose" onclick="google.script.host.close()">Close</button>
-    </div>
+    <!-- Quick Backfill -->
+    <div class="qb">
+      <div class="qbTitle">Quick Backfill</div>
 
-    <!-- ✅ Quick Backfill Range Part -->
-    <div class="quickBox">
-      <div class="quickTitle">Quick Backfill</div>
-
-      <div class="quickRow">
-        <div class="quickLabel">Current column</div>
-        <div class="quickValue" id="currentColumnLabel">—</div>
+      <div class="qbRow">
+        <div class="qbLabel">Current Column:</div>
+        <div class="qbValue" id="qbColName">—</div>
       </div>
 
-      <div class="quickRow">
-        <div class="quickLabel">Row range</div>
-        <div class="rangeRow">
-          <input type="number" id="rowFrom" min="2" placeholder="From (≥2)">
-          <span class="rangeSep">to</span>
-          <input type="number" id="rowTo" min="2" placeholder="To (≥2)">
+      <div class="qbRow">
+        <label style="display:flex; align-items:center; gap:8px; margin:0; font-weight:600;">
+          <input id="allRowsChk" type="checkbox" style="width:auto; margin:0;">
+          All rows
+        </label>
+      </div>
+
+      <div class="qbRow">
+        <div class="qbLabel">Row Range:</div>
+        <div class="rangeWrap">
+          <input id="fromRow" type="number" min="2" placeholder="From (>=2)">
+          <div class="to">to</div>
+          <input id="toRow" type="number" min="2" placeholder="To (>=2)">
         </div>
       </div>
 
-      <button id="btnApply" class="applyBtn" onclick="onQuickApply()">Apply</button>
+      <div class="qbActions">
+        <button id="btnApply" class="primary" onclick="onApply()">Apply</button>
+      </div>
     </div>
+
+
   </div>
 
   <script>
@@ -243,14 +242,14 @@
       const spinner = document.getElementById("spinner");
       const status = document.getElementById("status");
       const btnReturn = document.getElementById("btnReturn");
-      const btnAiUpdate = document.getElementById("btnAiUpdate");
+      const btnSave = document.getElementById("btnSave");
       const btnApply = document.getElementById("btnApply");
 
       if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
 
       spinner.classList.toggle("show", !!isBusy);
       btnReturn.disabled = !!isBusy;
-      btnAiUpdate.disabled = !!isBusy;
+      btnSave.disabled = !!isBusy;
       btnApply.disabled = !!isBusy;
 
       if (msg){
@@ -265,9 +264,9 @@
       }
     }
 
-    function syncCurrentColumnLabel_(){
+    function syncQuickBackfillLabel(){
       const col = document.getElementById("columnSelect").value || "—";
-      document.getElementById("currentColumnLabel").textContent = col;
+      document.getElementById("qbColName").textContent = col;
     }
 
     function loadColumns(){
@@ -284,9 +283,8 @@
             sel.appendChild(o);
           });
 
-          syncCurrentColumnLabel_();
-
           if (columns && columns.length > 0){
+            syncQuickBackfillLabel();
             loadPrompt();
           } else {
             setBusy(false, "No columns found.");
@@ -303,9 +301,7 @@
       const col = document.getElementById("columnSelect").value;
       if (!col) return;
 
-      syncCurrentColumnLabel_();
       setBusy(true, "Loading…");
-
       google.script.run
         .withSuccessHandler(function(text){
           lastLoadedPrompt = text || "";
@@ -320,84 +316,126 @@
     }
 
     function onReturn(){
-      document.getElementById("planBox").value = "";
-      loadPrompt();
+      document.getElementById("promptBox").value = lastLoadedPrompt;
       setBusy(false, "Reverted.");
     }
 
-    function onAiUpdate(){
+    function onSave(){
       const col = document.getElementById("columnSelect").value;
-      const plan = document.getElementById("planBox").value || "";
-
+      const text = document.getElementById("promptBox").value || "";
       if (!col) return;
-      if (!plan.trim()){
-        setBusy(false, "Plan is empty.");
-        return;
-      }
 
-      setBusy(true, "Updating via OpenAI…");
-      google.script.run
-        .withSuccessHandler(function(res){
-          if (res && res.updatedPrompt !== undefined){
-            lastLoadedPrompt = res.updatedPrompt || "";
-            document.getElementById("promptBox").value = lastLoadedPrompt;
-            document.getElementById("planBox").value = "";
-          }
-          setBusy(false, (res && res.message) ? res.message : "Updated and saved.");
-        })
-        .withFailureHandler(function(err){
-          setBusy(false, "Update failed.");
-          console.error(err);
-        })
-        .BF_aiRewriteAndSavePrompt(col, plan);
-    }
-
-    /* =========================
-       Quick Backfill Apply
-       Requires a server function:
-         BF_quickBackfillApply(columnId, startRow, endRow)
-       ========================= */
-    function onQuickApply(){
-      const col = document.getElementById("columnSelect").value;
-      const from = parseInt(document.getElementById("rowFrom").value || "", 10);
-      const to = parseInt(document.getElementById("rowTo").value || "", 10);
-
-      if (!col){
-        setBusy(false, "No column selected.");
-        return;
-      }
-      if (!from || from < 2){
-        setBusy(false, "From must be ≥ 2.");
-        return;
-      }
-      if (!to || to < 2){
-        setBusy(false, "To must be ≥ 2.");
-        return;
-      }
-
-      const startRow = Math.min(from, to);
-      const endRow = Math.max(from, to);
-
-      setBusy(true, `Backfilling ${startRow}-${endRow}…`);
+      setBusy(true, "Saving…");
       google.script.run
         .withSuccessHandler(function(msg){
-          setBusy(false, msg || "Backfill done.");
+          lastLoadedPrompt = text || "";
+          setBusy(false, msg || "Saved.");
         })
         .withFailureHandler(function(err){
-          setBusy(false, "Backfill failed.");
+          setBusy(false, "Save failed.");
           console.error(err);
         })
-        .BF_quickBackfillApply(col, startRow, endRow);
+        .BF_saveBackfillPrompt(col, text);
     }
 
-    document.addEventListener("DOMContentLoaded", function(){
-      const colSel = document.getElementById("columnSelect");
-      colSel.addEventListener("change", function(){
-        syncCurrentColumnLabel_();
-        loadPrompt();
+  function onApply(){
+    const col = document.getElementById("columnSelect").value;
+    const allRows = document.getElementById("allRowsChk").checked;
+
+    if (!col){
+      setBusy(false, "No column selected.");
+      return;
+    }
+
+    // If All rows checked, ask server for the proper range and run
+    if (allRows){
+      setBusy(true, "Running backfill (all rows)…");
+      google.script.run
+        .withSuccessHandler(function(info){
+          // info: { startRow, endRow }
+          const startRow = info.startRow;
+          const endRow = info.endRow;
+
+          // reflect in UI
+          document.getElementById("fromRow").value = startRow;
+          document.getElementById("toRow").value = endRow;
+
+          google.script.run
+            .withSuccessHandler(function(res){
+              const msg = (res && res.message) ? res.message : "Backfill done.";
+              setBusy(false, msg);
+            })
+            .withFailureHandler(function(err){
+              setBusy(false, "Backfill failed.");
+              console.error(err);
+            })
+            .BF_quickBackfill(col, startRow, endRow);
+        })
+        .withFailureHandler(function(err){
+          setBusy(false, "Range check failed.");
+          console.error(err);
+        })
+        .BF_getMMCrawlDataRange();
+      return;
+    }
+
+    // Manual range mode (existing behavior)
+    const fromVal = parseInt(document.getElementById("fromRow").value, 10);
+    const toVal = parseInt(document.getElementById("toRow").value, 10);
+
+    if (!fromVal || !toVal || fromVal < 2 || toVal < 2){
+      setBusy(false, "Row range must be >= 2.");
+      return;
+    }
+
+    setBusy(true, "Running backfill…");
+    google.script.run
+      .withSuccessHandler(function(res){
+        const msg = (res && res.message) ? res.message : "Backfill done.";
+        setBusy(false, msg);
+      })
+      .withFailureHandler(function(err){
+        setBusy(false, "Backfill failed.");
+        console.error(err);
+      })
+      .BF_quickBackfill(col, fromVal, toVal);
+  }
+
+  // Auto-disable inputs when All rows is checked
+document.addEventListener("DOMContentLoaded", function () {
+    // ---- Elements ----
+    const columnSelect = document.getElementById("columnSelect");
+    const allRowsChk   = document.getElementById("allRowsChk");
+    const fromRowInput = document.getElementById("fromRow");
+    const toRowInput   = document.getElementById("toRow");
+
+    // ---- Existing behavior: reload prompt when column changes ----
+    if (columnSelect) {
+      columnSelect.addEventListener("change", function () {
+        loadPrompt();   // your existing function
       });
-      loadColumns();
-    });
+    }
+
+    // ---- NEW: All rows checkbox behavior ----
+    if (allRowsChk && fromRowInput && toRowInput) {
+      allRowsChk.addEventListener("change", function () {
+        const useAll = allRowsChk.checked;
+
+        // Disable / enable manual inputs
+        fromRowInput.disabled = useAll;
+        toRowInput.disabled   = useAll;
+
+        // Clear values when switching to "All rows"
+        if (useAll) {
+          fromRowInput.value = "";
+          toRowInput.value   = "";
+        }
+      });
+    }
+
+    // ---- Initial load ----
+    loadColumns(); // your existing function
+  });
   </script>
 </body>
 </html>

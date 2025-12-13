@@ -486,6 +486,13 @@ function BF_getBackfillPrompt(columnId) {
 
 /**
  * Save/update rule.
+ * Also saves the previous version of the prompt into Backfill column D.
+ *
+ * Backfill sheet columns:
+ *   A: Column_ID
+ *   B: Prompt
+ *   C: Result
+ *   D: Previous Version of Prompt
  */
 function BF_saveBackfillPrompt(columnId, newPrompt) {
   const ss = SpreadsheetApp.getActive();
@@ -496,9 +503,20 @@ function BF_saveBackfillPrompt(columnId, newPrompt) {
   const row = BF_findBackfillConfigRow_(sh, columnId);
   if (row < 2) throw new Error('Column_ID "' + columnId + '" not found in Backfill sheet.');
 
-  sh.getRange(row, 2).setValue((newPrompt || "").toString());
+  const incoming = (newPrompt || "").toString();
+  const current = (sh.getRange(row, 2).getValue() || "").toString(); // Column B
+
+  // Save previous prompt to Column D only if it exists AND is changing
+  if (current.trim() && current !== incoming) {
+    sh.getRange(row, 4).setValue(current); // Column D
+  }
+
+  // Save new prompt to Column B
+  sh.getRange(row, 2).setValue(incoming);
+
   return 'Prompt saved for "' + columnId + '".';
 }
+
 
 /**
  * AI rewrite the existing Backfill prompt using a user "plan",
@@ -1214,19 +1232,39 @@ function BF_normalizeRevenueOrder_(value) {
  * Sidebar action: run the standard backfill engine for a column + row range.
  * Returns { rowsProcessed: number }
  */
-function BF_quickBackfillApply(columnId, startRow, endRow) {
+function BF_quickBackfill(columnId, startRow, endRow) {
   startRow = parseInt(startRow, 10);
   endRow = parseInt(endRow, 10);
 
   if (!columnId) throw new Error("Missing columnId.");
   if (!startRow || !endRow) throw new Error("Invalid row range.");
-  if (startRow < 2) startRow = 2;
-  if (endRow < 2) endRow = 2;
+  if (startRow < 2 || endRow < 2) throw new Error("Row range must be >= 2.");
+
   if (endRow < startRow) {
     const t = startRow; startRow = endRow; endRow = t;
   }
 
-  // Reuse your existing core runner
-  return BF_runBackfillForColumnId_(columnId, startRow, endRow);
+  // Reuse your existing engine:
+  const result = BF_runBackfillForColumnId_(columnId, startRow, endRow);
+
+  return {
+    message: 'Backfill "' + columnId + '" complete. Rows: ' + startRow + "-" + endRow +
+             " (" + (result && result.rowsProcessed ? result.rowsProcessed : (endRow - startRow + 1)) + " rows)"
+  };
 }
+
+function BF_getMMCrawlDataRange() {
+  const ss = SpreadsheetApp.getActive();
+  const mmSheetName = (typeof AIA !== "undefined" && AIA.MMCRAWL_SHEET) || "MMCrawl";
+  const mmSheet = ss.getSheetByName(mmSheetName);
+  if (!mmSheet) throw new Error('Data sheet "' + mmSheetName + '" not found.');
+
+  const lastRow = mmSheet.getLastRow();
+  // Data starts at row 2; if sheet only has header, endRow becomes 2
+  const startRow = 2;
+  const endRow = Math.max(2, lastRow);
+
+  return { startRow: startRow, endRow: endRow };
+}
+
 
