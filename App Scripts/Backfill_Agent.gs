@@ -231,6 +231,22 @@ function BF_runBackfill_OwnershipFamilyCombo() {
  * 2) Backfill from News (non-GPT, merges "Specific Value")
  **************************************************/
 
+/*************************************************
+ * PATCH: Update ONLY "Backfill from News" to match NEW News Raw "Specific Value"
+ *
+ * New reality:
+ * - News Raw column "Specific Value" (I) is NO LONGER a giant "Special Values" JSON.
+ * - It now contains either:
+ *   (A) a JSON object like {"Medical":"Yes","Ownership":"Sold to PE"}
+ *   OR
+ *   (B) MMCrawl Updates lines like:
+ *       Medical ; "Yes (News: <URL>)", 2020
+ *       Ownership ; "Sold to PE (News: <URL>)", 2024
+ *
+ * This patch parses BOTH formats and applies them to MMCrawl columns.
+ **************************************************/
+
+/** ===== Replace your existing BF_runBackfill_FromNews() with this version ===== */
 function BF_runBackfill_FromNews() {
   const ss = SpreadsheetApp.getActive();
   const ui = SpreadsheetApp.getUi();
@@ -296,22 +312,27 @@ function BF_runBackfill_FromNews() {
   }
 
   const newsHeaders = newsSheet.getRange(1, 1, 1, newsLastCol).getValues()[0];
+
   const newsUrlCol = BF_findHeaderIndex_(newsHeaders, [
     "Company Website URL",
     "Public Website Homepage URL",
     "Company Website",
     "Website"
   ]);
+
+  // This MUST match your current News Raw header text
   const newsSpecificCol = BF_findHeaderIndex_(newsHeaders, [
     "Specific Value",
     "Specific Values"
   ]);
+
   const newsPubDateCol = BF_findHeaderIndex_(newsHeaders, [
     "Publication Date",
     "Publication date",
     "Pub Date",
     "Pub date"
   ]);
+
   const newsStoryUrlCol = BF_findHeaderIndex_(newsHeaders, [
     "News Story URL",
     "News URL",
@@ -330,14 +351,15 @@ function BF_runBackfill_FromNews() {
   const newsNumRows = newsLastRow - 1;
   const newsData = newsSheet.getRange(2, 1, newsNumRows, newsLastCol).getValues();
 
-  // Build map: normalized company URL -> [{ specVal, pubYear, storyUrl }]
+  // Build map: normalized company URL -> [{ specificText, pubYear, storyUrl }]
   const newsMap = {};
 
   for (let i = 0; i < newsNumRows; i++) {
     const row = newsData[i];
+
     const url = (row[newsUrlCol] || "").toString().trim();
-    const specVal = (row[newsSpecificCol] || "").toString().trim();
-    if (!url || !specVal) continue;
+    const specificText = (row[newsSpecificCol] || "").toString().trim();
+    if (!url || !specificText) continue;
 
     let pubYear = "";
     if (newsPubDateCol !== -1) {
@@ -346,7 +368,7 @@ function BF_runBackfill_FromNews() {
       if (ym) pubYear = ym[0];
     }
 
-    const storyUrl = newsStoryUrlCol !== -1
+    const storyUrl = (newsStoryUrlCol !== -1)
       ? (row[newsStoryUrlCol] || "").toString().trim()
       : "";
 
@@ -354,82 +376,136 @@ function BF_runBackfill_FromNews() {
     if (!norm) continue;
 
     if (!newsMap[norm]) newsMap[norm] = [];
-    newsMap[norm].push({ specVal: specVal, pubYear: pubYear, storyUrl: storyUrl });
+    newsMap[norm].push({ specificText: specificText, pubYear: pubYear, storyUrl: storyUrl });
   }
 
-  // Label synonyms: Specific Value label -> MMCrawl header
+  // Label synonyms: allow legacy labels to map to MMCrawl headers
   const LABEL_SYNONYM = {
     "Family Ownership": "Family business",
-    "Family ownership": "Family business"
+    "Family ownership": "Family business",
+    "Employees": "Number of employees",
+    "Employee count": "Number of employees",
+    "Square footage": "Square footage (facility)",
+    "Square Footage": "Square footage (facility)"
   };
 
   let appliedCount = 0;
-  const ssActive = SpreadsheetApp.getActive();
 
   // Process MMCrawl rows in selected range
   for (let idx = targetRowIndexMin; idx <= targetRowIndexMax; idx++) {
     if (idx < 0 || idx >= mmNumRows) continue;
 
     const sheetRowNumber = idx + 2;
-    const row = mmData[idx];
+    const mmRow = mmData[idx];
 
-    const url = (row[mmUrlCol] || "").toString().trim();
+    const url = (mmRow[mmUrlCol] || "").toString().trim();
     if (!url) continue;
 
     const norm = BF_normalizeUrl_(url);
     if (!norm) continue;
 
-    const newsEntries = newsMap[norm];
-    if (!newsEntries || newsEntries.length === 0) continue; // no news for this company
+    const entries = newsMap[norm];
+    if (!entries || !entries.length) continue;
 
-    ssActive.toast(
-      'Backfill from News – MMCrawl row ' + sheetRowNumber + " of " + endRow +
-      "\n" + url,
-      "Backfill from News",
-      4
-    );
+    // For each News Raw row for this company, apply updates
+    for (let s = 0; s < entries.length; s++) {
+      const e = entries[s];
+      const updates = BF_parseSpecificValueUpdates_(e.specificText, e.pubYear);
 
-    for (let s = 0; s < newsEntries.length; s++) {
-      const specEntry = newsEntries[s];
-      const specVal = specEntry.specVal;
-      const pubYear = specEntry.pubYear;
-      const storyUrl = specEntry.storyUrl;
-
-      // Specific Value format is like:  Label ; "Value"
-      const regex = /([^;]+?)\s*;\s*"([^"]+)"/g;
-      let match;
-      while ((match = regex.exec(specVal)) !== null) {
-        let label = match[1].trim();
-        const rawValue = match[2].trim();
+      // updates = [{ label, value }]
+      for (let u = 0; u < updates.length; u++) {
+        let label = (updates[u].label || "").trim();
+        const rawValue = (updates[u].value || "").trim();
         if (!label || !rawValue) continue;
 
-        if (LABEL_SYNONYM[label]) {
-          label = LABEL_SYNONYM[label];
-        }
+        if (LABEL_SYNONYM[label]) label = LABEL_SYNONYM[label];
 
         const colIndex = BF_findHeaderIndexExact_(mmHeaders, label);
-        if (colIndex === -1) continue; // no matching column
+        if (colIndex === -1) continue;
 
-        const cleanedValue = BF_simplifyNewsValue_(rawValue, pubYear);
+        // If the value already contains (News: ...) keep it; else add year tag
+        const cleanedValue = BF_simplifyNewsValue_(rawValue, e.pubYear);
 
         const changed = BF_applyNewsValueToCell_(
           mmSheet,
           sheetRowNumber,
           colIndex + 1,
           cleanedValue,
-          storyUrl
+          e.storyUrl
         );
         if (changed) appliedCount++;
       }
     }
   }
 
-  ssActive.toast("Backfill from News finished.", "Backfill from News", 3);
   ui.alert(
     "Backfill from News complete.\n" +
     "MMCrawl rows processed: " + startRow + "-" + endRow + "\n" +
     "Values applied to MMCrawl cells: " + appliedCount
   );
+}
+
+
+/** ===== Add this NEW helper function (place anywhere in Backfill_Agent.gs) =====
+ * Parses your NEW News Raw "Specific Value" cell into [{label,value}, ...]
+ *
+ * Accepts:
+ * (A) JSON object: {"Medical":"Yes","Ownership":"Sold to PE"}
+ * (B) MMCrawl line format:
+ *     Medical ; "Yes (News: <URL>)", 2020
+ *     Ownership ; "Sold to PE (News: <URL>)", 2024
+ * (C) Fallback: single-key JSON-like text; returns nothing if it can't parse.
+ */
+function BF_parseSpecificValueUpdates_(specificText, pubYear) {
+  const t = (specificText || "").toString().trim();
+  if (!t) return [];
+
+  // 1) Try JSON object first
+  if (t[0] === "{" && t[t.length - 1] === "}") {
+    try {
+      const obj = JSON.parse(t);
+      if (obj && typeof obj === "object" && !Array.isArray(obj)) {
+        const out = [];
+        Object.keys(obj).forEach((k) => {
+          const v = obj[k];
+          if (v === null || v === undefined) return;
+          const vs = (typeof v === "string") ? v.trim() : JSON.stringify(v);
+          if (!k || !vs) return;
+          out.push({ label: String(k).trim(), value: vs });
+        });
+        return out;
+      }
+    } catch (_) {
+      // fall through
+    }
+  }
+
+  // 2) Parse MMCrawl Updates lines:
+  //    Label ; "Value ...", 2020
+  // allow multiple lines separated by \n
+  const lines = t.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  const out2 = [];
+
+  // Regex supports:
+  // Key ; "Some text (News: ...)" , 2020
+  // Key ; "Some text", 2020
+  const re = /^([^;]+?)\s*;\s*"(.*)"\s*(?:,\s*(19|20)\d{2})?\s*$/;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const m = line.match(re);
+    if (!m) continue;
+
+    const label = (m[1] || "").trim();
+    const val = (m[2] || "").trim();
+    // year exists in m[0] but we don't need it; BF_simplifyNewsValue_ will add pubYear if missing
+    if (label && val) out2.push({ label: label, value: val });
+  }
+
+  if (out2.length) return out2;
+
+  // 3) If it's not JSON or MMCrawl lines, nothing to apply
+  return [];
 }
 
 /** Open the "Update Rule Backfill" dialog */

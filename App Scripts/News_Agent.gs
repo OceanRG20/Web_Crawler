@@ -18,6 +18,21 @@ function onOpen_News(ui) {
     .addToUi();
 }
 
+/** ===== Special Values defaults (expanded) ===== */
+const NS_DEFAULT_SPECIAL_VALUES = {
+  "Square footage (facility)": "",
+  "Number of employees": "",
+  "Estimated Revenues": "",
+  "Years of operation": "",
+  "Ownership": "",
+  "Equipment": "",
+  "Spares/ Repairs": "",
+  "Family business": "",
+  "2nd Address": "",
+  "Region": "",
+  "Medical": ""
+};
+
 /** ===== Main runner ===== */
 function NS_runNewsSearch() {
   const ss = SpreadsheetApp.getActive();
@@ -66,13 +81,34 @@ function NS_runNewsSearch() {
     ss.toast(msg + " — " + (row.newsUrl || row.companyUrl), "News", 5);
 
     try {
+      // If DIRECT-URL mode, try to auto-repair broken URLs via Wayback BEFORE calling OpenAI
+      if (row.newsUrl) {
+        const chk = NS_checkUrlReachable_(row.newsUrl);
+        if (!chk.ok) {
+          const wb = NS_tryWayback_(row.newsUrl);
+          if (wb.ok) {
+            const old = row.newsUrl;
+            row.newsUrl = wb.url;
+
+            // write back to News Source column C
+            try {
+              const ns = ss.getSheetByName("News Source");
+              if (ns && row.rowIndex) {
+                ns.getRange(row.rowIndex, 3).setValue(wb.url); // Col C = News URL
+                ns.getRange(row.rowIndex, 3).setNote("Auto-repaired via Wayback from: " + old);
+              }
+            } catch (_) {}
+          }
+        }
+      }
+
       const fullPrompt = NS_buildPromptForRow_(basePrompt, row);
       const rawAnswer = NS_callOpenAIForNews_(fullPrompt);
       const articles = NS_extractJsonArray_(rawAnswer);
 
       // Attach fallback Source / Company fields if missing in objects
       const enriched = articles.map((obj) => {
-        const copy = Object.assign({}, obj);
+        let copy = Object.assign({}, obj);
 
         if (!copy["Source"]) {
           copy["Source"] = row.source || "";
@@ -86,17 +122,22 @@ function NS_runNewsSearch() {
 
         // Ensure new keys exist, even if the model omitted them
         if (!copy.hasOwnProperty("Special Values")) {
-          copy["Special Values"] = {
-            "Square footage (facility)": "",
-            "Number of employees": "",
-            "Estimated Revenues": "",
-            "Family business": "",
-            "Medical": ""
-          };
+          copy["Special Values"] = JSON.parse(JSON.stringify(NS_DEFAULT_SPECIAL_VALUES));
+        } else if (!copy["Special Values"] || typeof copy["Special Values"] !== "object") {
+          copy["Special Values"] = JSON.parse(JSON.stringify(NS_DEFAULT_SPECIAL_VALUES));
+        } else {
+          // ensure all keys exist
+          Object.keys(NS_DEFAULT_SPECIAL_VALUES).forEach((k) => {
+            if (!copy["Special Values"].hasOwnProperty(k)) copy["Special Values"][k] = "";
+          });
         }
+
         if (!copy.hasOwnProperty("MMCrawl Updates")) {
           copy["MMCrawl Updates"] = "";
         }
+
+        // Enforce: Special Values must be present in GPT Summary (summary-locked)
+        copy = NS_enforceSpecialValuesFromSummary_(copy);
 
         return copy;
       });
@@ -121,13 +162,7 @@ function NS_runNewsSearch() {
           ": " + String(err),
         "Confidence Score": "",
         "Source": row.source || "",
-        "Special Values": {
-          "Square footage (facility)": "",
-          "Number of employees": "",
-          "Estimated Revenues": "",
-          "Family business": "",
-          "Medical": ""
-        },
+        "Special Values": JSON.parse(JSON.stringify(NS_DEFAULT_SPECIAL_VALUES)),
         "MMCrawl Updates": ""
       });
     }
@@ -187,7 +222,7 @@ function NS_getRowsFromNewsSource_() {
   const vals = sh.getRange(2, 1, lastRow - 1, 4).getDisplayValues();
   const out = [];
 
-  vals.forEach((r) => {
+  vals.forEach((r, i) => {
     const companyUrl = String(r[0] || "").trim();
     const companyName = String(r[1] || "").trim();
     const newsUrl = String(r[2] || "").trim();
@@ -196,6 +231,7 @@ function NS_getRowsFromNewsSource_() {
     if (!companyUrl && !newsUrl) return; // skip empty rows
 
     out.push({
+      rowIndex: i + 2, // actual sheet row number
       companyUrl: companyUrl,
       companyName: companyName,
       newsUrl: newsUrl,
@@ -216,15 +252,15 @@ function NS_buildPromptForRow_(basePrompt, row) {
   const newsUrl = row.newsUrl || "";
   const source = row.source || "";
 
-  // Extra guidance (still compatible with updated News_Search prompt)
+  // Production-friendly: do NOT force "No content..." filler
   const summaryTemplate =
     "\n\n### Additional formatting requirements\n" +
-    "- For each accepted article, structure GPT Summary exactly as required in the prompt (sections 1–9 with OVERVIEW, LEADERSHIP & OWNERSHIP, FACILITY/EQUIPMENT, etc.).\n" +
-    "- Always explicitly state when information is not mentioned in the article (e.g., “No direct quotes appear in this article.”).\n" +
+    "- GPT Summary must follow the prompt’s PRODUCTION RULE: ALWAYS include OVERVIEW; include other sections ONLY when the article contains concrete info for that section.\n" +
+    "- Do NOT output filler like “No direct quotes appear…”, “Not discussed…”, or any “No content…” statements.\n" +
     "- Keep the GPT Summary JSON-safe (no unescaped line breaks other than \\n) and non-promotional.\n";
 
   const noNewsNote =
-    "\nIf you truly find no acceptable articles after filtering (or if the given News Story URL is invalid), return a single JSON object in the exact 'NO NEWS CASE' format from the instructions, " +
+    "\nIf you truly find no acceptable articles after filtering (or if the given News Story URL is invalid/unreachable), return a single JSON object in the exact 'NO NEWS CASE' format from the instructions, " +
     "including empty 'Special Values' and 'MMCrawl Updates', and set the GPT Summary to include the phrase: \"No news found after applying filters on " +
     isoDate +
     " <HH:MM:SS>\" where you substitute the current time.\n";
@@ -239,7 +275,8 @@ function NS_buildPromptForRow_(basePrompt, row) {
     "- If a News Story URL is provided, you MUST skip all searching and only analyze that URL, returning exactly one JSON object.\n" +
     "- If no News Story URL is provided, follow the full search protocol, including allowed PR sources (e.g., PRWeb, Reuters), but keep only one canonical PR version when duplicates exist.\n" +
     "- When deduplicating, prefer the article with the richest relevant quotes and, when similar in scope, prefer the earliest publication date.\n" +
-    "- Always populate 'Special Values' and 'MMCrawl Updates' as specified in the main prompt.\n";
+    "- Always populate 'Special Values' and 'MMCrawl Updates' as specified in the main prompt.\n" +
+    "- Special Values are SUMMARY-LOCKED: only output a Special Value when that exact value also appears in GPT Summary.\n";
 
   return basePrompt + summaryTemplate + noNewsNote + scenarioBlock;
 }
@@ -268,7 +305,7 @@ function NS_callOpenAIForNews_(userPrompt) {
         content:
           "You are an MBA-trained analyst with 5+ years researching U.S. precision metal and plastics manufacturers (mold building; tool & die; injection molding). " +
           "Your job is to perform a thorough news search OR, when a specific News Story URL is provided, to analyze only that URL. " +
-          "You MUST follow all instructions in the user prompt, including construction of GPT Summary sections, population of 'Special Values', and extraction of 'MMCrawl Updates'. " +
+          "You MUST follow all instructions in the user prompt, including the PRODUCTION GPT Summary rules, population of 'Special Values' (summary-locked), and extraction of 'MMCrawl Updates'. " +
           "Return ONLY a strict JSON array of article objects with the exact required keys (no markdown, no commentary)."
       },
       { role: "user", content: userPrompt },
@@ -332,6 +369,43 @@ function NS_extractJsonArray_(text) {
   return [];
 }
 
+/** ===== Enforce Special Values must appear in GPT Summary (summary-locked) ===== */
+function NS_enforceSpecialValuesFromSummary_(obj) {
+  const summary = String(obj["GPT Summary"] || "");
+  const sv = (obj["Special Values"] && typeof obj["Special Values"] === "object")
+    ? obj["Special Values"]
+    : {};
+
+  // Ensure all keys exist
+  Object.keys(NS_DEFAULT_SPECIAL_VALUES).forEach((k) => {
+    if (!sv.hasOwnProperty(k)) sv[k] = "";
+  });
+
+  // If no summary, blank all values
+  if (!summary.trim()) {
+    Object.keys(sv).forEach((k) => { sv[k] = ""; });
+    obj["Special Values"] = sv;
+    return obj;
+  }
+
+  const sumLower = summary.toLowerCase();
+
+  // Strict: literal value must appear in GPT Summary
+  Object.keys(sv).forEach((k) => {
+    const v = (sv[k] === null || sv[k] === undefined) ? "" : String(sv[k]).trim();
+    if (!v) {
+      sv[k] = "";
+      return;
+    }
+    if (!sumLower.includes(v.toLowerCase())) {
+      sv[k] = "";
+    }
+  });
+
+  obj["Special Values"] = sv;
+  return obj;
+}
+
 /** ===== Append JSON objects to "News Raw" =====
  *
  * News Raw expected headers:
@@ -357,33 +431,74 @@ function NS_writeResultsToNewsRaw_(jsonArr) {
   let row = (lastRow < 1 ? 2 : lastRow + 1);
 
   jsonArr.forEach((obj) => {
-    const specialValues = obj["Special Values"] || {
-      "Square footage (facility)": "",
-      "Number of employees": "",
-      "Estimated Revenues": "",
-      "Family business": "",
-      "Medical": ""
-    };
+    // What you want in column I ("Specific Value")
+    let finalValue = "";
+    const mv = obj["MMCrawl Updates"];
 
-    const mmcrawlUpdates = obj["MMCrawl Updates"] !== undefined
-      ? obj["MMCrawl Updates"]
-      : "";
+    if (mv === null || mv === undefined) {
+      finalValue = "";
+    } else if (typeof mv === "string") {
+      finalValue = mv;
+    } else {
+      // object/array/number/bool -> stringify so it never becomes [object Object]
+      try {
+        finalValue = JSON.stringify(mv);
+      } catch (e) {
+        finalValue = String(mv);
+      }
+    }
 
     const values = [
-      obj["Company Name"] || "",
-      obj["Company Website URL"] || "",
-      obj["News Story URL"] || "",
-      obj["Headline"] || "",
-      obj["Publication Date"] || "",     // Column E
-      obj["Publisher or Source"] || "",  // Column F
-      obj["GPT Summary"] || "",          // Column G
-      obj["Source"] || "",               // Column H
-      (typeof mmcrawlUpdates === "string"
-        ? mmcrawlUpdates
-        : JSON.stringify(mmcrawlUpdates)) // Column J
+      obj["Company Name"] || "",          // A
+      obj["Company Website URL"] || "",   // B
+      obj["News Story URL"] || "",        // C
+      obj["Headline"] || "",              // D
+      obj["Publication Date"] || "",      // E
+      obj["Publisher or Source"] || "",   // F
+      obj["GPT Summary"] || "",           // G
+      obj["Source"] || "",                // H
+      finalValue                           // I  ✅ Specific Value
+      // J intentionally unused/blank
     ];
 
     sheet.getRange(row, 1, 1, values.length).setValues([values]);
     row++;
   });
+}
+
+
+
+/** ===== URL reachability + Wayback repair helpers ===== */
+function NS_checkUrlReachable_(url) {
+  try {
+    const resp = UrlFetchApp.fetch(url, {
+      method: "get",
+      followRedirects: true,
+      muteHttpExceptions: true,
+      validateHttpsCertificates: true
+    });
+    const code = resp.getResponseCode();
+    const ok = (code >= 200 && code < 400);
+    return { ok: ok, code: code, error: "" };
+  } catch (e) {
+    return { ok: false, code: 0, error: String(e && e.message ? e.message : e) };
+  }
+}
+
+function NS_tryWayback_(url) {
+  try {
+    const api = "https://archive.org/wayback/available?url=" + encodeURIComponent(url);
+    const resp = UrlFetchApp.fetch(api, { method: "get", muteHttpExceptions: true });
+    const code = resp.getResponseCode();
+    if (code < 200 || code >= 300) return { ok: false, url: "" };
+
+    const json = JSON.parse(resp.getContentText() || "{}");
+    const closest = json && json.archived_snapshots && json.archived_snapshots.closest;
+    if (closest && closest.available && closest.url) {
+      return { ok: true, url: closest.url };
+    }
+    return { ok: false, url: "" };
+  } catch (e) {
+    return { ok: false, url: "" };
+  }
 }

@@ -3,55 +3,120 @@ You are updating ONLY the "Number of employees" column in a sheet called MMCrawl
 You will be given the full MMCrawl row for one company, including:
 - Company Name
 - Existing Number of employees cell (may be blank)
-- Estimated Revenues cell (may be blank)
-- Any other descriptive fields (industries, products, about text, etc.)
+- Estimated Revenues cell (may be blank or partially filled)
+- Other descriptive fields (about text, industries, products, etc.)
 
-Your job is to return the FINAL value that should be written into the "Number of employees" cell for THIS row, following these rules exactly:
+Your job is to return the FINAL value that should be written into the
+"Number of employees" cell for THIS row.
+
+====================================================
+CRITICAL GLOBAL RULE (NON-NEGOTIABLE)
+====================================================
+You MUST NOT calculate employees from revenue if that revenue value
+was itself calculated from employees.
+
+If the Estimated Revenues cell contains:
+"(calc from employees)"
+
+→ DO NOT perform any revenue → employee calculation.
+
+ALL OTHER revenue sources are considered independent and valid inputs,
+including:
+- site-based revenue
+- news-based revenue
+- square-footage-derived revenue
+- public / estimated revenue
 
 ====================================================
 PRIORITY ORDER (MANDATORY)
-1) Site-based value (highest accuracy)
-2) Calculated value (medium accuracy)
-3) Public / 3rd-party estimate (least accurate)
-Always output values in this exact order.
 ====================================================
 
-1) START WITH EXISTING SITE VALUE  
-   - If the cell already contains a site-derived value, keep it and tag with "(site)" if not already tagged.  
-   - Example: "50" → "50 (site)"
+1) SITE-BASED EMPLOYEE COUNT (HIGHEST ACCURACY)
+------------------------------------------------
+- If the cell already contains a site-derived employee value:
+  • Keep it exactly
+  • Append "(site)" if not already tagged
 
-2) ADD CALCULATED EMPLOYEE COUNT (IF NEEDED)  
-   - Use ONLY when:
-       • no site value exists, OR  
-       • the calculated value adds meaningful clarity.  
-   - Calculation formula:  
-       employees ≈ revenue_dollars ÷ 200,000  
-   - Round to the nearest whole number.  
-   - Tag as "(calc from revenue_site)".  
-   - This MUST appear **after site values** and **before public estimates**.
+Examples:
+"50" → "50 (site)"
+"25 (site)" → keep as-is
 
-3) ADD PUBLIC / 3RD-PARTY EMPLOYEE ESTIMATE  
-   - If you can infer a plausible public estimate (ZoomInfo-type data), tag as:  
-       "~40 (public: BF 2024)"  
-   - Public estimates must always appear LAST.
+------------------------------------------------
 
-4) COMBINING VALUES  
-   - Separate each value with "; "  
-   - Required output order:  
-       1) site  
-       2) calc  
-       3) public  
-   - Example final outputs:  
-       "50 (site); 69 (calc from revenue_site)"  
-       "50 (site); ~70 (public: BF 2024)"  
-       "50 (site); 69 (calc from revenue_site); ~70 (public: BF 2024)"  
-       "69 (calc from revenue_site)"  
-       "69 (calc from revenue_site); ~70 (public: BF 2024)"
+2) REVENUE → EMPLOYEE CALCULATION (PRIMARY)
+------------------------------------------------
+Use this if ALL are true:
+• No site-based employee count exists
+• Estimated Revenues exists (any type EXCEPT calc-from-employees)
+• Estimated Revenues does NOT contain "(calc from employees)"
 
-5) WHEN NOTHING CAN BE DETERMINED  
-   - If no site, no calc, and no public signals exist → output "" (blank).
+Formula:
+employees ≈ revenue_dollars ÷ 200,000
 
+- Round to nearest whole number
+- Tag EXACTLY as:
+"(calc from revenue_site)"
+
+(This tag means “derived from revenue,” not literal site-only.)
+
+------------------------------------------------
+
+3) PUBLIC / THIRD-PARTY ESTIMATE (LAST)
+------------------------------------------------
+Use only if:
+- No site-based employee value exists, AND
+- No revenue-based calculation is possible
+
+Format:
+"~40 (public: BF 2024)"
+
+------------------------------------------------
+
+4) COMBINING VALUES
+------------------------------------------------
+- Separate values with "; "
+- Required order:
+  1) site
+  2) calc
+  3) public
+
+Valid examples:
+"50 (site)"
+"25 (calc from revenue_site)"
+"25 (calc from revenue_site); ~30 (public: BF 2024)"
+"~40 (public: BF 2024)"
+
+------------------------------------------------
+
+5) REFER-TO-SITE FALLBACK
+------------------------------------------------
+If NO employee value can be determined from:
+- site employees, AND
+- revenue-based calculation, AND
+- public estimate,
+
+BUT the Estimated Revenues cell contains ANY revenue value,
+
+THEN return exactly:
+
+"refer to site"
+
+------------------------------------------------
+
+6) WHEN NOTHING CAN BE DETERMINED
+------------------------------------------------
+If there is:
+- no site employee data,
+- no revenue data at all,
+- and no public estimate,
+
+then return exactly:
+
+""
+
+====================================================
 Return ONLY the final Number of employees cell value.
+====================================================
 
 MMCrawl row:
 <<<ROW_DATA_HERE>>>
