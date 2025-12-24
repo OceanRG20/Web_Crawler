@@ -17,40 +17,40 @@ PRIORITY ORDER (MANDATORY)
 Always output values in this exact order.
 ====================================================
 
-1) START WITH EXISTING SITE VALUE  
-   - If the cell already contains a site-derived value, keep it and tag with ""(site)"" if not already tagged.  
-   - Example: ""50"" ‚Üí ""50 (site)""
+1) START WITH EXISTING SITE VALUE 
+- If the cell already contains a site-derived value, keep it and tag with ""(site)"" if not already tagged. 
+- Example: ""50"" ? ""50 (site)""
 
-2) ADD CALCULATED EMPLOYEE COUNT (IF NEEDED)  
-   - Use ONLY when:
-       ‚Ä¢ no site value exists, OR  
-       ‚Ä¢ the calculated value adds meaningful clarity.  
-   - Calculation formula:  
-       employees ‚âà revenue_dollars √∑ 200,000  
-   - Round to the nearest whole number.  
-   - Tag as ""(calc from revenue_site)"".  
-   - This MUST appear **after site values** and **before public estimates**.
+2) ADD CALCULATED EMPLOYEE COUNT (IF NEEDED) 
+- Use ONLY when:
+ï no site value exists, OR 
+ï the calculated value adds meaningful clarity. 
+- Calculation formula: 
+employees ò revenue_dollars ˜ 200,000 
+- Round to the nearest whole number. 
+- Tag as ""(calc from revenue_site)"". 
+- This MUST appear **after site values** and **before public estimates**.
 
-3) ADD PUBLIC / 3RD-PARTY EMPLOYEE ESTIMATE  
-   - If you can infer a plausible public estimate (ZoomInfo-type data), tag as:  
-       ""~40 (public: BF 2024)""  
-   - Public estimates must always appear LAST.
+3) ADD PUBLIC / 3RD-PARTY EMPLOYEE ESTIMATE 
+- If you can infer a plausible public estimate (ZoomInfo-type data), tag as: 
+""~40 (public: BF 2024)"" 
+- Public estimates must always appear LAST.
 
-4) COMBINING VALUES  
-   - Separate each value with ""; ""  
-   - Required output order:  
-       1) site  
-       2) calc  
-       3) public  
-   - Example final outputs:  
-       ""50 (site); 69 (calc from revenue_site)""  
-       ""50 (site); ~70 (public: BF 2024)""  
-       ""50 (site); 69 (calc from revenue_site); ~70 (public: BF 2024)""  
-       ""69 (calc from revenue_site)""  
-       ""69 (calc from revenue_site); ~70 (public: BF 2024)""
+4) COMBINING VALUES 
+- Separate each value with ""; "" 
+- Required output order: 
+1) site 
+2) calc 
+3) public 
+- Example final outputs: 
+""50 (site); 69 (calc from revenue_site)"" 
+""50 (site); ~70 (public: BF 2024)"" 
+""50 (site); 69 (calc from revenue_site); ~70 (public: BF 2024)"" 
+""69 (calc from revenue_site)"" 
+""69 (calc from revenue_site); ~70 (public: BF 2024)""
 
-5) WHEN NOTHING CAN BE DETERMINED  
-   - If no site, no calc, and no public signals exist ‚Üí output """" (blank).
+5) WHEN NOTHING CAN BE DETERMINED 
+- If no site, no calc, and no public signals exist ? output """" (blank).
 
 Return ONLY the final Number of employees cell value.
 
@@ -77,49 +77,49 @@ MANDATORY PRIORITY ORDER FOR FINAL OUTPUT
 Values must ALWAYS appear in this exact order in the final cell.
 ====================================================
 
-STEP 1 ‚Äî START WITH EXISTING DATA  
-- Preserve any valid site-based value and tag it as ""(site)"".  
+STEP 1 ó START WITH EXISTING DATA 
+- Preserve any valid site-based value and tag it as ""(site)"". 
 - If multiple site values exist, keep them first in the output.
 
-STEP 2 ‚Äî NEWS-BASED VALUES (IF ANY)  
-- If confident revenue appears in news/press ‚Üí treat as equivalent to site accuracy.  
+STEP 2 ó NEWS-BASED VALUES (IF ANY) 
+- If confident revenue appears in news/press ? treat as equivalent to site accuracy. 
 - Tag as ""(news YYYY)"" and place BEFORE site values.
 
 FINAL ORDER SO FAR:
-1) News  
-2) Site  
+1) News 
+2) Site 
 
-STEP 3 ‚Äî CALCULATED REVENUE (EMPLOYEES ‚Üí REVENUE)  
-- Use ONLY when needed (no strong site/news value OR adds clarity).  
-- Formula:  
-    revenue ‚âà employees √ó 200,000  
-- Round to clean values (e.g., ""$12M"").  
-- Tag: ""(calc from employees)""  
+STEP 3 ó CALCULATED REVENUE (EMPLOYEES ? REVENUE) 
+- Use ONLY when needed (no strong site/news value OR adds clarity). 
+- Formula: 
+revenue ò employees ◊ 200,000 
+- Round to clean values (e.g., ""$12M""). 
+- Tag: ""(calc from employees)"" 
 - This MUST appear AFTER site/news and BEFORE public estimates.
 
-STEP 4 ‚Äî CALCULATED REVENUE (SQFT ‚Üí REVENUE)  
-- Use ONLY when:  
-    ‚Ä¢ no usable employee count exists, AND  
-    ‚Ä¢ square footage is available.  
-- Formula:  
-    revenue ‚âà sqft √ó 600  
-- Tag: ""(calc from sqft)""  
+STEP 4 ó CALCULATED REVENUE (SQFT ? REVENUE) 
+- Use ONLY when: 
+ï no usable employee count exists, AND 
+ï square footage is available. 
+- Formula: 
+revenue ò sqft ◊ 600 
+- Tag: ""(calc from sqft)"" 
 - Also placed BEFORE public estimates.
 
-STEP 5 ‚Äî PUBLIC DIRECTORY ESTIMATES  
-- ZoomInfo/D&B/etc.  
-- Tag: ""(public: ZI 2023)"" or ""(public: BF 2024)""  
+STEP 5 ó PUBLIC DIRECTORY ESTIMATES 
+- ZoomInfo/D&B/etc. 
+- Tag: ""(public: ZI 2023)"" or ""(public: BF 2024)"" 
 - These ALWAYS appear LAST.
 
 ====================================================
 FINAL OUTPUT ORDER EXAMPLES
 ====================================================
-""$14M (news 2023); $13.8M (site); $12M (calc from employees); ~$5‚Äì10M (public: ZI 2023)""
+""$14M (news 2023); $13.8M (site); $12M (calc from employees); ~$5ñ10M (public: ZI 2023)""
 ""~$8M (site); ~$12M (calc from employees)""
-""$12M (calc from employees); ~$5‚Äì10M (public: ZI 2023)""
-""$8‚Äì15M (public: BF 2024)""   (if only public data exists)
-""$11M (calc from sqft)""      (if only sqft calc is possible)
-""NI""                         (if no data at all)
+""$12M (calc from employees); ~$5ñ10M (public: ZI 2023)""
+""$8ñ15M (public: BF 2024)"" (if only public data exists)
+""$11M (calc from sqft)"" (if only sqft calc is possible)
+""NI"" (if no data at all)
 
 ====================================================
 If absolutely NO revenue information can be inferred, return exactly:
@@ -140,14 +140,14 @@ You will be given the FULL MMCrawl row, including:
 Your job is to return the FINAL value that should be written into the ""Square footage (facility)"" cell for THIS row.
 
 =====================================================
-RULE 0 ‚Äî NEVER CHANGE THE MEANING
+RULE 0 ó NEVER CHANGE THE MEANING
 =====================================================
-‚Ä¢ Never delete an existing numeric datapoint.
-‚Ä¢ Never invent a new numeric value that is not supported by site text, public sources, or the revenue formula below.
-‚Ä¢ You MAY normalize wording/formatting (add ‚Äúft¬≤‚Äù, change ""(estimate)"" to ""(zoominfo)"", fix spacing, standardize separators), but the underlying numbers and provenance must stay the same.
+ï Never delete an existing numeric datapoint.
+ï Never invent a new numeric value that is not supported by site text, public sources, or the revenue formula below.
+ï You MAY normalize wording/formatting (add ìft≤î, change ""(estimate)"" to ""(zoominfo)"", fix spacing, standardize separators), but the underlying numbers and provenance must stay the same.
 
 =====================================================
-RULE 1 ‚Äî MAXIMUM TWO ITEMS PER CELL
+RULE 1 ó MAXIMUM TWO ITEMS PER CELL
 =====================================================
 The final cell may contain:
 - Up to TWO numeric items (e.g. a site value and a public value, or a site value and a calc-from-revenue value), OR
@@ -160,10 +160,10 @@ When more than two numeric items are available, keep at most TWO according to th
 3) Calc-from-revenue value (lowest priority)
 
 Examples of allowed combinations:
-- ""23,000 ft¬≤ (site); 30,000 ft¬≤ (public: BF 2024)""
-- ""40,000 ft¬≤ (site); 55,000 ft¬≤ (calc from revenue)""
-- ""~30k ft¬≤ (public: ZI 2023)""
-- ""18,333 ft¬≤ (calc from revenue)""
+- ""23,000 ft≤ (site); 30,000 ft≤ (public: BF 2024)""
+- ""40,000 ft≤ (site); 55,000 ft≤ (calc from revenue)""
+- ""~30k ft≤ (public: ZI 2023)""
+- ""18,333 ft≤ (calc from revenue)""
 - ""NI""
 - ""refer to site""
 
@@ -173,37 +173,37 @@ Disallowed (do NOT output):
 =====================================================
 2) START FROM THE EXISTING CELL (NORMALIZE IF NEEDED)
 =====================================================
-Let ‚Äúbaseline‚Äù be the current Square footage (facility) value (may be empty).
+Let ìbaselineî be the current Square footage (facility) value (may be empty).
 
 If baseline is NOT empty:
 - Preserve all numeric datapoints and their tags.
 - You may clean up formatting:
-  ‚Ä¢ Ensure each numeric item includes ‚Äúft¬≤‚Äù somewhere.
-  ‚Ä¢ Normalize ""(estimate)"" ‚Üí ""(zoominfo)"" when it clearly refers to a ZoomInfo-type estimate.
-  ‚Ä¢ Standardize separators as:  ""<value 1>; <value 2>"" (semicolon + single space).
+ï Ensure each numeric item includes ìft≤î somewhere.
+ï Normalize ""(estimate)"" ? ""(zoominfo)"" when it clearly refers to a ZoomInfo-type estimate.
+ï Standardize separators as: ""<value 1>; <value 2>"" (semicolon + single space).
 - Identify which items are:
-  ‚Ä¢ site items ‚Üí tagged ""(site)""
-  ‚Ä¢ public items ‚Üí tagged ""(public: ...)""
-  ‚Ä¢ calc items ‚Üí tagged ""(calc from revenue)"" or obviously equivalent.
+ï site items ? tagged ""(site)""
+ï public items ? tagged ""(public: ...)""
+ï calc items ? tagged ""(calc from revenue)"" or obviously equivalent.
 - If there are more than two numeric items, keep at most TWO according to the priority:
-  1) keep the best site item
-  2) keep the best public item (if present)
-  3) otherwise, if needed to reach two items, keep ONE calc-from-revenue item
-  Discard any additional, lower-priority items when there would be more than two in total.
+1) keep the best site item
+2) keep the best public item (if present)
+3) otherwise, if needed to reach two items, keep ONE calc-from-revenue item
+Discard any additional, lower-priority items when there would be more than two in total.
 
 If baseline is empty:
-- You will construct the value from rules 3‚Äì5.
+- You will construct the value from rules 3ñ5.
 
 =====================================================
 3) ADD SITE VALUE IF MISSING
 =====================================================
 Look for facility size in the row text (About, Services, etc.), e.g.:
-- ‚Äúour 45,000 sq ft facility‚Äù
-- ‚Äúa 30,000-square-foot plant‚Äù
-- ‚Äú20k ft2 shop‚Äù
+- ìour 45,000 sq ft facilityî
+- ìa 30,000-square-foot plantî
+- ì20k ft2 shopî
 
 If you find a clear site facility size AND there is no ""(site)"" item in baseline AND you still have fewer than two total numeric items:
-- Extract and normalize it, e.g. ""45,000 ft¬≤ (site)"" or ""~30k ft¬≤ (site)"".
+- Extract and normalize it, e.g. ""45,000 ft≤ (site)"" or ""~30k ft≤ (site)"".
 - Add it to the value (respecting the max-two-items rule).
 
 =====================================================
@@ -211,8 +211,8 @@ If you find a clear site facility size AND there is no ""(site)"" item in baseli
 =====================================================
 If you can find a credible public estimate for facility size (e.g., BF, ZoomInfo, trade press) AND there is no ""(public: ...)"" item AND you still have fewer than two total numeric items:
 - Add a new item such as:
-  ""~30k ft¬≤ (public: BF 2024)""
-  ""~25k ft¬≤ (public: ZI 2023)""
+""~30k ft≤ (public: BF 2024)""
+""~25k ft≤ (public: ZI 2023)""
 
 =====================================================
 5) LAST-RESORT CALCULATION FROM REVENUE
@@ -224,105 +224,105 @@ Only perform a revenue-based square footage calculation when ALL of the followin
 4) You still have fewer than two numeric items.
 
 Then:
-- Approximate square_footage ‚âà Revenue √∑ 600
+- Approximate square_footage ò Revenue ˜ 600
 - Express as:
-  ""18,333 ft¬≤ (calc from revenue)""
-  or ""~18k ft¬≤ (calc from revenue)""
+""18,333 ft≤ (calc from revenue)""
+or ""~18k ft≤ (calc from revenue)""
 
 =====================================================
 6) WHEN TO RETURN ""NI"" OR ""REFER TO SITE""
 =====================================================
 After applying all steps:
 
-‚Ä¢ If you still have ZERO numeric items and there is NO convincing evidence anywhere in the row that the facility size exists or is discussed ‚Üí return ""NI"".
+ï If you still have ZERO numeric items and there is NO convincing evidence anywhere in the row that the facility size exists or is discussed ? return ""NI"".
 
-‚Ä¢ If you still have ZERO numeric items but the row clearly talks about the plant / facility in a way that suggests a size is known but not stated (e.g., ‚Äúour large multi-building facility‚Äù, ‚Äúmulti-plant campus‚Äù) ‚Üí return ""refer to site"".
+ï If you still have ZERO numeric items but the row clearly talks about the plant / facility in a way that suggests a size is known but not stated (e.g., ìour large multi-building facilityî, ìmulti-plant campusî) ? return ""refer to site"".
 
-‚Ä¢ If you have one or two numeric items ‚Üí return those items only (no ""NI"" or ""refer to site"" in combination with numbers).
+ï If you have one or two numeric items ? return those items only (no ""NI"" or ""refer to site"" in combination with numbers).
 
 =====================================================
 7) OUTPUT FORMAT
 =====================================================
-‚Ä¢ Output ONE final line only.
-‚Ä¢ Use ""ft¬≤"" for square feet.
-‚Ä¢ Separate multiple items with ""; "" (semicolon + single space).
-‚Ä¢ Do NOT output more than TWO numeric items.
-‚Ä¢ No commentary or explanation; ONLY the final cell value.
+ï Output ONE final line only.
+ï Use ""ft≤"" for square feet.
+ï Separate multiple items with ""; "" (semicolon + single space).
+ï Do NOT output more than TWO numeric items.
+ï No commentary or explanation; ONLY the final cell value.
 
 ROW DATA:
 <<<ROW_DATA_HERE>>>
 ","Last run for ""Square footage (facility)"": rows 2-19 (9 rows) at 12/9/2025, 10:57:37 AM"
-Years of operation,"You are updating ONLY the ""Years of operation"" column in a sheet called MMCrawl.
+Years of operation,"You are updating ONLY the ""Years of operation"" column in a sheet called MMCrawl. 
 
-You will be given the full MMCrawl row for one company, including:
-- Company Name
-- Public Website Homepage URL (company site URL)
-- Years of operation cell (may be blank or already filled)
-- Founding year or history notes (if any)
-- Any other descriptive fields (about text, industries, products, ownership, etc.)
+You will be given the full MMCrawl row for one company, including: 
+- Company Name 
+- Public Website Homepage URL (company site URL) 
+- Years of operation cell (may be blank or already filled) 
+- Founding year or history notes (if any) 
+- Any other descriptive fields (about text, industries, products, ownership, etc.) 
 
-Your job is to return the FINAL value that should be written into the ""Years of operation"" cell for THIS row, following these rules exactly:
+Your job is to return the FINAL value that should be written into the ""Years of operation"" cell for THIS row, following these rules exactly: 
 
-1) Respect existing values
-- If the ""Years of operation"" cell in this row is ALREADY filled with a non-empty value, simply return that existing value unchanged.
-- Only try to calculate or estimate years of operation when the cell is currently blank.
+1) Respect existing values 
+- If the ""Years of operation"" cell in this row is ALREADY filled with a non-empty value, simply return that existing value unchanged. 
+- Only try to calculate or estimate years of operation when the cell is currently blank. 
 
-2) What ""Years of operation"" means
-- ""Years of operation"" is the number of years the company has been operating (age of the company).
-- If you see a statement like ""founded in 1971"", convert that into an approximate years-of-operation figure.
-- Use a reasonable current year (for example, 2024‚Äì2025) when doing the subtraction. You do NOT need to state the founding year in the cell, only the years of operation.
+2) What ""Years of operation"" means 
+- ""Years of operation"" is the number of years the company has been operating (age of the company). 
+- If you see a statement like ""founded in 1971"", convert that into an approximate years-of-operation figure. 
+- Use a reasonable current year (for example, 2024ñ2025) when doing the subtraction. You do NOT need to state the founding year in the cell, only the years of operation. 
 
-3) Use the website URL as the primary source
-- Focus first on the company‚Äôs own website (Public Website Homepage URL).
-- Use any clues from the row or from that site such as:
-  ‚Ä¢ ‚ÄúFounded in 1966‚Äù
-  ‚Ä¢ ‚ÄúServing customers for over 30 years‚Äù
-  ‚Ä¢ ‚ÄúCelebrating 50 years in business‚Äù
-- Convert such statements into a concise numeric or approximate years-of-operation value, e.g.:
-  ‚Ä¢ ""59""   (if founded ~1966 and assuming current year ~2025)
-  ‚Ä¢ ""30+""  (if the wording says ‚Äúover 30 years‚Äù but not exact)
+3) Use the website URL as the primary source 
+- Focus first on the companyís own website (Public Website Homepage URL). 
+- Use any clues from the row or from that site such as: 
+ï ìFounded in 1966î 
+ï ìServing customers for over 30 yearsî 
+ï ìCelebrating 50 years in businessî 
+- Convert such statements into a concise numeric or approximate years-of-operation value, e.g.: 
+ï ""59"" (if founded ~1966 and assuming current year ~2025) 
+ï ""30+"" (if the wording says ìover 30 yearsî but not exact) 
 
-4) If no clear years-of-operation can be derived
-- If the row and company website do NOT provide enough information to confidently estimate years of operation, return exactly:
-  NI
+4) If no clear years-of-operation can be derived 
+- If the row and company website do NOT provide enough information to confidently estimate years of operation, return exactly: 
+NI 
 
-5) Output format
-- Return ONLY the final value for the cell:
-  ‚Ä¢ Either a concise numeric-style value like ""35"", ""30+"", ""50+"", etc.
-  ‚Ä¢ Or ""NI"" if nothing reliable can be determined.
-- Do NOT add words like ""years"", ""years in business"", ""founded"", or any extra commentary.
+5) Output format 
+- Return ONLY the final value for the cell: 
+ï Either a concise numeric-style value like ""35"", ""30+"", ""50+"", etc. 
+ï Or ""NI"" if nothing reliable can be determined. 
+- Do NOT add words like ""years"", ""years in business"", ""founded"", or any extra commentary. 
 
-Below is the MMCrawl row data for this company:
+Below is the MMCrawl row data for this company: 
 
-<<<ROW_DATA_HERE>>>","Last run for ""Years of operation"": rows 2-19 (9 rows) at 12/9/2025, 11:01:30 AM"
-Ownership,"You are updating ONLY the ""Ownership"" column in a sheet called MMCrawl.
+<<<ROW_DATA_HERE>>>","Last run for ""Years of operation"": rows 2-19 (9 rows) at 12/9/2025, 11:01:30 AM"
+Ownership,"You are updating ONLY the ""Ownership"" column in a sheet called MMCrawl. 
 
-You will be given the full MMCrawl row for one company, including:
-- Company Name
-- Other descriptive fields (industry, employees, products, etc.)
-- Public information may be available through reasoning on the company website URL.
+You will be given the full MMCrawl row for one company, including: 
+- Company Name 
+- Other descriptive fields (industry, employees, products, etc.) 
+- Public information may be available through reasoning on the company website URL. 
 
-Rules:
+Rules: 
 
-1. Add verified ownership information only if it is missing or incomplete:
-   - privately held?
-   - family-owned?
-   - subsidiary?
-   - founder history?
-   - ownership changes?
-2. If the Ownership cell has correct information, keep it.
-3. Append new information; do NOT overwrite valid existing data.
-4. Keep the result short, factual, and consistent with MMCrawl tone.
+1. Add verified ownership information only if it is missing or incomplete: 
+- privately held? 
+- family-owned? 
+- subsidiary? 
+- founder history? 
+- ownership changes? 
+2. If the Ownership cell has correct information, keep it. 
+3. Append new information; do NOT overwrite valid existing data. 
+4. Keep the result short, factual, and consistent with MMCrawl tone. 
 
-Your output must return ONLY the final Ownership cell content for THIS row.
+Your output must return ONLY the final Ownership cell content for THIS row. 
 ","Last run for ""Ownership"": rows 2-19 (9 rows) at 12/9/2025, 11:09:18 AM"
-Equipment,"You are a professional analyst. Your ONLY job is to extract and normalize the company‚Äôs real capital equipment from its official website.
+Equipment,"You are a professional analyst. Your ONLY job is to extract and normalize the companyís real capital equipment from its official website.
 
 INPUT:
 - You will be given one company HOME PAGE URL.
 
 TASK:
-Visit and analyze the company‚Äôs website. Extract ONLY real equipment actually shown or stated on the site.
+Visit and analyze the companyís website. Extract ONLY real equipment actually shown or stated on the site.
 
 VALID EQUIPMENT INCLUDES:
 - CNC machines (3-axis, 4-axis, 5-axis)
@@ -334,47 +334,47 @@ VALID EQUIPMENT INCLUDES:
 (If Makino, Yasda, or Kern appear anywhere, always include them.)
 
 EXTRACTION PRIORITY (in this exact order):
-1. Brand + Model + Axis/Type + Quantity  
-   Format: Brand Model (axis/type) √óqty
-2. Brand + Machine Type (if model not shown)  
-   Example: Haas (3-axis VMC)
-3. Normalized categories (only if explicitly listed), such as:  
-   - CNC Mills (3-axis)  
-   - CNC Mills (5-axis)  
-   - Wire EDM  
-   - Sinker EDM  
-   - Hole-Popper EDM  
-   - Gun Drill  
-   - Injection Molding Tryout Presses  
-   - CMM / Metrology Systems
+1. Brand + Model + Axis/Type + Quantity 
+Format: Brand Model (axis/type) ◊qty
+2. Brand + Machine Type (if model not shown) 
+Example: Haas (3-axis VMC)
+3. Normalized categories (only if explicitly listed), such as: 
+- CNC Mills (3-axis) 
+- CNC Mills (5-axis) 
+- Wire EDM 
+- Sinker EDM 
+- Hole-Popper EDM 
+- Gun Drill 
+- Injection Molding Tryout Presses 
+- CMM / Metrology Systems
 
 RULES:
-- Only extract equipment visible on the company‚Äôs own site (text, equipment list, PDF, or clear machine photos).
-- Do NOT include vague capabilities (‚ÄúCNC machining‚Äù, ‚Äúmodern equipment‚Äù, ‚Äústate-of-the-art machines‚Äù, grinders, hand tools, software, robots).
+- Only extract equipment visible on the companyís own site (text, equipment list, PDF, or clear machine photos).
+- Do NOT include vague capabilities (ìCNC machiningî, ìmodern equipmentî, ìstate-of-the-art machinesî, grinders, hand tools, software, robots).
 - Axis labels must ONLY be used when explicitly stated or visible.
-- Use √óqty only if explicitly stated; otherwise omit quantity.
+- Use ◊qty only if explicitly stated; otherwise omit quantity.
 
 DECISION RULE:
-- If you can extract at least one valid item ‚Üí return the normalized equipment list.
+- If you can extract at least one valid item ? return the normalized equipment list.
 
 OUTPUT RULES:
 - Output ONE single line only.
 - Separate multiple equipment items with ""; "".
 - Output must be EXACTLY one of:
-  ‚Ä¢ normalized equipment list  
+ï normalized equipment list 
 
 
 Return only the final one-line equipment output. Nothing else.
 ","Last run for ""Equipment"": rows 2-29 (28 rows) at 12/9/2025, 4:44:05 AM"
-CNC 3-axis,"You are updating ONLY the ‚ÄúCNC 3-axis‚Äù column in MMCrawl.
+CNC 3-axis,"You are updating ONLY the ìCNC 3-axisî column in MMCrawl.
 
-You will be given the full MMCrawl row for one company. The most important field for this task is the ‚ÄúEquipment‚Äù cell, which may contain:
+You will be given the full MMCrawl row for one company. The most important field for this task is the ìEquipmentî cell, which may contain:
 - a normalized equipment list,
 - vague equipment text,
-- the phrase ‚ÄúNI‚Äù, or
-- the phrase ‚ÄúRefer to Site‚Äù.
+- the phrase ìNIî, or
+- the phrase ìRefer to Siteî.
 
-Your job is to decide what the value of the ‚ÄúCNC 3-axis‚Äù cell should be, based ONLY on the content of the Equipment cell.
+Your job is to decide what the value of the ìCNC 3-axisî cell should be, based ONLY on the content of the Equipment cell.
 
 You must return only ONE of:
 ""Yes""
@@ -382,7 +382,7 @@ You must return only ONE of:
 ""NI""
 
 ====================================================
-CRITICAL OVERRIDE RULE  (apply before everything else)
+CRITICAL OVERRIDE RULE (apply before everything else)
 ====================================================
 If the Equipment cell contains NO CNC machining equipment AND contains NONE of the CNC machining brands listed below, you MUST output:
 NI
@@ -400,35 +400,35 @@ Do NOT consider CMM, presses, molding machines, or general tooling equipment as 
 OTHER RULES
 ====================================================
 
-1. If the Equipment cell is exactly ‚ÄúRefer to Site‚Äù (any case), output:
+1. If the Equipment cell is exactly ìRefer to Siteî (any case), output:
 refer to site
 
-2. If the Equipment cell is exactly ‚ÄúNI‚Äù (any case) and contains no other equipment text, output:
+2. If the Equipment cell is exactly ìNIî (any case) and contains no other equipment text, output:
 NI
 
 3. Otherwise, examine the detailed equipment list:
 
-   Output ‚ÄúYes‚Äù ONLY when the Equipment cell clearly indicates 3-axis machining, for example:
-   - ‚ÄúCNC Mills (3-axis)‚Äù
-   - ‚ÄúHaas VF-2 (3-axis)‚Äù
-   - ‚ÄúMakino PS95 (3-axis VMC)‚Äù
-   - any explicit model labeled ‚Äú3-axis‚Äù.
+Output ìYesî ONLY when the Equipment cell clearly indicates 3-axis machining, for example:
+- ìCNC Mills (3-axis)î
+- ìHaas VF-2 (3-axis)î
+- ìMakino PS95 (3-axis VMC)î
+- any explicit model labeled ì3-axisî.
 
-4. If CNC machining equipment is present BUT the text is vague or incomplete (e.g., ‚ÄúMakino‚Äù, ‚ÄúHaas‚Äù, ‚ÄúCNC machining‚Äù, ‚ÄúCNC mill‚Äù with no axis specified), you must output:
+4. If CNC machining equipment is present BUT the text is vague or incomplete (e.g., ìMakinoî, ìHaasî, ìCNC machiningî, ìCNC millî with no axis specified), you must output:
 refer to site
 
 5. If no 3-axis capability can be confidently identified, output:
 NI
 ","Last run for ""CNC 3-axis"": rows 2-29 (28 rows) at 12/9/2025, 5:59:23 AM"
-CNC 5-axis,"You are updating ONLY the ‚ÄúCNC 5-axis‚Äù column in MMCrawl.
+CNC 5-axis,"You are updating ONLY the ìCNC 5-axisî column in MMCrawl.
 
-You will be given the full MMCrawl row for one company. The most important field for this task is the ‚ÄúEquipment‚Äù cell, which may contain:
+You will be given the full MMCrawl row for one company. The most important field for this task is the ìEquipmentî cell, which may contain:
 - a normalized equipment list,
 - vague equipment text,
-- the phrase ‚ÄúNI‚Äù, or
-- the phrase ‚ÄúRefer to Site‚Äù.
+- the phrase ìNIî, or
+- the phrase ìRefer to Siteî.
 
-Your job is to decide what the value of the ‚ÄúCNC 5-axis‚Äù cell should be, based ONLY on the content of the Equipment cell.
+Your job is to decide what the value of the ìCNC 5-axisî cell should be, based ONLY on the content of the Equipment cell.
 
 You must return only ONE of:
 ""Yes""
@@ -436,7 +436,7 @@ You must return only ONE of:
 ""NI""
 
 ====================================================
-CRITICAL OVERRIDE RULE  (apply before everything else)
+CRITICAL OVERRIDE RULE (apply before everything else)
 ====================================================
 If the Equipment cell contains NO CNC machining equipment AND contains NONE of the CNC machining brands listed below, you MUST output:
 NI
@@ -454,22 +454,22 @@ Do NOT consider CMM, presses, molding machines, or general tooling equipment as 
 OTHER RULES
 ====================================================
 
-1. If the Equipment cell is exactly ‚ÄúRefer to Site‚Äù (any case), output:
+1. If the Equipment cell is exactly ìRefer to Siteî (any case), output:
 refer to site
 
-2. If the Equipment cell is exactly ‚ÄúNI‚Äù (any case) and contains no other equipment text, output:
+2. If the Equipment cell is exactly ìNIî (any case) and contains no other equipment text, output:
 NI
 
 3. Otherwise, examine the detailed equipment list:
 
-   Output ‚ÄúYes‚Äù ONLY when the Equipment cell clearly indicates 5-axis machining, for example:
-   - ‚ÄúCNC Mills (5-axis)‚Äù
-   - ‚ÄúMakino D200Z (5-axis)‚Äù
-   - ‚ÄúMatsuura MX-520 (5-axis)‚Äù
-   - ‚ÄúHaas UMC-750 (5-axis)‚Äù
-   - any explicit model labeled ‚Äú5-axis‚Äù.
+Output ìYesî ONLY when the Equipment cell clearly indicates 5-axis machining, for example:
+- ìCNC Mills (5-axis)î
+- ìMakino D200Z (5-axis)î
+- ìMatsuura MX-520 (5-axis)î
+- ìHaas UMC-750 (5-axis)î
+- any explicit model labeled ì5-axisî.
 
-4. If CNC machining equipment is present BUT the text is vague or incomplete (e.g., ‚ÄúMakino (5-axis)‚Äù with no model or category, or a machine brand without axis), you must output:
+4. If CNC machining equipment is present BUT the text is vague or incomplete (e.g., ìMakino (5-axis)î with no model or category, or a machine brand without axis), you must output:
 refer to site
 
 5. If no 5-axis capability can be confidently identified, output:
@@ -480,14 +480,14 @@ Spares/ Repairs,"You are updating ONLY the ""Spares/Repairs"" column.
 Rules:
 1. Never modify or delete ""by hand"" content.
 2. Determine whether the company offers:
-   - repairs
-   - refurbishing
-   - maintenance
-   - spare components or parts
+- repairs
+- refurbishing
+- maintenance
+- spare components or parts
 3. Output:
-   - ""Yes""
-   - ""NI""
-   - OR append additional notes if needed, preserving existing data.
+- ""Yes""
+- ""NI""
+- OR append additional notes if needed, preserving existing data.
 
 Return only the final cell.
 ","Last run for ""Spares/ Repairs"": rows 2-19 (9 rows) at 12/9/2025, 11:13:34 AM"
@@ -510,94 +510,94 @@ Possible outputs (must be exactly one of these, case-sensitive):
 Rules:
 
 1. Respect existing confirmed ""Yes"":
-   - If the current Family business cell already contains ""Yes"" (case-insensitive), output ""Yes"" and do NOT change it.
+- If the current Family business cell already contains ""Yes"" (case-insensitive), output ""Yes"" and do NOT change it.
 
 2. When the current Family business value is ""refer to site"":
-   - You must analyze the Ownership column and decide whether the company is clearly a family-owned business or not.
-   - Only in this case (existing value = ""refer to site"") are you allowed to change the value.
+- You must analyze the Ownership column and decide whether the company is clearly a family-owned business or not.
+- Only in this case (existing value = ""refer to site"") are you allowed to change the value.
 
-3. When Ownership clearly indicates a family business ‚Üí output ""Yes"":
-   - If the Ownership text clearly states or strongly implies that the company is family-owned or family-run, output ""Yes"".
-   - Examples of clear indicators (case-insensitive, may be part of a longer sentence):
-     ‚Ä¢ ""family-owned""
-     ‚Ä¢ ""family owned""
-     ‚Ä¢ ""family-run""
-     ‚Ä¢ ""family run""
-     ‚Ä¢ ""family-operated""
-     ‚Ä¢ ""family operated""
-     ‚Ä¢ ""family business""
-     ‚Ä¢ ""second-generation"" or ""third-generation"" (when referring to ownership)
-     ‚Ä¢ phrases such as ""founded by X; now operated by his son/daughter"", ""multi-generation family company"", etc.
-   - If multiple owners are all from the same family and the text describes this as a family company, treat it as ""Yes"".
+3. When Ownership clearly indicates a family business ? output ""Yes"":
+- If the Ownership text clearly states or strongly implies that the company is family-owned or family-run, output ""Yes"".
+- Examples of clear indicators (case-insensitive, may be part of a longer sentence):
+ï ""family-owned""
+ï ""family owned""
+ï ""family-run""
+ï ""family run""
+ï ""family-operated""
+ï ""family operated""
+ï ""family business""
+ï ""second-generation"" or ""third-generation"" (when referring to ownership)
+ï phrases such as ""founded by X; now operated by his son/daughter"", ""multi-generation family company"", etc.
+- If multiple owners are all from the same family and the text describes this as a family company, treat it as ""Yes"".
 
-4. When Ownership describes specific individual owners but NOT clearly as a family business ‚Üí output ""refer to site"":
-   - If the Ownership text names one or more individuals but does NOT use any of the family-related phrases above, treat this as ambiguous.
-   - Examples:
-     ‚Ä¢ ""Privately held; owned by John Smith""
-     ‚Ä¢ ""Owned by Jane Doe, President""
-     ‚Ä¢ ""Privately held; owned by John and Mary Smith""
-   - In these cases, you cannot safely classify it as a family business, so you must output ""refer to site"".
+4. When Ownership describes specific individual owners but NOT clearly as a family business ? output ""refer to site"":
+- If the Ownership text names one or more individuals but does NOT use any of the family-related phrases above, treat this as ambiguous.
+- Examples:
+ï ""Privately held; owned by John Smith""
+ï ""Owned by Jane Doe, President""
+ï ""Privately held; owned by John and Mary Smith""
+- In these cases, you cannot safely classify it as a family business, so you must output ""refer to site"".
 
-5. When Ownership gives no useful signal ‚Üí output ""NI"":
-   - If Ownership is blank or only contains generic phrases such as:
-     ‚Ä¢ ""Privately held""
-     ‚Ä¢ ""Privately owned""
-     ‚Ä¢ ""Independent company""
-     ‚Ä¢ ""Employee-owned"" (with no mention of family)
-     ‚Ä¢ other neutral descriptions with no clear family indication
-   - And there is no other part of the row that clearly indicates the company is family-owned,
-   - Then output ""NI"".
+5. When Ownership gives no useful signal ? output ""NI"":
+- If Ownership is blank or only contains generic phrases such as:
+ï ""Privately held""
+ï ""Privately owned""
+ï ""Independent company""
+ï ""Employee-owned"" (with no mention of family)
+ï other neutral descriptions with no clear family indication
+- And there is no other part of the row that clearly indicates the company is family-owned,
+- Then output ""NI"".
 
 6. Safety / precedence:
-   - Never infer ""Yes"" based solely on common surnames or guesses.
-   - Only output ""Yes"" when the text clearly supports that the business is family-owned or family-run.
-   - Otherwise prefer ""refer to site"" (for named individual owners) or ""NI"" (for generic/unknown ownership).
+- Never infer ""Yes"" based solely on common surnames or guesses.
+- Only output ""Yes"" when the text clearly supports that the business is family-owned or family-run.
+- Otherwise prefer ""refer to site"" (for named individual owners) or ""NI"" (for generic/unknown ownership).
 
 Output format:
 - Return exactly ONE of: ""Yes"", ""NI"", or ""refer to site"".
 - Do not add explanations, quotes, or any other text.
 ","Last run for ""Family business"": rows 2-19 (9 rows) at 12/9/2025, 11:11:54 AM"
-2nd Address,"You are updating ONLY the ""2nd Address"" column in MMCrawl.
+2nd Address,"You are updating ONLY the ""2nd Address"" column in MMCrawl. 
 
-You will be given the full MMCrawl row for one company, including:
-- Company Name
-- Street Address, City, State, Zipcode (primary address)
-- Any description fields (About, Services, Industries, Ownership, etc.)
+You will be given the full MMCrawl row for one company, including: 
+- Company Name 
+- Street Address, City, State, Zipcode (primary address) 
+- Any description fields (About, Services, Industries, Ownership, etc.) 
 
-Your job is to determine whether the company has a TRUE, DISTINCT second physical address.
+Your job is to determine whether the company has a TRUE, DISTINCT second physical address. 
 
-==========================
-RULES (EXTREMELY IMPORTANT)
-==========================
+========================== 
+RULES (EXTREMELY IMPORTANT) 
+========================== 
 
-1. Output must be EXACTLY ONE of:
-   - A real second address (full street, city, state, zip)
-   - """"    (completely blank)
+1. Output must be EXACTLY ONE of: 
+- A real second address (full street, city, state, zip) 
+- """" (completely blank) 
 
-2. Never output ‚ÄúNI‚Äù, ‚ÄúNone‚Äù, ‚Äúrefer to site‚Äù, or any explanation.
-   The client requires that the column remain blank in almost all cases.
+2. Never output ìNIî, ìNoneî, ìrefer to siteî, or any explanation. 
+The client requires that the column remain blank in almost all cases. 
 
-3. A valid second address MUST:
-   - Be explicitly shown in the MMCrawl row text, or
-   - Represent a completely separate facility location (different city or different street address).
+3. A valid second address MUST: 
+- Be explicitly shown in the MMCrawl row text, or 
+- Represent a completely separate facility location (different city or different street address). 
 
-4. Do NOT infer or guess a second address from:
-   - References to multiple buildings on the same property
-   - Regions served
-   - Multiple departments or divisions
-   - Shipping/receiving addresses unless they give a DIFFERENT full address
+4. Do NOT infer or guess a second address from: 
+- References to multiple buildings on the same property 
+- Regions served 
+- Multiple departments or divisions 
+- Shipping/receiving addresses unless they give a DIFFERENT full address 
 
-5. If the MMCrawl row shows only one address, or the information is unclear:
-   OUTPUT: """"
+5. If the MMCrawl row shows only one address, or the information is unclear: 
+OUTPUT: """" 
 
-6. Formatting:
-   - Provide the address exactly as shown or cleaned (e.g., ‚Äú123 Main St, Houston, TX 77001‚Äù).
-   - Do not add tags, notes, or explanations.
+6. Formatting: 
+- Provide the address exactly as shown or cleaned (e.g., ì123 Main St, Houston, TX 77001î). 
+- Do not add tags, notes, or explanations. 
 
-Return only the final 2nd Address value for this row.
+Return only the final 2nd Address value for this row. 
 
-MMCrawl row:
-<<<ROW_DATA_HERE>>>
+MMCrawl row: 
+<<<ROW_DATA_HERE>>> 
 ","Last run for ""2nd Address"": rows 12-15 (4 rows) at 12/10/2025, 2:40:44 PM"
 Region,"You are updating ONLY the ""Region"" column in MMCrawl.
 
@@ -611,77 +611,66 @@ You will receive the full MMCrawl row for ONE company, including:
 
 RULES:
 
-1. SKIP LOGIC
-   - If Region already contains any valid region code:
-       W.Pa, RT-NC, Mich, Minn, Wisc, Ilin, E.Mass,
-       NJ-E.Pa, SLC, FR-Col, Canada
-     ‚Üí Return the existing value exactly (do NOT change it).
 
-2. BACKFILL ONLY when Region is:
-   - """"
-   - ""NI""
-   - ""No region""
-   - ""refer to site""
+1. REGION ASSIGNMENT (Use City + State + Zipcode ONLY)
+Apply the first matching rule below:
 
-3. REGION ASSIGNMENT (Use City + State + Zipcode ONLY)
-   Apply the first matching rule below:
+Western Pennsylvania ? ""W.Pa""
+- Pennsylvania counties/cities in the western region (Pittsburgh area)
 
-   Western Pennsylvania ‚Üí ""W.Pa""
-     - Pennsylvania counties/cities in the western region (Pittsburgh area)
+Research Triangle NC ? ""RT-NC""
+- Raleigh / Durham / Cary / Chapel Hill region in North Carolina
 
-   Research Triangle NC ‚Üí ""RT-NC""
-     - Raleigh / Durham / Cary / Chapel Hill region in North Carolina
+Michigan ? ""Mich""
+- Any city in Michigan
 
-   Michigan ‚Üí ""Mich""
-     - Any city in Michigan
+Minnesota ? ""Minn""
+- Any city in Minnesota
 
-   Minnesota ‚Üí ""Minn""
-     - Any city in Minnesota
+Wisconsin ? ""Wisc""
+- Any city in Wisconsin
 
-   Wisconsin ‚Üí ""Wisc""
-     - Any city in Wisconsin
+Illinois ? ""Ilin""
+- Any city in Illinois
 
-   Illinois ‚Üí ""Ilin""
-     - Any city in Illinois
+Eastern Massachusetts ? ""E.Mass""
+- Boston metro or Eastern MA cities
 
-   Eastern Massachusetts ‚Üí ""E.Mass""
-     - Boston metro or Eastern MA cities
+New Jersey & Eastern Pennsylvania ? ""NJ-E.Pa""
+- Any city in NJ OR Eastern PA (Philadelphia-area counties)
 
-   New Jersey & Eastern Pennsylvania ‚Üí ""NJ-E.Pa""
-     - Any city in NJ OR Eastern PA (Philadelphia-area counties)
+Salt Lake City UT ? ""SLC""
+- SLC metro area, Utah
 
-   Salt Lake City UT ‚Üí ""SLC""
-     - SLC metro area, Utah
+BoulderñDenver CO ? ""FR-Col""
+- Boulder / Denver / Front Range, Colorado
 
-   Boulder‚ÄìDenver CO ‚Üí ""FR-Col""
-     - Boulder / Denver / Front Range, Colorado
+CANADA ? ""Canada""
+Assign ""Canada"" when ANY of the following are true:
+- State/Province contains a Canadian province or abbreviation:
+ON, Ont, Ontario
+QC, Que, Quebec, QuÈbec
+BC, British Columbia
+AB, Alberta
+MB, Manitoba
+SK, Saskatchewan
+NB, New Brunswick
+NS, Nova Scotia
+NL, Newfoundland, Newfoundland and Labrador
+PE, Prince Edward Island
+YT, Yukon
+NT, Northwest Territories
+NU, Nunavut
+- OR address text contains ìCanadaî
+- OR postal code matches Canadian format (e.g., ìK1A 0B1î, ìV6E 2Y3î)
 
-   CANADA ‚Üí ""Canada""
-     Assign ""Canada"" when ANY of the following are true:
-       - State/Province contains a Canadian province or abbreviation:
-           ON, Ont, Ontario
-           QC, Que, Quebec, Qu√©bec
-           BC, British Columbia
-           AB, Alberta
-           MB, Manitoba
-           SK, Saskatchewan
-           NB, New Brunswick
-           NS, Nova Scotia
-           NL, Newfoundland, Newfoundland and Labrador
-           PE, Prince Edward Island
-           YT, Yukon
-           NT, Northwest Territories
-           NU, Nunavut
-       - OR address text contains ‚ÄúCanada‚Äù
-       - OR postal code matches Canadian format (e.g., ‚ÄúK1A 0B1‚Äù, ‚ÄúV6E 2Y3‚Äù)
+2. DEFAULT CASE
+- If none of the above regions match:
+? Region = ""No region""
 
-4. DEFAULT CASE
-   - If none of the above regions match:
-       ‚Üí Region = ""No region""
-
-5. OUTPUT FORMAT
-   - Output only the region code.
-   - ONE line only.
+3. OUTPUT FORMAT
+- Output only the region code.
+- ONE line only.
 
 ","Last run for ""Region"": rows 2-5 (3 rows) at 12/10/2025, 2:52:50 PM"
 Medical,"You are updating ONLY the ""Medical"" column in MMCrawl.
@@ -700,57 +689,52 @@ Your task is to determine whether the company serves the medical industry, using
 RULES
 ========================================
 
-1. SKIP LOGIC
-   If the Medical cell already contains:
-     ‚Ä¢ ""Yes""
-   ‚Üí return ""Yes"" exactly (do NOT modify).
+1. WHEN TO SET ìYesî
+Set Medical = ""Yes"" if ANY of the following appear in ANY field:
+ï Medical
+ï Med-device
+ï Medical devices
+ï Medical molds
+ï Medtech
+ï Pharmaceutical
+ï Life sciences
+ï Biotech
+ï Healthcare
+ï Surgical
+ï Dental (ONLY if clearly related to medical tooling or products)
+ï ìISO 13485î (implies medical system compliance)
+ï Clean room / Cleanroom (class 7, class 8, etc.)
 
-2. WHEN TO SET ‚ÄúYes‚Äù
-   Set Medical = ""Yes"" if ANY of the following appear in ANY field:
-     ‚Ä¢ Medical
-     ‚Ä¢ Med-device
-     ‚Ä¢ Medical devices
-     ‚Ä¢ Medical molds
-     ‚Ä¢ Medtech
-     ‚Ä¢ Pharmaceutical
-     ‚Ä¢ Life sciences
-     ‚Ä¢ Biotech
-     ‚Ä¢ Healthcare
-     ‚Ä¢ Surgical
-     ‚Ä¢ Dental (ONLY if clearly related to medical tooling or products)
-     ‚Ä¢ ‚ÄúISO 13485‚Äù (implies medical system compliance)
-     ‚Ä¢ Clean room / Cleanroom (class 7, class 8, etc.)
+? If any match is found, output exactly: ""Yes"".
 
-   ‚Üí If any match is found, output exactly: ""Yes"".
+2. WHEN TO SET ìrefer to siteî
+If the company appears *possibly medical-related* but information is unclear or incomplete, such as:
+ï general references to ""precision molding"" or ""tight tolerance"" without industry context
+ï language implying regulated industries but not naming medical explicitly
+ï ambiguous terms like ìClass 101 toolingî (not medical-specific)
+ï ìDDMî, ìLSRî without explicit medical industry mention
 
-3. WHEN TO SET ‚Äúrefer to site‚Äù
-   If the company appears *possibly medical-related* but information is unclear or incomplete, such as:
-     ‚Ä¢ general references to ""precision molding"" or ""tight tolerance"" without industry context
-     ‚Ä¢ language implying regulated industries but not naming medical explicitly
-     ‚Ä¢ ambiguous terms like ‚ÄúClass 101 tooling‚Äù (not medical-specific)
-     ‚Ä¢ ‚ÄúDDM‚Äù, ‚ÄúLSR‚Äù without explicit medical industry mention
+? Output: ""refer to site""
 
-   ‚Üí Output: ""refer to site""
+3. WHEN TO SET ìNIî
+If NONE of the fields in MMCrawl indicate or suggest medical work:
+ï No medical terms
+ï No pharmaceutical / biotech references
+ï No clean room references
+ï No ISO 13485
+ï No med-device customers
+ï No regulated-industry hints
 
-4. WHEN TO SET ‚ÄúNI‚Äù
-   If NONE of the fields in MMCrawl indicate or suggest medical work:
-     ‚Ä¢ No medical terms
-     ‚Ä¢ No pharmaceutical / biotech references
-     ‚Ä¢ No clean room references
-     ‚Ä¢ No ISO 13485
-     ‚Ä¢ No med-device customers
-     ‚Ä¢ No regulated-industry hints
-
-   ‚Üí Output: ""NI""
+? Output: ""NI""
 
 ========================================
 OUTPUT FORMAT
 ========================================
 Return exactly ONE line:
 Either:
-   ""Yes""
-   ""refer to site""
-   ""NI""
+""Yes""
+""refer to site""
+""NI""
 
 No commentary.
 ","Last run for ""Medical"": rows 2-19 (9 rows) at 12/9/2025, 11:24:48 AM"
