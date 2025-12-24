@@ -1,5 +1,5 @@
 /*************************************************
- * News_Agent.gs — News menu + GPT news crawler + GPT URL repair
+ * News_Agent.gs — News menu + GPT news crawler + URL repair
  *
  * Sheets used:
  *   - "AI Integration"   (prompts + result log)
@@ -8,7 +8,7 @@
  *
  * Prompt IDs in AI Integration:
  *   - "News_Search"  (news crawling / summarization)
- *   - "News_Url"     (URL validation + repair; returns FINAL rebuilt rows list)
+ *   - "News_Url"     (URL validation + repair; stores FINAL rebuilt rows list)
  **************************************************/
 
 /** ===== Menu hook (called from AI_Agent.onOpen) ===== */
@@ -16,7 +16,7 @@ function onOpen_News(ui) {
   ui = ui || SpreadsheetApp.getUi();
   ui.createMenu("News")
     .addItem("▶ News Searching", "NS_runNewsSearch")
-    .addItem("✅ Check News Source URLs", "NS_checkNewsSourceUrls") // GPT-driven rebuild
+    .addItem("✅ Check News Source URLs", "NS_checkNewsSourceUrls")
     .addToUi();
 }
 
@@ -35,7 +35,8 @@ const NS_DEFAULT_SPECIAL_VALUES = {
   "Medical": ""
 };
 
-/** ===== Main runner ===== */
+/** ===== Main runner (kept as your current logic) ===== */
+/** ===== Main runner (UPDATED: do NOT skip any News Source rows) ===== */
 function NS_runNewsSearch() {
   const ss = SpreadsheetApp.getActive();
   const ui = SpreadsheetApp.getUi();
@@ -68,93 +69,67 @@ function NS_runNewsSearch() {
 
   ui.alert(
     "News Search",
-    "Processing " + newsRows.length + " candidate news URLs from News Source…",
+    "Processing " + newsRows.length + " news URL row(s) from News Source…",
     ui.ButtonSet.OK
   );
 
   const allArticles = [];
   let idx = 0;
 
+  // Fallback object to guarantee at least 1 output per input row
+  function makeFallbackNoNewsObject_(row, reason) {
+    const now = new Date();
+    const isoDate = now.toISOString().slice(0, 10);
+    const timeStr = now.toTimeString().slice(0, 8);
+
+    return {
+      "Company Name": row.companyName || "",
+      "Company Website URL": row.companyUrl || "",
+      "News Story URL": row.newsUrl || "",
+      "Headline": "No news found",
+      "Publication Date": "",
+      "Publisher or Source": "",
+      "GPT Summary":
+        "No news found after applying filters on " +
+        isoDate + " " + timeStr +
+        (reason ? (". Reason: " + String(reason)) : "."),
+      "Confidence Score": "",
+      "Source": row.source || "",
+      "Special Values": JSON.parse(JSON.stringify(NS_DEFAULT_SPECIAL_VALUES)),
+      "MMCrawl Updates": ""
+    };
+  }
+
   newsRows.forEach((row) => {
     idx++;
+
     ss.toast(
       "News Search " + idx + "/" + newsRows.length + " — " + (row.newsUrl || row.companyUrl),
       "News",
       5
     );
 
-    /**
-     * POLICY (keep as you had):
-     * - NEVER SKIP a row.
-     * - 404/429: try Wayback; if none, keep URL in sheet but run SEARCH MODE for this run.
-     * - Soft-404 (HTML says not found): remove URL from sheet, append candidate URLs, run SEARCH MODE for this run.
-     * - All other statuses (including 403/406 bot blocks): do NOT remove; proceed.
-     */
-    if (row.newsUrl) {
-      // 1) Soft-404 check (content-based)
-      const fx = NS_fetchHtml_(row.newsUrl);
-      if (fx.ok && NS_isSoft404_(row.newsUrl, fx.html)) {
-        const candidates = NS_extractCandidateUrlsFromHtml_(fx.html).slice(0, 6); // cap
-        NS_applySoft404RepairToSheet_(
-          row.rowIndex,
-          row.companyUrl,
-          row.companyName,
-          row.newsUrl,
-          candidates,
-          row.source // preserve original source
-        );
-
-        // Run search mode for THIS run
-        row.newsUrl = "";
-      } else {
-        // 2) Only actionable statuses 404/429
-        const chk = NS_checkUrlActionable404_429_(row.newsUrl);
-        if (chk.actionable) {
-          const wb = NS_tryWayback_(row.newsUrl);
-
-          if (wb.ok && wb.url) {
-            const old = row.newsUrl;
-            row.newsUrl = wb.url;
-
-            // write back to News Source column C
-            try {
-              const ns = ss.getSheetByName("News Source");
-              if (ns && row.rowIndex) {
-                ns.getRange(row.rowIndex, 3).setValue(wb.url);
-                ns.getRange(row.rowIndex, 3).setNote("Auto-repaired via Wayback from: " + old);
-              }
-            } catch (_) {}
-
-          } else {
-            // No Wayback: keep sheet URL but run search mode THIS run
-            const original = row.newsUrl;
-            row.newsUrl = "";
-
-            try {
-              const ns = ss.getSheetByName("News Source");
-              if (ns && row.rowIndex) {
-                ns.getRange(row.rowIndex, 3).setNote(
-                  "404/429 detected; no Wayback snapshot. Kept URL in sheet, ran SEARCH MODE for this run.\n" +
-                  "Original: " + original + "\nChecked: " + new Date().toISOString()
-                );
-              }
-            } catch (_) {}
-          }
-        }
-      }
-    }
+    // IMPORTANT CHANGE:
+    // - Do NOT pre-fetch / soft-404 repair / 404/429 logic here.
+    // - Always call News_Search for every row as provided in News Source.
 
     try {
       const fullPrompt = NS_buildPromptForRow_(basePrompt, row);
       const rawAnswer = NS_callOpenAIForNews_(fullPrompt);
       const articles = NS_extractJsonArray_(rawAnswer);
 
-      const enriched = articles.map((obj) => {
+      // Guarantee at least 1 output row per News Source input row
+      const finalArticles = (articles && articles.length)
+        ? articles
+        : [makeFallbackNoNewsObject_(row, "Model returned empty/invalid JSON array for this input.")];
+
+      const enriched = finalArticles.map((obj) => {
         let copy = Object.assign({}, obj);
 
         if (!copy["Source"]) copy["Source"] = row.source || "";
         if (!copy["Company Name"]) copy["Company Name"] = row.companyName || "";
         if (!copy["Company Website URL"]) copy["Company Website URL"] = row.companyUrl || "";
+        if (!copy["News Story URL"]) copy["News Story URL"] = row.newsUrl || "";
 
         if (!copy.hasOwnProperty("Special Values")) {
           copy["Special Values"] = JSON.parse(JSON.stringify(NS_DEFAULT_SPECIAL_VALUES));
@@ -173,27 +148,10 @@ function NS_runNewsSearch() {
       });
 
       allArticles.push.apply(allArticles, enriched);
-    } catch (err) {
-      const now = new Date();
-      const isoDate = now.toISOString().slice(0, 10);
-      const timeStr = now.toTimeString().slice(0, 8);
 
-      allArticles.push({
-        "Company Name": row.companyName || "",
-        "Company Website URL": row.companyUrl || "",
-        "News Story URL": row.newsUrl || "",
-        "Headline": "Error fetching news",
-        "Publication Date": "",
-        "Publisher or Source": "",
-        "GPT Summary":
-          "Error while running News_Search for this URL at " +
-          isoDate + " " + timeStr +
-          ": " + String(err),
-        "Confidence Score": "",
-        "Source": row.source || "",
-        "Special Values": JSON.parse(JSON.stringify(NS_DEFAULT_SPECIAL_VALUES)),
-        "MMCrawl Updates": ""
-      });
+    } catch (err) {
+      // Guarantee at least 1 output for hard failures too
+      allArticles.push(makeFallbackNoNewsObject_(row, "Error while running News_Search: " + String(err)));
     }
 
     Utilities.sleep(250);
@@ -211,6 +169,7 @@ function NS_runNewsSearch() {
     8
   );
 }
+
 
 /** ===== Prompt row locator in AI Integration ===== */
 function NS_findPromptRow_(id) {
@@ -231,13 +190,6 @@ function NS_findPromptRow_(id) {
 }
 
 /** ===== Read rows from "News Source" ===== */
-/**
- * Expected headers in News Source:
- *   A: Company URL
- *   B: Company Name
- *   C: News URL
- *   D: Source
- */
 function NS_getRowsFromNewsSource_() {
   const ss = SpreadsheetApp.getActive();
   const sh = ss.getSheetByName("News Source");
@@ -309,9 +261,7 @@ function NS_buildPromptForRow_(basePrompt, row) {
 /** ===== OpenAI call for News_Search ===== */
 function NS_callOpenAIForNews_(userPrompt) {
   const key = PropertiesService.getScriptProperties().getProperty("OPENAI_API_KEY");
-  if (!key) {
-    throw new Error('Missing OpenAI API key. Use "AI Integration → Set OpenAI API Key".');
-  }
+  if (!key) throw new Error('Missing OpenAI API key. Use "AI Integration → Set OpenAI API Key".');
 
   const model = (typeof AIA !== "undefined" && AIA && AIA.MODEL) ? AIA.MODEL : "gpt-4o";
 
@@ -326,8 +276,8 @@ function NS_callOpenAIForNews_(userPrompt) {
           "You are an MBA-trained analyst with 5+ years researching U.S. precision metal and plastics manufacturers. " +
           "Follow the user instructions exactly. Return ONLY a strict JSON array (no markdown)."
       },
-      { role: "user", content: userPrompt },
-    ],
+      { role: "user", content: userPrompt }
+    ]
   };
 
   const resp = UrlFetchApp.fetch("https://api.openai.com/v1/chat/completions", {
@@ -335,7 +285,7 @@ function NS_callOpenAIForNews_(userPrompt) {
     contentType: "application/json",
     muteHttpExceptions: true,
     headers: { Authorization: "Bearer " + key },
-    payload: JSON.stringify(payload),
+    payload: JSON.stringify(payload)
   });
 
   const code = resp.getResponseCode();
@@ -343,7 +293,7 @@ function NS_callOpenAIForNews_(userPrompt) {
   if (code < 200 || code >= 300) throw new Error("OpenAI HTTP " + code + ": " + text);
 
   const data = JSON.parse(text);
-  const answer = data?.choices?.[0]?.message?.content;
+  const answer = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
   if (!answer) throw new Error("No content returned from OpenAI (News_Search).");
   return String(answer).trim();
 }
@@ -370,26 +320,6 @@ function NS_extractJsonArray_(text) {
   if (Array.isArray(obj)) return obj.filter((v) => v && typeof v === "object");
   if (typeof obj === "object") return [obj];
   return [];
-}
-
-function NS_extractJsonObject_(text) {
-  if (!text) return null;
-  let t = String(text).trim();
-
-  const fence = t.match(/```json([\s\S]*?)```/i) || t.match(/```([\s\S]*?)```/i);
-  if (fence) t = fence[1].trim();
-
-  // prefer object
-  let obj = null;
-  try {
-    obj = JSON.parse(t);
-  } catch (err) {
-    const m = t.match(/(\{[\s\S]*\})/);
-    if (m) {
-      try { obj = JSON.parse(m[1]); } catch (_) {}
-    }
-  }
-  return (obj && typeof obj === "object" && !Array.isArray(obj)) ? obj : null;
 }
 
 /** ===== Enforce Special Values must appear in GPT Summary (summary-locked) ===== */
@@ -460,7 +390,7 @@ function NS_writeResultsToNewsRaw_(jsonArr) {
   });
 }
 
-/** ===== URL + Wayback + Soft-404 helpers ===== */
+/** ===== URL helpers ===== */
 
 /** Actionable URL check: ONLY 404 and 429. */
 function NS_checkUrlActionable404_429_(url) {
@@ -508,63 +438,99 @@ function NS_fetchHtml_(url) {
     return { ok: false, code: 0, html: "" };
   }
 }
-
-/** Soft-404 detector: content indicates "not found" even if HTTP 200. */
+/**
+ * Soft-404 detector (PRE-VERSION style: simple, reliable string checks).
+ * Returns true when the HTML content indicates "not found" even if HTTP 200.
+ */
 function NS_isSoft404_(url, html) {
   if (!html) return false;
-  const h = html.toLowerCase();
+  const h = String(html).toLowerCase();
 
   const needles = [
     "sorry, we couldn't find the page",
-    "sorry, we couldn’t find the page",
     "couldn't find the page you're looking for",
     "could not find the page",
     "page not found",
     "the page you requested cannot be found",
     "we can't find the page",
-    "we can’t find the page",
-    "sorry, we couldn't find that page",
-    "sorry, we can’t find that page"
+    "sorry, we can’t find that page.",
+    "sorry, we can't find that page",
+    "sorry, we can’t find that page",
+    "we can’t find that page",
+    "we can't find that page"
   ];
 
   let hits = 0;
   needles.forEach((n) => { if (h.indexOf(n) >= 0) hits++; });
 
-  // conservative threshold
-  return hits >= 1;
+  if (h.indexOf("couldn't find the page") >= 0) return true;
+  if (h.indexOf("page not found") >= 0) return true;
+  if (hits >= 2) return true;
+
+  return false;
 }
 
 /**
  * Extract candidate URLs from a soft-404 page (e.g., "Closest matches").
- * Returns a de-duped list of absolute URLs.
+ * - Supports absolute and relative URLs.
+ * - Keeps only article-like URLs.
+ * - De-dupes and preserves page order.
  */
-function NS_extractCandidateUrlsFromHtml_(html) {
+function NS_extractCandidateUrlsFromHtml_(html, baseUrl) {
   const out = [];
   if (!html) return out;
 
+  const base = String(baseUrl || "").trim();
+
+  function toAbsolute_(href) {
+    let u = String(href || "").trim();
+    if (!u) return "";
+    u = u.replace(/&amp;/g, "&");
+
+    if (/^https?:\/\//i.test(u)) return u;
+    if (u.indexOf("//") === 0) return "https:" + u;
+
+    // relative -> origin + path
+    const m = base.match(/^(https?:\/\/[^\/]+)(\/.*)?$/i);
+    const origin = m ? m[1] : "";
+    if (!origin) return "";
+    if (u.charAt(0) !== "/") u = "/" + u;
+    return origin + u;
+  }
+
+  // Pull hrefs
   const re = /href\s*=\s*["']([^"']+)["']/gi;
   let m;
   while ((m = re.exec(html)) !== null) {
-    let u = String(m[1] || "").trim();
-    if (!u) continue;
+    const abs = toAbsolute_(m[1]);
+    if (!abs) continue;
 
-    u = u.replace(/&amp;/g, "&");
-    if (!/^https?:\/\//i.test(u)) continue;
+    const ul = abs.toLowerCase();
 
-    // Keep only likely article links (expand safely if needed)
-    if (
-      u.indexOf("ptonline.com/articles/") >= 0 ||
-      u.indexOf("plasticstoday.com/") >= 0 ||
-      u.indexOf("moldmakingtechnology.com/") >= 0
-    ) {
-      out.push(u);
-    }
+    // Article-like patterns (tune as needed)
+    const isArticleLike =
+      ul.indexOf("/articles/") >= 0 ||
+      ul.indexOf("/article/") >= 0 ||
+      ul.indexOf("/news/") >= 0;
+
+    if (!isArticleLike) continue;
+
+    // Exclusions (avoid directories / taxonomies)
+    if (ul.indexOf("/suppliers/") >= 0) continue;
+    if (ul.indexOf("/topics/") >= 0) continue;
+    if (ul.indexOf("/topic/") >= 0) continue;
+    if (ul.indexOf("/tag/") >= 0) continue;
+    if (ul.indexOf("/category/") >= 0) continue;
+    if (ul.indexOf("/search") >= 0) continue;
+
+    out.push(abs);
   }
 
+  // Dedupe, preserve order
   const uniq = [];
   const seen = {};
   out.forEach((u) => {
-    const key = u.toLowerCase();
+    const key = String(u).toLowerCase();
     if (seen[key]) return;
     seen[key] = true;
     uniq.push(u);
@@ -574,74 +540,60 @@ function NS_extractCandidateUrlsFromHtml_(html) {
 }
 
 /**
- * Soft-404 repair in sheet:
- * - Clear the bad News URL in place
- * - Append candidate URLs as new rows with SAME company + SAME source
+ * Rebuild News Source sheet from output rows (A:E).
+ * Expected columns:
+ * A: Company URL
+ * B: Company Name
+ * C: News URL
+ * D: Source
+ * E: Archive_Flag
  */
-function NS_applySoft404RepairToSheet_(rowIndex, companyUrl, companyName, badUrl, candidates, originalSource) {
+function NS_rebuildNewsSourceSheetFromRows_(rows) {
   const ss = SpreadsheetApp.getActive();
   const sh = ss.getSheetByName("News Source");
-  if (!sh) return;
+  if (!sh) throw new Error('Sheet "News Source" not found.');
 
-  // Clear bad URL
-  sh.getRange(rowIndex, 3).clearContent();
-  sh.getRange(rowIndex, 3).setNote(
-    "Soft-404 detected; URL removed.\nOriginal: " + badUrl +
-    "\nChecked: " + new Date().toISOString()
-  );
+  const out = [];
+  (rows || []).forEach((r) => {
+    if (!Array.isArray(r)) return;
+    const a = String(r[0] || "").trim();
+    const b = String(r[1] || "").trim();
+    const c = String(r[2] || "").trim();
+    const d = String(r[3] || "").trim();
+    const e = String(r[4] || "").trim();
 
-  // Keep Source as-is (do not overwrite with a label)
-  // If you want to mark, prefer Note not value change.
+    if (!a && !b && !c && !d && !e) return;
 
-  if (!candidates || !candidates.length) return;
-
-  // Dedupe against existing News URLs
-  const last = sh.getLastRow();
-  const existing = (last >= 2)
-    ? sh.getRange(2, 3, last - 1, 1).getDisplayValues().flat().map(s => String(s || "").trim().toLowerCase())
-    : [];
-
-  const toAdd = [];
-  candidates.slice(0, 6).forEach((u) => {
-    const key = String(u).trim().toLowerCase();
-    if (!key) return;
-    if (existing.indexOf(key) >= 0) return;
-    toAdd.push([companyUrl || "", companyName || "", u, originalSource || ""]);
+    // Only allow "Yes" or blank
+    const flag = (e === "Yes") ? "Yes" : "";
+    out.push([a, b, c, d, flag]);
   });
 
-  if (!toAdd.length) return;
-  sh.getRange(sh.getLastRow() + 1, 1, toAdd.length, 4).setValues(toAdd);
-}
+  // Clear old data area (row 2 down)
+  const last = sh.getLastRow();
+  if (last >= 2) {
+    sh.getRange(2, 1, last - 1, sh.getMaxColumns()).clearContent().clearNote();
+  }
 
-/** Wayback repair helper (used by News_Search flow) */
-function NS_tryWayback_(url) {
-  try {
-    const api = "https://archive.org/wayback/available?url=" + encodeURIComponent(url);
-    const resp = UrlFetchApp.fetch(api, { method: "get", muteHttpExceptions: true });
-    const code = resp.getResponseCode();
-    if (code < 200 || code >= 300) return { ok: false, url: "" };
-
-    const json = JSON.parse(resp.getContentText() || "{}");
-    const closest = json && json.archived_snapshots && json.archived_snapshots.closest;
-    if (closest && closest.available && closest.url) {
-      return { ok: true, url: closest.url };
-    }
-    return { ok: false, url: "" };
-  } catch (e) {
-    return { ok: false, url: "" };
+  if (out.length) {
+    sh.getRange(2, 1, out.length, 5).setValues(out);
   }
 }
 
-/** =========================================================
- *  ✅ CHECK NEWS SOURCE URLS (GPT-DRIVEN REBUILD)
+/**
+ * ✅ CHECK NEWS SOURCE URLS (LOCAL REBUILD + SAVE RESULT)
  *
- *  Flow:
- *   1) Read all rows from News Source (A:D).
- *   2) Load prompt "News_Url" from AI Integration.
- *   3) Call OpenAI with: prompt + JSON input rows.
- *   4) Save returned JSON into AI Integration Result/Date for News_Url.
- *   5) Rebuild News Source sheet rows from returned "rows".
- * ========================================================= */
+ * Rules implemented exactly as you described:
+ * - HTTP 200 with real content -> keep
+ * - HTTP 404 / 429 -> remove
+ * - HTTP 200 soft-404:
+ *      - if closest matches exist -> replace with matches, set Archive_Flag="Yes"
+ *      - if no matches -> remove
+ * - blocked / fetch failed -> keep as-is
+ *
+ * Also saves the FINAL rebuilt rows list into AI Integration -> Result for Prompt ID "News_Url",
+ * then rebuilds News Source from that JSON.
+ */
 function NS_checkNewsSourceUrls() {
   const ss = SpreadsheetApp.getActive();
   const ui = SpreadsheetApp.getUi();
@@ -658,12 +610,6 @@ function NS_checkNewsSourceUrls() {
     return;
   }
 
-  const basePrompt = String(aiSheet.getRange(promptRow, 2).getValue() || "").trim();
-  if (!basePrompt) {
-    ui.alert('No prompt content in "AI Integration" for Prompt ID "News_Url".');
-    return;
-  }
-
   const sh = ss.getSheetByName("News Source");
   if (!sh) {
     ui.alert('Sheet "News Source" not found.');
@@ -676,80 +622,165 @@ function NS_checkNewsSourceUrls() {
     return;
   }
 
-  // Read ALL existing rows
-  const vals = sh.getRange(2, 1, lastRow - 1, 4).getDisplayValues();
+  // News Source columns:
+  // A: Company URL, B: Company Name, C: News URL, D: Source, E: Archive_Flag
+  const vals = sh.getRange(2, 1, lastRow - 1, 5).getDisplayValues();
+
   const inputRows = vals
-    .map(r => [String(r[0] || "").trim(), String(r[1] || "").trim(), String(r[2] || "").trim(), String(r[3] || "").trim()])
-    .filter(r => r.some(x => String(x || "").trim() !== "")); // remove fully empty
+    .map(r => [
+      String(r[0] || "").trim(),
+      String(r[1] || "").trim(),
+      String(r[2] || "").trim(),
+      String(r[3] || "").trim(),
+      String(r[4] || "").trim()
+    ])
+    .filter(r => r.some(x => String(x || "").trim() !== ""));
 
   if (!inputRows.length) {
     ui.alert("News Source is empty (no rows to check).");
     return;
   }
 
-  ss.toast("Sending " + inputRows.length + " News Source row(s) to News_Url…", "News", 8);
+  // Output + counters
+  let checked_rows = 0;
+  let kept = 0;
+  let removed_404_429 = 0;
+  let replaced_soft404 = 0;
+  let removed_soft404_no_matches = 0;
+  let added_matches = 0;
 
-  // Build user prompt: base + explicit JSON payload
-  const userPrompt =
-    basePrompt +
-    "\n\n====================\nINPUT_ROWS_JSON\n====================\n" +
-    JSON.stringify({ rows: inputRows }, null, 2) +
-    "\n";
+  const outRows = [];
+  const seenNewsUrls = {}; // dedupe by news URL lower
 
-  // Call OpenAI
-  let raw = "";
-  try {
-    raw = NS_callOpenAIForUrlRepair_(userPrompt);
-  } catch (e) {
-    ui.alert("News_Url call failed:\n\n" + String(e));
-    return;
+  // Fetch headers
+  const headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9"
+  };
+
+  function addRow_(companyUrl, companyName, newsUrl, source, flag) {
+    const nu = String(newsUrl || "").trim();
+    if (!nu) return;
+    const key = nu.toLowerCase();
+    if (seenNewsUrls[key]) return;
+    seenNewsUrls[key] = true;
+    outRows.push([
+      String(companyUrl || "").trim(),
+      String(companyName || "").trim(),
+      nu,
+      String(source || "").trim(),
+      (flag === "Yes") ? "Yes" : ""
+    ]);
   }
 
-  // Parse JSON object
-  const obj = NS_extractJsonObject_(raw);
-  if (!obj) {
-    ui.alert("News_Url returned invalid JSON. See AI Integration Result for raw output.");
-    aiSheet.getRange(promptRow, 3).setValue(String(raw || ""));
-    aiSheet.getRange(promptRow, 4).setValue(new Date());
-    return;
+  for (let i = 0; i < inputRows.length; i++) {
+    const row = inputRows[i];
+    const companyUrl = row[0];
+    const companyName = row[1];
+    const newsUrl = row[2];
+    const source = row[3];
+    // const existingFlag = row[4]; // we will recompute
+
+    if (!newsUrl) {
+      // If no News URL, keep row as-is (rare, but safe)
+      addRow_(companyUrl, companyName, newsUrl, source, "");
+      continue;
+    }
+
+    checked_rows++;
+    ss.toast("Checking " + checked_rows + "/" + inputRows.length + " — " + newsUrl, "News", 5);
+
+    let resp, code, html;
+    try {
+      resp = UrlFetchApp.fetch(newsUrl, {
+        method: "get",
+        followRedirects: true,
+        muteHttpExceptions: true,
+        validateHttpsCertificates: true,
+        headers
+      });
+      code = resp.getResponseCode();
+      html = String(resp.getContentText() || "");
+    } catch (e) {
+      // BLOCKED/UNKNOWN -> keep original
+      kept++;
+      addRow_(companyUrl, companyName, newsUrl, source, "");
+      continue;
+    }
+
+    // HARD REMOVE
+    if (code === 404 || code === 429) {
+      removed_404_429++;
+      continue;
+    }
+
+    // If not a normal HTML success, treat as unknown -> keep
+    // (e.g., 403, 406, 500, etc.)
+    if (!(code >= 200 && code < 400)) {
+      kept++;
+      addRow_(companyUrl, companyName, newsUrl, source, "");
+      continue;
+    }
+
+    // SOFT-404 detection (HTTP 200 but "can't find" content)
+    if (NS_isSoft404_(newsUrl, html)) {
+      const candidates = NS_extractCandidateUrlsFromHtml_(html, newsUrl).slice(0, 6);
+
+      if (candidates.length) {
+        replaced_soft404++;
+        candidates.forEach((u) => {
+          add_matches:
+          addRow_(companyUrl, companyName, u, source, "Yes");
+        });
+        added_matches += candidates.length;
+      } else {
+        // Soft-404 but no matches -> remove
+        removed_soft404_no_matches++;
+      }
+      continue;
+    }
+
+    // Otherwise keep (assume valid article)
+    kept++;
+    addRow_(companyUrl, companyName, newsUrl, source, "");
   }
 
-  // Save result JSON to AI Integration
-  aiSheet.getRange(promptRow, 3).setValue(JSON.stringify(obj, null, 2));
+  const resultObj = {
+    checked_rows: checked_rows,
+    kept: kept,
+    removed_404_429: removed_404_429,
+    replaced_soft404: replaced_soft404,
+    removed_soft404_no_matches: removed_soft404_no_matches,
+    added_matches: added_matches,
+    rows: outRows,
+    notes: "Local rebuild: kept valid pages, removed 404/429, replaced soft-404 pages with closest-match URLs (Archive_Flag=Yes), removed soft-404 with no matches, kept blocked/unknown unchanged."
+  };
+
+  // Save JSON into AI Integration Result/Date for News_Url
+  aiSheet.getRange(promptRow, 3).setValue(JSON.stringify(resultObj, null, 2));
   aiSheet.getRange(promptRow, 4).setValue(new Date());
 
-  // Validate rows output
-  const outRows = Array.isArray(obj.rows) ? obj.rows : null;
-  if (!outRows) {
-    ui.alert('News_Url JSON missing "rows" array. No sheet update performed.');
-    return;
-  }
-
-  // Rebuild News Source from output rows
+  // Rebuild News Source from result rows
   NS_rebuildNewsSourceSheetFromRows_(outRows);
-
-  // Summary (best-effort; fields depend on your prompt)
-  const checked = (typeof obj.checked_rows === "number") ? obj.checked_rows : inputRows.length;
-  const kept = (typeof obj.kept === "number") ? obj.kept : "";
-  const removed = (typeof obj.removed_404_429 === "number") ? obj.removed_404_429 : "";
-  const replaced = (typeof obj.replaced_soft404 === "number") ? obj.replaced_soft404 : "";
-  const added = (typeof obj.added_matches === "number") ? obj.added_matches : "";
 
   ui.alert(
     "Check News Source URLs complete",
-    "Checked: " + checked +
-      (kept !== "" ? ("\nKept: " + kept) : "") +
-      (removed !== "" ? ("\nRemoved (404/429): " + removed) : "") +
-      (replaced !== "" ? ("\nReplaced (soft404): " + replaced) : "") +
-      (added !== "" ? ("\nAdded matches: " + added) : "") +
-      "\n\nNews Source was rebuilt from AI Integration → Result (News_Url).",
+    "Checked: " + checked_rows +
+      "\nKept: " + kept +
+      "\nRemoved (404/429): " + removed_404_429 +
+      "\nReplaced (soft-404): " + replaced_soft404 +
+      "\nRemoved (soft-404, no matches): " + removed_soft404_no_matches +
+      "\nAdded matches: " + added_matches +
+      "\n\nNews Source was rebuilt and AI Integration → Result (News_Url) was updated.",
     ui.ButtonSet.OK
   );
 
-  ss.toast("News Source rebuilt from News_Url result.", "News", 8);
+  ss.toast("News Source rebuilt. AI Integration (News_Url) Result updated.", "News", 8);
 }
 
-/** OpenAI call for News_Url (URL validation + rebuild) */
+
+/** ===== OpenAI call for News_Url (URL validation + rebuild) ===== */
 function NS_callOpenAIForUrlRepair_(userPrompt) {
   const key = PropertiesService.getScriptProperties().getProperty("OPENAI_API_KEY");
   if (!key) throw new Error('Missing OpenAI API key. Use "AI Integration → Set OpenAI API Key".');
@@ -764,8 +795,8 @@ function NS_callOpenAIForUrlRepair_(userPrompt) {
       {
         role: "system",
         content:
-          "You are a URL validation and repair agent. Follow the provided rules exactly. " +
-          "Return ONLY strict JSON (no markdown)."
+          "You are a News Source URL validation + repair agent. " +
+          "Follow the provided rules exactly. Return ONLY strict JSON (no markdown)."
       },
       { role: "user", content: userPrompt }
     ]
@@ -784,37 +815,10 @@ function NS_callOpenAIForUrlRepair_(userPrompt) {
   if (code < 200 || code >= 300) throw new Error("OpenAI HTTP " + code + ": " + text);
 
   const data = JSON.parse(text);
-  const answer = data?.choices?.[0]?.message?.content;
+  const answer = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
   if (!answer) throw new Error("No content returned from OpenAI (News_Url).");
+
   return String(answer).trim();
 }
 
-/** Rebuild News Source sheet from output rows (A:D). */
-function NS_rebuildNewsSourceSheetFromRows_(rows) {
-  const ss = SpreadsheetApp.getActive();
-  const sh = ss.getSheetByName("News Source");
-  if (!sh) throw new Error('Sheet "News Source" not found.');
 
-  // Normalize rows to 4 columns strings
-  const out = [];
-  (rows || []).forEach((r) => {
-    if (!Array.isArray(r)) return;
-    const a = String(r[0] || "").trim();
-    const b = String(r[1] || "").trim();
-    const c = String(r[2] || "").trim();
-    const d = String(r[3] || "").trim();
-    if (!a && !b && !c && !d) return;
-    out.push([a, b, c, d]);
-  });
-
-  // Clear old data area (row 2 down)
-  const last = sh.getLastRow();
-  if (last >= 2) {
-    sh.getRange(2, 1, last - 1, sh.getMaxColumns()).clearContent().clearNote();
-  }
-
-  // Write new rows
-  if (out.length) {
-    sh.getRange(2, 1, out.length, 4).setValues(out);
-  }
-}
