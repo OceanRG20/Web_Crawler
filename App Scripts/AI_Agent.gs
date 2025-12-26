@@ -26,10 +26,18 @@ function AIA_safeUi_() {
 }
 
 /** ===== MASTER onOpen (ordered menus) ===== */
+/** ===== MASTER onOpen (ordered menus) ===== */
 function onOpen(e) {
   const ui = AIA_safeUi_();
 
-  // 1) Record View (if you have a Code / Record View module)
+  // 0) Core logging + dedupe
+  try {
+    if (typeof onOpen_Core === "function") onOpen_Core(ui);
+  } catch (err) {
+    console.log("onOpen_Core:", err);
+  }
+
+  // 1) Record View (now in Record_View.gs)
   try {
     if (typeof onOpen_Code === "function") onOpen_Code(ui);
   } catch (err) {
@@ -57,13 +65,19 @@ function onOpen(e) {
     console.log("onOpen_News:", err);
   }
 
-  // 4) ✅ Backfill menu (from Backfill_Agent.gs)
+  // 5) ✅ Backfill menu (from Backfill_Agent.gs)
   try {
     if (typeof onOpen_Backfill === "function") onOpen_Backfill(ui);
   } catch (err) {
     console.log("onOpen_Backfill:", err);
   }
+
 }
+
+function onInstall(e) {
+  onOpen(e);
+}
+
 
 function onInstall(e) {
   onOpen(e);
@@ -1433,3 +1447,6 @@ function AIA_mapItemToRow_(item, headers) {
 
   return row;
 }
+
+
+

@@ -28,8 +28,8 @@ function onOpen_Backfill(ui) {
   const manualSubMenu = ui.createMenu("▶ Columns Backfill (Manual)")
     .addItem("Equipment + CNC 3 & 5-axis", "BF_runBackfill_EquipmentCNCCombo")
     .addItem("Ownership + Family business", "BF_runBackfill_OwnershipFamilyCombo")
-    .addItem("Number of employees", "BF_runBackfill_NumberOfEmployees")
     .addItem("Estimated Revenues", "BF_runBackfill_EstimatedRevenues")
+    .addItem("Number of employees", "BF_runBackfill_NumberOfEmployees")
     .addItem("Square footage (facility)", "BF_runBackfill_SquareFootage")
     .addItem("Years of operation", "BF_runBackfill_YearsOfOperation")
     .addSeparator()
@@ -246,6 +246,21 @@ function BF_runBackfill_OwnershipFamilyCombo() {
  * This patch parses BOTH formats and applies them to MMCrawl columns.
  **************************************************/
 
+/*************************************************
+ * BACKFILL FROM NEWS — PATCH (Boolean columns behavior + JSON-array Specific Value)
+ *
+ * What this patch does (per your screenshots):
+ * 1) For BOOLEAN-style columns (Medical, CNC 3-axis, CNC 5-axis, Family business):
+ *    - If MMCrawl already has "Yes" → do NOTHING (do not append anything).
+ *    - If MMCrawl has "NI" (or blank / refer to site) and News says "Yes" → set cell to ONLY "Yes"
+ *      and hyperlink the "Yes" text to the News Story URL (NO "(News: YEAR)" suffix).
+ *    - Never create "Yes ; Yes" chains.
+ *
+ * 2) Specific Value parsing:
+ *    - Supports JSON object, JSON array (of objects/strings), and line format:
+ *      Label ; "Value ...", 2020
+ **************************************************/
+
 /** ===== Replace your existing BF_runBackfill_FromNews() with this version ===== */
 function BF_runBackfill_FromNews() {
   const ss = SpreadsheetApp.getActive();
@@ -257,14 +272,8 @@ function BF_runBackfill_FromNews() {
   const mmSheet = ss.getSheetByName(mmSheetName);
   const newsSheet = ss.getSheetByName(newsSheetName);
 
-  if (!mmSheet) {
-    ui.alert('Data sheet "' + mmSheetName + '" not found.');
-    return;
-  }
-  if (!newsSheet) {
-    ui.alert('News sheet "' + newsSheetName + '" not found.');
-    return;
-  }
+  if (!mmSheet) { ui.alert('Data sheet "' + mmSheetName + '" not found.'); return; }
+  if (!newsSheet) { ui.alert('News sheet "' + newsSheetName + '" not found.'); return; }
 
   const rangeInfo = BF_promptForRowRange_(ui);
   if (!rangeInfo) return;
@@ -273,10 +282,7 @@ function BF_runBackfill_FromNews() {
   let endRow = rangeInfo.endRow;
 
   const mmLastRow = mmSheet.getLastRow();
-  if (startRow > mmLastRow) {
-    ui.alert("Start row is beyond MMCrawl data.");
-    return;
-  }
+  if (startRow > mmLastRow) { ui.alert("Start row is beyond MMCrawl data."); return; }
   if (endRow > mmLastRow) endRow = mmLastRow;
 
   const mmLastCol = mmSheet.getLastColumn();
@@ -289,14 +295,11 @@ function BF_runBackfill_FromNews() {
     "Website"
   ]);
   if (mmUrlCol === -1) {
-    ui.alert(
-      'No website column found in MMCrawl. ' +
-      'Expected header like "Company Website URL" or "Public Website Homepage URL".'
-    );
+    ui.alert('No website column found in MMCrawl (e.g., "Company Website URL").');
     return;
   }
 
-  // Read MMCrawl rows
+  // Read MMCrawl rows (data starts row 2)
   const mmNumRows = mmLastRow - 1;
   const mmData = mmSheet.getRange(2, 1, mmNumRows, mmLastCol).getValues();
 
@@ -306,10 +309,7 @@ function BF_runBackfill_FromNews() {
   // News Raw setup
   const newsLastRow = newsSheet.getLastRow();
   const newsLastCol = newsSheet.getLastColumn();
-  if (newsLastRow < 2) {
-    ui.alert("No data rows found in News Raw.");
-    return;
-  }
+  if (newsLastRow < 2) { ui.alert("No data rows found in News Raw."); return; }
 
   const newsHeaders = newsSheet.getRange(1, 1, 1, newsLastCol).getValues()[0];
 
@@ -320,7 +320,6 @@ function BF_runBackfill_FromNews() {
     "Website"
   ]);
 
-  // This MUST match your current News Raw header text
   const newsSpecificCol = BF_findHeaderIndex_(newsHeaders, [
     "Specific Value",
     "Specific Values"
@@ -339,21 +338,14 @@ function BF_runBackfill_FromNews() {
     "Article URL"
   ]);
 
-  if (newsUrlCol === -1) {
-    ui.alert('Column "Company Website URL" (or equivalent) not found in News Raw.');
-    return;
-  }
-  if (newsSpecificCol === -1) {
-    ui.alert('Column "Specific Value" not found in News Raw.');
-    return;
-  }
+  if (newsUrlCol === -1) { ui.alert('Column "Company Website URL" not found in News Raw.'); return; }
+  if (newsSpecificCol === -1) { ui.alert('Column "Specific Value" not found in News Raw.'); return; }
 
   const newsNumRows = newsLastRow - 1;
   const newsData = newsSheet.getRange(2, 1, newsNumRows, newsLastCol).getValues();
 
   // Build map: normalized company URL -> [{ specificText, pubYear, storyUrl }]
   const newsMap = {};
-
   for (let i = 0; i < newsNumRows; i++) {
     const row = newsData[i];
 
@@ -379,7 +371,7 @@ function BF_runBackfill_FromNews() {
     newsMap[norm].push({ specificText: specificText, pubYear: pubYear, storyUrl: storyUrl });
   }
 
-  // Label synonyms: allow legacy labels to map to MMCrawl headers
+  // Label synonyms
   const LABEL_SYNONYM = {
     "Family Ownership": "Family business",
     "Family ownership": "Family business",
@@ -391,7 +383,6 @@ function BF_runBackfill_FromNews() {
 
   let appliedCount = 0;
 
-  // Process MMCrawl rows in selected range
   for (let idx = targetRowIndexMin; idx <= targetRowIndexMax; idx++) {
     if (idx < 0 || idx >= mmNumRows) continue;
 
@@ -407,12 +398,11 @@ function BF_runBackfill_FromNews() {
     const entries = newsMap[norm];
     if (!entries || !entries.length) continue;
 
-    // For each News Raw row for this company, apply updates
     for (let s = 0; s < entries.length; s++) {
       const e = entries[s];
-      const updates = BF_parseSpecificValueUpdates_(e.specificText, e.pubYear);
 
-      // updates = [{ label, value }]
+      // Parse Specific Value into updates
+      const updates = BF_parseSpecificValueUpdates_(e.specificText, e.pubYear); // [{label,value}]
       for (let u = 0; u < updates.length; u++) {
         let label = (updates[u].label || "").trim();
         const rawValue = (updates[u].value || "").trim();
@@ -423,15 +413,15 @@ function BF_runBackfill_FromNews() {
         const colIndex = BF_findHeaderIndexExact_(mmHeaders, label);
         if (colIndex === -1) continue;
 
-        // If the value already contains (News: ...) keep it; else add year tag
-        const cleanedValue = BF_simplifyNewsValue_(rawValue, e.pubYear);
+        const cleanedValue = BF_simplifyNewsValue_(rawValue, e.pubYear, label);
 
         const changed = BF_applyNewsValueToCell_(
           mmSheet,
           sheetRowNumber,
           colIndex + 1,
           cleanedValue,
-          e.storyUrl
+          e.storyUrl,
+          label
         );
         if (changed) appliedCount++;
       }
@@ -445,22 +435,12 @@ function BF_runBackfill_FromNews() {
   );
 }
 
-
-/** ===== Add this NEW helper function (place anywhere in Backfill_Agent.gs) =====
- * Parses your NEW News Raw "Specific Value" cell into [{label,value}, ...]
- *
- * Accepts:
- * (A) JSON object: {"Medical":"Yes","Ownership":"Sold to PE"}
- * (B) MMCrawl line format:
- *     Medical ; "Yes (News: <URL>)", 2020
- *     Ownership ; "Sold to PE (News: <URL>)", 2024
- * (C) Fallback: single-key JSON-like text; returns nothing if it can't parse.
- */
+/** ===== Replace your existing BF_parseSpecificValueUpdates_() with this version ===== */
 function BF_parseSpecificValueUpdates_(specificText, pubYear) {
   const t = (specificText || "").toString().trim();
   if (!t) return [];
 
-  // 1) Try JSON object first
+  // A) JSON object
   if (t[0] === "{" && t[t.length - 1] === "}") {
     try {
       const obj = JSON.parse(t);
@@ -475,38 +455,61 @@ function BF_parseSpecificValueUpdates_(specificText, pubYear) {
         });
         return out;
       }
+    } catch (_) {}
+  }
+
+  // B) JSON array (common cause of your "array symbol" issue in News Raw)
+  //    Supports:
+  //      - [{"Medical":"Yes"},{"CNC 3-axis":"Yes"}]
+  //      - ["Medical ; \"Yes (News: ...)\" , 2020", "Family business ; \"Yes\" , 2023"]
+  if (t[0] === "[" && t[t.length - 1] === "]") {
+    try {
+      const arr = JSON.parse(t);
+      if (Array.isArray(arr)) {
+        const out = [];
+        arr.forEach((item) => {
+          if (item === null || item === undefined) return;
+
+          if (typeof item === "string") {
+            // treat as line format
+            const sub = BF_parseSpecificValueUpdates_(item, pubYear);
+            sub.forEach(x => out.push(x));
+            return;
+          }
+
+          if (typeof item === "object" && !Array.isArray(item)) {
+            Object.keys(item).forEach((k) => {
+              const v = item[k];
+              if (v === null || v === undefined) return;
+              const vs = (typeof v === "string") ? v.trim() : JSON.stringify(v);
+              if (!k || !vs) return;
+              out.push({ label: String(k).trim(), value: vs });
+            });
+          }
+        });
+        return out;
+      }
     } catch (_) {
       // fall through
     }
   }
 
-  // 2) Parse MMCrawl Updates lines:
-  //    Label ; "Value ...", 2020
-  // allow multiple lines separated by \n
+  // C) MMCrawl line format: Label ; "Value ...", 2020
   const lines = t.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
   const out2 = [];
-
-  // Regex supports:
-  // Key ; "Some text (News: ...)" , 2020
-  // Key ; "Some text", 2020
   const re = /^([^;]+?)\s*;\s*"(.*)"\s*(?:,\s*(19|20)\d{2})?\s*$/;
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const m = line.match(re);
+    const m = lines[i].match(re);
     if (!m) continue;
-
     const label = (m[1] || "").trim();
     const val = (m[2] || "").trim();
-    // year exists in m[0] but we don't need it; BF_simplifyNewsValue_ will add pubYear if missing
     if (label && val) out2.push({ label: label, value: val });
   }
 
-  if (out2.length) return out2;
-
-  // 3) If it's not JSON or MMCrawl lines, nothing to apply
-  return [];
+  return out2;
 }
+
 
 /** Open the "Update Rule Backfill" dialog */
 function BF_showUpdateRuleDialog() {
@@ -1123,12 +1126,15 @@ function BF_normalizeUrl_(url) {
   return s;
 }
 
-/**
- * Simplify raw Specific Value into "Value (News: YEAR)" or "Value (News)".
- */
-function BF_simplifyNewsValue_(rawValue, pubYear) {
+/** ===== Replace your existing BF_simplifyNewsValue_() with this version ===== */
+function BF_simplifyNewsValue_(rawValue, pubYear, label) {
   let v = (rawValue || "").toString().trim();
   let year = pubYear || "";
+
+  // Boolean columns must stay clean: ONLY "Yes" or "NI" (no "(News: YEAR)")
+  if (BF_isBooleanNewsColumn_(label)) {
+    return BF_normalizeYesNI_(v); // "Yes" or "NI" or original if neither
+  }
 
   if (!year) {
     const ym = v.match(/\b(19|20)\d{2}\b/);
@@ -1138,57 +1144,70 @@ function BF_simplifyNewsValue_(rawValue, pubYear) {
   // Remove any existing "(News ...)" tags
   v = v.replace(/\(News[^)]*\)/gi, "").trim();
 
-  // Remove trailing ", YEAR" if it exists
+  // Remove trailing ", YEAR"
   if (year) {
     const reYearComma = new RegExp("[,\\s]*" + year + "\\s*$");
     v = v.replace(reYearComma, "").trim();
   }
 
-  // Clean trailing punctuation
   v = v.replace(/[;,.\s]+$/, "").trim();
-
   if (!v) v = (rawValue || "").toString().trim();
 
-  if (year) {
-    return v + " (News: " + year + ")";
-  } else {
-    return v + " (News)";
-  }
+  if (year) return v + " (News: " + year + ")";
+  return v + " (News)";
 }
 
-/**
- * Apply one cleaned news value into a specific MMCrawl cell,
- * and hyperlink the word "News" (inside this new segment) to storyUrl.
- *
- * Rules:
- *  - If existing is blank or "refer to site": replace with cleanedValue.
- *  - Else: append "; cleanedValue" unless already present.
- * Returns true if text content changed.
- */
-function BF_applyNewsValueToCell_(sheet, row, col, cleanedValue, storyUrl) {
+/** ===== Replace your existing BF_applyNewsValueToCell_() with this version ===== */
+function BF_applyNewsValueToCell_(sheet, row, col, cleanedValue, storyUrl, label) {
   const cell = sheet.getRange(row, col);
-  const currentRaw = (cell.getValue() || "").toString().trim();
+  const currentRaw = (cell.getDisplayValue() || "").toString().trim(); // display value helps with rich text
+  const currNorm = BF_normalizeYesNI_(currentRaw);
+  const incomingNorm = BF_normalizeYesNI_(cleanedValue);
+
+  // BOOLEAN COLUMN RULES (your screenshots)
+  if (BF_isBooleanNewsColumn_(label)) {
+    // If already "Yes" -> keep, no changes
+    if (currNorm === "Yes") return false;
+
+    // If incoming is "Yes" and current is blank/NI/refer -> set ONLY "Yes" with hyperlink
+    const isEmptyLike =
+      !currentRaw ||
+      currNorm === "NI" ||
+      /^"?refer to site"?$/i.test(currentRaw);
+
+    if (incomingNorm === "Yes" && isEmptyLike) {
+      if (!storyUrl) {
+        cell.setValue("Yes");
+      } else {
+        const rt = SpreadsheetApp.newRichTextValue()
+          .setText("Yes")
+          .setLinkUrl(0, 3, storyUrl)
+          .build();
+        cell.setRichTextValue(rt);
+      }
+      return true;
+    }
+
+    // If incoming is NI or unknown -> do nothing (do not overwrite with NI)
+    return false;
+  }
+
+  // NON-BOOLEAN: existing behavior (append with " ; " + hyperlink "News" word in the new segment)
   const isReferToSite = /^"?refer to site"?$/i.test(currentRaw);
   const isEmpty = !currentRaw || isReferToSite;
 
   let newValue;
-  if (isEmpty) {
-    newValue = cleanedValue;
-  } else if (currentRaw.indexOf(cleanedValue) !== -1) {
-    newValue = currentRaw; // already there
-  } else {
-    newValue = currentRaw + " ; " + cleanedValue;
-  }
+  if (isEmpty) newValue = cleanedValue;
+  else if (currentRaw.indexOf(cleanedValue) !== -1) newValue = currentRaw;
+  else newValue = currentRaw + " ; " + cleanedValue;
 
   const textChanged = newValue !== currentRaw;
 
-  // If no story URL, just write plain text
   if (!storyUrl) {
     if (textChanged) cell.setValue(newValue);
     return textChanged;
   }
 
-  // Build rich text where only new segment's "News" word is hyperlinked
   const builder = SpreadsheetApp.newRichTextValue().setText(newValue);
 
   const segStart = newValue.length - cleanedValue.length;
@@ -1205,6 +1224,7 @@ function BF_applyNewsValueToCell_(sheet, row, col, cleanedValue, storyUrl) {
   cell.setRichTextValue(builder.build());
   return textChanged;
 }
+
 
 /**
  * Preserve any cell content that contains the phrase "by hand".
@@ -1343,4 +1363,25 @@ function BF_getMMCrawlDataRange() {
   return { startRow: startRow, endRow: endRow };
 }
 
+/** ===== Add these NEW helper functions anywhere in Backfill_Agent.gs ===== */
+function BF_isBooleanNewsColumn_(label) {
+  const s = (label || "").toString().trim().toLowerCase();
+  return (
+    s === "medical" ||
+    s === "family business" ||
+    s === "cnc 3-axis" ||
+    s === "cnc 5-axis"
+  );
+}
 
+function BF_normalizeYesNI_(value) {
+  const s = (value || "").toString().trim().toLowerCase();
+
+  // Accept common variants produced by summaries/specific values
+  if (s === "yes") return "Yes";
+  if (s.indexOf("yes") === 0) return "Yes"; // "Yes (News: 2020)" etc.
+  if (s === "ni") return "NI";
+  if (s.indexOf("ni") === 0) return "NI";
+
+  return (value || "").toString().trim();
+}
