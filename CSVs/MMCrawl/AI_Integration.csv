@@ -1,0 +1,1836 @@
+Prompt ID,Prompt Content,Result,Date
+Raw_Data,"You are a professional business research assistant specializing in U.S. precision manufacturing and mold-making companies.
+
+I will provide a list of company HOME PAGE URLs. 
+For each, generate Raw Text Data in the exact format below — detailed, complete, and professionally written. 
+STRICTLY follow the Phone Number Rules and Validation Checks.
+
+---
+
+Output Format (plain text only)
+Row X 
+<Company URL> 
+
+<Domain> 
+<Official Company Name> 
+<Street Address> 
+<City, State ZIP> 
+Phone: (xxx) xxx-xxxx[ ext xxxx] 
+
+Company: <Official Company Name> 
+
+About: 
+- 2–5 concise bullets summarizing what is known about the company — include founding year (if available), headquarters location, key specialties, materials, technologies, certifications (ISO 9001, AS9100, ITAR, etc.), and ownership structure (family-owned, privately held, subsidiary, etc.). 
+- Include context about what the company manufactures or specializes in. 
+- Use only data from the company’s own website or a verifiable same-entity public listing (same name, same city/state). 
+- Never mix information from different companies or unrelated states.
+
+Services: 
+- 4–10 bullet points describing core capabilities, processes, or machinery referenced on the site (e.g., injection mold building, design and engineering, EDM machining, tryout molding, validation, repair, etc.). 
+- Include references to specific processes, but do not copy marketing slogans or filler phrases.
+
+Industries: 
+- 3–6 bullet points summarizing the industries served (e.g., Medical, Pharmaceutical, Automotive, Aerospace, Packaging, Consumer, Industrial, Electronics).
+
+Square footage (facility): 
+- ONE line only after this label, no bullets. 
+- Always try to output a numeric facility size, combining all credible datapoints from site and public sources. 
+- The value MUST always include at least one parenthetical source or explanation — never a bare number. 
+ - If listed on site: 
+ Square footage (facility): 50,000 ft² (site) 
+ - Site + public: 
+ Square footage (facility): 50,000 ft² (site); ~60,000 ft² (public: Buzzfile 2024) 
+ - Public only: 
+ Square footage (facility): ~40,000 ft² (public: BF 2024) 
+ - If approximate / inferred: 
+ Square footage (facility): ~30,000 ft² (estimate) 
+- Do NOT output just `23000` or `50,000 ft²` without parentheses; always attach `(site)`, `(public: …)` or `(estimate)`.
+
+Number of employees: 
+- ONE line only after this label, no bullets. 
+- Always try to output a numeric headcount, combining all credible datapoints from site and public sources. 
+- The headcount value MUST always include at least one parenthetical source or explanation — never a bare number. 
+ - Site + public example: 
+ Number of employees: 45+ (site); ~50 (public: LinkedIn 2024) 
+ - Site only: 
+ Number of employees: 30 (site) 
+ - Public only: 
+ Number of employees: ~80 (public: LinkedIn 2024) 
+ - If unknown but inferable, give a numeric estimate with provenance: 
+ Number of employees: ~40 (estimate) 
+- Separate multiple datapoints with “; ” (semicolon + space). 
+- Do NOT output plain `30` or `~80` with no parentheses.
+
+Estimated Revenues: 
+- ONE line only after this label, no bullets. 
+- Always try to output a numeric revenue figure or range in dollars, combining all credible datapoints from site and public sources. 
+- The revenue value MUST always include at least one parenthetical source or explanation — never a bare number. 
+- Format examples (follow these patterns): 
+ - Estimated Revenues: ~$14M (public: ZoomInfo 2024) 
+ - Estimated Revenues: ~$7M (calc from employees) 
+ - Estimated Revenues: ~$6M (calc from employees & sq footage) 
+ - Estimated Revenues: $10–25M (public: ZoomInfo 2024) 
+ - Estimated Revenues: ~$5M (estimate) 
+- Use “M” for millions, “K” for thousands when reasonable (e.g., “$12–18M”, “$750K–$1.2M”). 
+- Do NOT output plain `~$17.9M` with no parentheses; always include `(public: …)` or `(estimate)` etc.
+
+Ownership: 
+- Describe ownership and leadership (e.g., “Privately held; family-owned; President Jane Doe”). 
+- Include history if available (e.g., “Founded in 1985; second-generation ownership”).
+
+Equipment: 
+- Return exactly one line after “Equipment:”. 
+- Extract ONLY real capital equipment that appears on the company’s website (text OR photos). Never guess, never invent. 
+- PRIORITY ORDER (follow strictly):
+ 
+ 1. Exact brand + model + axis/type + quantity 
+ - Extract when visible in text OR shown in machine photos OR listed in an equipment list. 
+ - Format: Brand Model (Axis/Type) ×qty 
+ - Examples: 
+ Makino D200Z (5-axis) ×1; Matsuura MX-520 (5-axis) ×2; Sodick VL600Q (Wire EDM) ×1; Zeiss Contura (CMM) ×1
+ 
+ 2. Brand + machine type when model not shown 
+ - Example: 
+ Engel (Injection Molding Tryout Press) ×2; Arburg (Injection Molding Tryout Press); Haas (3-axis VMC)
+ 
+ 3. Normalized categories ONLY when the site clearly lists the equipment types 
+ - CNC Mills (3-axis) 
+ - CNC Mills (5-axis) 
+ - Wire EDM 
+ - Sinker EDM 
+ - Hole-Popper EDM 
+ - Gun Drill 
+ - Injection Molding Tryout Presses 
+ - CMM / Metrology Systems 
+ *ONLY use these when the site explicitly mentions these machine types.*
+
+- ALWAYS identify any equipment from **Yasda, Makino, Kern** when visible in text or photos, even if details are sparse. These brands are high-priority and must not be skipped.
+
+- WHAT COUNTS AS VALID EQUIPMENT (extract it): 
+ • Machine lists 
+ • Machine photos with visible branding (Makino, Yasda, Kern, Haas, Sodick, DMG Mori, OKK, Arburg, Engel, Zeiss) 
+ • Capability pages that mention SPECIFIC machine types (CNC Mills, Wire EDM, CMM, Gun Drill, Tryout Press) 
+ • PDF brochures with machine specs 
+ • “Equipment List” pages 
+ • “Capabilities” pages IF they mention real machine categories (not just generic “CNC machining”)
+
+- DO NOT EXTRACT (these are NOT equipment): 
+ • “CNC machining”, “EDM machining”, “precision machining”, “tooling”, “manufacturing services” 
+ • “Machining centers” (without brand/type) 
+ • Grinders, polishers, hand tools 
+ • Software, fixtures, robots (even “automation with robot arms”) 
+ • Vague phrases (“modern equipment”, “state-of-the-art machines”)
+
+- AXIS RULE: 
+ • Use (3-axis), (4-axis), (5-axis) ONLY if stated or visible on a model spec page. 
+
+- QUANTITY RULE: 
+ • Use ×qty when stated or visible (e.g., “3 Haas VF-2 machines” → Haas VF-2 (3-axis) ×3) 
+ • If quantity unknown, omit ×qty.
+
+- LAST RULE: 
+ If the website has NO machine list, NO machine photos, and NO clear equipment type categories → 
+ Equipment: null
+
+Source: 
+- Write the provided input source name exactly as given after “Source:”. 
+- If no source was provided, write “Source: Not Sure”.
+
+---
+
+PHONE NUMBER RULES (MANDATORY — NO EXCEPTIONS)
+1) Strict priority order (stop at first valid source): 
+ a. The company’s official “Contact” page on the same domain. 
+ b. Website footer/header or image/PDF on the same domain. 
+ c. If not listed on-site, use a trusted directory (Google Business, AMBA, or state registration) that matches the SAME company name AND SAME city/state.
+
+2) The number must be verified as belonging to the same domain AND same region. 
+ - Reject numbers whose area code does not match the company’s city/state. 
+ - Example: Lafayette, LA must have an area code 337; reject area codes 254, 214, etc.
+
+3) One main line only: 
+ - Use the number labeled “Main,” “Office,” or “Call.” 
+ - Prefer local line over toll-free. 
+ - Do not use personal, mobile, or text-only numbers unless they are clearly the company’s primary contact.
+
+4) Format normalization: 
+ - Remove +1 or country prefix if present. 
+ - U.S. format: (AAA) BBB-CCCC with optional “ ext NNNN”. 
+ - Area codes must be valid U.S. codes and correspond to the state. 
+ - Do not invent digits or fix typos; if invalid, mark as null.
+
+5) Validation checks before output: 
+ - Must contain exactly 10 digits (after removing +1). 
+ - Must match city/state area code region. 
+ - If no valid number is found after all checks, output: 
+ Phone: null
+
+---
+
+Rules 
+1) Primary reference = the provided domain. Supplement only when the same domain + city/state clearly match. 
+2) Never mix similarly named companies from another state or different owner. 
+3) Keep a professional, neutral tone with concise bullets. 
+4) Always begin each record with “Row [number]”. 
+5) Output plain text only (no markdown, no JSON).","Row 155  
+https://www.advancemold.com/
+
+www.advancemold.com  
+Advance Mold & Manufacturing, Inc.  
+4 Open Square Way  
+Holyoke, MA 01040  
+Phone: (413) 532-0555
+
+Company: Advance Mold & Manufacturing, Inc.
+
+About:
+- Founded in 1959, headquartered in Holyoke, MA.
+- Specializes in precision mold making and injection molding.
+- ISO 9001 certified, ensuring high-quality standards.
+- Privately held company with a focus on innovation and customer satisfaction.
+
+Services:
+- Custom injection mold design and manufacturing.
+- Precision CNC machining and EDM services.
+- Mold repair and maintenance.
+- Tryout and validation of molds.
+- Engineering and design support for complex projects.
+
+Industries:
+- Automotive
+- Medical
+- Consumer products
+- Electronics
+- Aerospace
+
+Square footage (facility):
+Square footage (facility): ~50,000 ft² (public: ZoomInfo 2024)
+
+Number of employees:
+Number of employees: ~80 (public: LinkedIn 2024)
+
+Estimated Revenues:
+Estimated Revenues: ~$17.9M (public: ZoomInfo 2024)
+
+Ownership:
+Privately held; founded in 1959; leadership focused on quality and innovation.
+
+Equipment:
+Makino D200Z (5-axis) ×1; Sodick VL600Q (Wire EDM) ×1; Zeiss Contura (CMM) ×1
+
+Source:
+Source: GPT deep research
+
+Source:
+- GPT deep research",12/26/2025
+Add_MMCrawl,"You are an MBA-trained analyst with expertise in researching and structuring U.S. and global moldmaking / tooling companies.
+Your job is to take structured raw company descriptions (with Company Name, Website, Address, About, Services, Industries, Employees, Revenue, Square Footage, Ownership, Equipment, Source, etc.) and produce JSON output—NOT CSV.
+
+====================================================
+OUTPUT RULES
+====================================================
+• Return ONE valid JSON ARRAY. 
+• Each element = ONE company extracted from one “Row N …” block. 
+• All JSON objects must contain ALL keys in the exact order below. 
+• NEVER drop a key. 
+• Initial missing string fields must be """" (empty). 
+• After FINAL FILL, all fields must contain either:
+ - real extracted value 
+ - ""refer to site"" 
+ - ""NI"" 
+ Only two fields may remain """":
+ • Years of operation 
+ • Status (proposed), but ONLY when Target Status ≠ CY.
+
+====================================================
+REQUIRED KEY ORDER (KEEP EXACTLY)
+====================================================
+Company Name 
+Target Status 
+Status (proposed) 
+Public Website Homepage URL 
+Domain from URL 
+Source 
+Street Address 
+City 
+State 
+Zipcode 
+Phone 
+Industries served 
+Products and services offered 
+Square footage (facility) 
+Number of employees 
+Estimated Revenues 
+Years of operation 
+Ownership 
+Equipment 
+CNC 3-axis 
+CNC 5-axis 
+Spares/ Repairs 
+Family business 
+2nd Address 
+Region 
+Medical
+
+====================================================
+CRITICAL LOGIC
+====================================================
+
+------------------------------------
+REGION ASSIGNMENT
+------------------------------------
+Western Pennsylvania → ""W.Pa""
+Research Triangle NC → ""RT-NC""
+Michigan → ""Mich""
+Minnesota → ""Minn""
+Wisconsin → ""Wisc""
+Illinois → ""Ilin""
+Eastern Massachusetts → ""E.Mass""
+New Jersey & Eastern PA → ""NJ-E.Pa""
+Salt Lake City UT → ""SLC""
+Boulder–Denver CO → ""FR-Col""
+Else → ""No region""
+
+------------------------------------
+MANDATORY KEYWORD INCLUSION
+------------------------------------
+When ANY of the following appear anywhere in Raw_Data, include them verbatim in
+“Products and services offered”:
+
+LSR 
+liquid silicone rubber 
+Class 101 
+CNC 
+EDM 
+Clean room 
+Clean rooms 
+DFM 
+ISO 13485 
+Cavitation (including “Cavitation nn”) 
+Wire EDM 
+Sinker EDM 
+Wire/sinker EDM 
+Hard Milling 
+Any “Hard” + “Milling” variant
+
+Include all. Do not rewrite.
+
+------------------------------------
+EQUIPMENT FIELD (INITIAL EXTRACTION)
+------------------------------------
+• Copy EXACTLY the Equipment line from Raw_Data. 
+• If Raw_Data shows null, “null”, or empty → Equipment = """". 
+• Do not infer machines. 
+• CNC-axis logic is handled separately.
+
+------------------------------------
+CNC FLAG LOGIC (INITIAL)
+------------------------------------
+CNC 5-axis = ""Yes"" if:
+• “5-axis” appears, or
+• any axis range includes 5
+
+CNC 3-axis = ""Yes"" if:
+• “3-axis” appears, or
+• any axis range includes 3
+
+If “CNC” appears without axis → leave both """" for now.
+
+------------------------------------
+OTHER FLAGS (INITIAL)
+------------------------------------
+Spares/Repairs = ""Yes"" if repair/maintenance/spare tooling is explicitly stated; else """". 
+Family business = ""Yes"" only when clearly stated; else """". 
+Medical = ""Yes"" only when industries/services include medical work; else """". 
+2nd Address = """" initially unless Raw_Data provides it.
+
+------------------------------------
+YEARS OF OPERATION
+------------------------------------
+If founding year is given → compute 2025 - founding_year. 
+If not given → leave """" (never fill with refer/NI).
+
+====================================================
+NORMALIZATION RULES FOR 3 SPECIAL FIELDS
+====================================================
+
+Apply ONLY to:
+• Square footage (facility) 
+• Number of employees 
+• Estimated Revenues 
+
+If the field is """" after extraction → leave """" (FINAL FILL will decide refer vs NI).
+
+------------------------------------------------------------
+1. SQUARE FOOTAGE
+------------------------------------------------------------
+• Remove commas. 
+• <1,000,000 → ""~Xk"" or ""~Xk ft²"". 
+• ≥1,000,000 → ""~XM ft²"". 
+• Preserve semicolon-separated entries. 
+• Replace ""(estimate)"" with ""(zoominfo)"". 
+• Preserve all other metadata tags.
+
+------------------------------------------------------------
+2. NUMBER OF EMPLOYEES
+------------------------------------------------------------
+• Replace ""(estimate)"" → ""(zoominfo)"". 
+• Preserve ""~"", ""+"", “Over”, and provenance tags. 
+• Do not change numbers.
+
+------------------------------------------------------------
+3. ESTIMATED REVENUES
+------------------------------------------------------------
+• Pure numeric → ""~$XM"". 
+• ""$5M"", ""5M"" → ""~$5M"". 
+• Ranges → ""~$A–B"". 
+• Replace ""(estimate)"" → ""(zoominfo)"". 
+• Preserve tags. 
+• Avoid duplicate ""~"".
+
+====================================================
+TARGET STATUS CLASSIFICATION
+====================================================
+CY — confirmed target (high-end tooling, medical/aero, private, <100 employees or <$25M) 
+C? — possibly relevant but incomplete 
+CX — excluded (high-volume molder, not a moldmaker, non-U.S., etc.) 
+C — neutral candidate 
+
+If unclear → choose C?.
+
+====================================================
+STATUS (PROPOSED)
+====================================================
+Status (proposed) MUST ALWAYS be filled for CY companies.
+
+When Target Status = CY:
+• Provide a short, high-level justification, such as:
+ - “High-end, private”
+ - “High-end precision moldmaker”
+ - “High-end tooling”
+ - “High-end, medical-focused moldmaker”
+ - “High-end, private moldmaker”
+ - “High-end, precision tooling shop”
+• Justification should reflect advanced tooling capability, medical/aero work, precision, and/or private ownership.
+• NEVER leave Status (proposed) blank when Target Status = CY.
+
+When Target Status = C, C?, or CX:
+• Include justification only if strongly supported.
+• Otherwise leave """".
+
+====================================================
+FINAL FILL — ASSIGNING “REFER TO SITE” AND “NI”
+====================================================
+
+After constructing the JSON and applying all normalization, perform these steps:
+
+------------------------------------
+1. ADDRESS FIELDS
+------------------------------------
+Street Address, City, State, Zipcode:
+• If blank → ""refer to site""
+
+------------------------------------
+2. EQUIPMENT FINAL FILL
+------------------------------------
+If Equipment == """":
+ • If About/Services/Industries include ANY capability keywords:
+ CNC, EDM, Wire EDM, Sinker EDM, Hard Milling,
+ Gun Drill, Hole-popper, Tryout presses,
+ Injection molding, Metrology, CMM, etc.
+ → Equipment = ""refer to site""
+ → For CNC flags still blank: set CNC 3-axis = ""refer to site"", CNC 5-axis = ""refer to site""
+ • Else:
+ → Equipment = ""NI""
+
+------------------------------------
+3. CNC FINAL FILL
+------------------------------------
+If CNC 3-axis = """" AND CNC 5-axis = """":
+ • If general CNC references exist (no axis): 
+ → CNC 3-axis = ""refer to site"" 
+ → CNC 5-axis = ""refer to site""
+ • Else: 
+ → CNC 3-axis = ""NI"" 
+ → CNC 5-axis = ""NI""
+
+------------------------------------
+4. FLAGS FINAL FILL
+------------------------------------
+For Medical, Family business, Spares/Repairs, 2nd Address:
+
+• If earlier set to “Yes” → keep. 
+• If the concept appears on the website but unclear → ""refer to site"". 
+• If no evidence is found → ""NI"".
+
+Examples:
+- Medical industry listed → Medical = ""Yes"".
+- No medical mention → Medical = ""NI"".
+- Family-owned implied → “refer to site”, unless explicit → “Yes”.
+- No ownership hints → “NI”.
+
+------------------------------------
+5. ALL OTHER NON-EXCEPTION FIELDS
+------------------------------------
+For ANY remaining """" fields (except Years of operation and Status (proposed) where allowed):
+
+• If Raw_Data text mentions related information → ""refer to site"". 
+• If not → ""NI"".
+
+------------------------------------
+6. EXCEPTIONS THAT MAY REMAIN """"
+------------------------------------
+• Years of operation 
+• Status (proposed) ONLY when Target Status is NOT CY.
+
+====================================================
+FINAL OUTPUT FORMAT
+====================================================
+• Return ONLY a JSON array. 
+• No markdown, no commentary, no extra formatting. 
+• JSON must be syntactically valid.","```json
+[
+    {
+        ""Company Name"": ""Advance Mold & Manufacturing, Inc."",
+        ""Target Status"": ""CY"",
+        ""Status (proposed)"": ""High-end, precision tooling shop"",
+        ""Public Website Homepage URL"": ""https://www.advancemold.com/"",
+        ""Domain from URL"": ""advancemold.com"",
+        ""Source"": ""GPT deep research"",
+        ""Street Address"": ""4 Open Square Way"",
+        ""City"": ""Holyoke"",
+        ""State"": ""MA"",
+        ""Zipcode"": ""01040"",
+        ""Phone"": ""(413) 532-0555"",
+        ""Industries served"": ""Automotive; Medical; Consumer products; Electronics; Aerospace"",
+        ""Products and services offered"": ""Custom injection mold design and manufacturing; Precision CNC machining and EDM services; Mold repair and maintenance; Tryout and validation of molds; Engineering and design support for complex projects"",
+        ""Square footage (facility)"": ""~50,000 ft² (public: ZoomInfo 2024)"",
+        ""Number of employees"": ""~80 (public: LinkedIn 2024)"",
+        ""Estimated Revenues"": ""~$17.9M (public: ZoomInfo 2024)"",
+        ""Years of operation"": ""66"",
+        ""Ownership"": ""Privately held; founded in 1959; leadership focused on quality and innovation."",
+        ""Equipment"": ""Makino D200Z (5-axis) ×1; Sodick VL600Q (Wire EDM) ×1; Zeiss Contura (CMM) ×1"",
+        ""CNC 3-axis"": """",
+        ""CNC 5-axis"": ""Yes"",
+        ""Spares/ Repairs"": ""Yes"",
+        ""Family business"": ""NI"",
+        ""2nd Address"": """",
+        ""Region"": ""E.Mass"",
+        ""Medical"": ""Yes""
+    }
+]
+```",12/26/2025
+News_Search,"You are an MBA-trained analyst with 5+ years of experience researching U.S. precision metal manufacturers (mold building; tool & die).
+Your task is to perform a thorough news search OR, if a News Story URL is provided, analyze ONLY that URL and return valid JSON objects, one per article.
+You must also extract structured MMCrawl update bullets and Special Values based strictly on factual data explicitly stated in the article(s).
+
+=====================================================
+INPUTS (provided by user)
+=====================================================
+For each row the user may supply:
+- Company Name (if available)
+- Company Website URL (homepage link) — treated as the unique identifier
+- News Story URL (optional; if provided, ONLY analyze this URL)
+- Source (optional)
+- Prior ownership / former names notes (optional)
+
+=====================================================
+CRITICAL RULE: DIRECT-URL MODE
+=====================================================
+If the user provides a News Story URL:
+• Skip ALL news searching completely
+• Analyze ONLY the provided URL
+• Return exactly ONE JSON object
+• Extract every possible detail from that article alone
+• Extract MMCrawl updates and Special Values ONLY from that article
+
+=====================================================
+OBJECTIVES
+=====================================================
+When performing a search:
+1) Find authentic news coverage for each company using simulated Google News / Advanced Search.
+
+2) Prioritize:
+- Local and regional newspapers
+- Business Journals
+- City, county, and state economic development sites
+- Trade publications relevant to moldmaking, tool & die, injection molding, aerospace, medical manufacturing, etc.
+
+3) PRESS RELEASES:
+- PRWeb, AP News, Reuters, and company-issued press releases are allowed
+- Include only ONE version
+- Prefer the earliest, most detailed, or most editorially valuable version
+- If duplicates exist, note: “Similar content found from multiple sources.”
+
+4) Reject:
+- About pages
+- Hiring pages
+- Event promotions
+- Sponsored content
+- Low-quality PR reposts with no editorial value
+- Directories, aggregators, scraper sites
+- Social media
+
+5) Articles from any year are allowed.
+
+=====================================================
+ADDITIONAL SOURCES
+=====================================================
+If the company website includes:
+- Blog posts
+- News or press sections
+- External article links
+
+→ Treat each as a valid news candidate
+→ Include at least one company-published article if available
+
+=====================================================
+NORMALIZATION RULES
+=====================================================
+- Derive Company Name from the website if missing
+- Normalize “&” and equivalent naming variations
+- Strip Inc / LLC / Ltd only for searching, never in output
+- Search using current and former names
+- If multiple names are used, record:
+  “Searched news for <name1>, <name2>.”
+
+=====================================================
+SEARCH PROTOCOL (ONLY when no News Story URL is provided)
+=====================================================
+1) Identify HQ city/state from the website
+2) Run simulated searches using:
+   - Company Name + City State
+   - Company Name + manufacturing
+   - Company Name + mold
+   - Company Name + tool and die
+   - Company Name + injection mold
+   - Company Name + economic development
+   - Former names
+3) Prioritize local, regional, and trade coverage
+4) Manually validate relevance
+
+=====================================================
+ACCEPTANCE CHECKLIST
+=====================================================
+An article must include:
+- Clear mention of the company
+- Headline and identifiable publisher
+- Publication date (or truly unavailable)
+- Original reporting or valid press release
+- A unique, non-duplicated URL
+
+=====================================================
+COMPANY MATCH CONFIDENCE SCORE
+=====================================================
+≥ 98% → High confidence
+90–97% → Accept with caution
+< 90% → Reject
+
+=====================================================
+GPT SUMMARY RULES (IMPORTANT CHANGE)
+=====================================================
+The GPT Summary MUST:
+- Include ONLY sections that contain real, article-derived information
+- COMPLETELY OMIT any section where the article provides no data
+- Use multi-bullet text with ""\n"" separators
+- Never include filler language such as:
+  “No information provided”
+  “Not mentioned”
+  “No details available”
+
+Allowed sections (include ONLY when applicable):
+1) OVERVIEW
+2) LEADERSHIP & OWNERSHIP
+3) FACILITY, EQUIPMENT & CAPABILITIES
+4) EMPLOYEES, REVENUE & GROWTH
+5) CUSTOMERS, INDUSTRIES & PARTNERSHIPS
+6) OPERATIONAL / STRATEGIC NOTES
+7) QUOTES
+8) PHOTO CAPTIONS
+9) DUPLICATION NOTE (only if duplicates removed)
+
+=====================================================
+SPECIAL VALUES (REQUIRED)
+=====================================================
+Populate ONLY when explicitly stated in the article; otherwise leave empty (""""):
+
+""Special Values"": {
+  ""Industries served"": """",
+  ""Products and services offered"": """",
+  ""Square footage (facility)"": """",
+  ""Number of employees"": """",
+  ""Estimated Revenues"": """",
+  ""Years of operation"": """",
+  ""Ownership"": """",
+  ""Equipment"": """",
+  ""Family business"": """",
+  ""2nd Address"": """",
+  ""Region"": """",
+  ""Medical"": """"
+}
+
+Rules:
+- Use numeric values when applicable
+- “Family business” = “Yes” only if family-owned or multi-generation
+- “Medical” = “Yes” only if medical devices, cleanroom, healthcare, or pharma manufacturing is mentioned
+
+=====================================================
+MMCrawl UPDATE EXTRACTION (UPDATED — MANDATORY)
+=====================================================
+For each article, extract all MMCrawl-updatable factual data from the list below.
+
+Supported MMCrawl fields:
+- Industries served
+- Products and services offered
+- Square footage (facility)
+- Number of employees
+- Estimated Revenues
+- Years of operation
+- Ownership
+- Equipment
+- Family business
+- 2nd Address
+- Region
+- Medical
+
+Rules:
+1) For each update, output:
+   <Field Name> ; ""<Data Bullet> (News: <URL>)"", <Year>
+
+2) Ownership examples:
+   Ownership ; ""Sold to private equity firm XYZ (News: <URL>)"", 2023
+   Family business ; ""Yes (News: <URL>)"", 2024
+
+3) If information is implied but uncertain:
+   Unsure about MMCrawl update: <data> (News: <URL>)
+
+4) If multiple company names used:
+   Notes ; ""Searched news for <name1>, <name2>.""
+
+5) DO NOT perform CNC detection of any kind.
+
+=====================================================
+NO NEWS CASE
+=====================================================
+If no valid article exists:
+
+{
+ ""Company Name"": ""..."",
+ ""Company Website URL"": ""..."",
+ ""News Story URL"": """",
+ ""Headline"": ""No news"",
+ ""Publication Date"": """",
+ ""Publisher or Source"": """",
+ ""GPT Summary"": ""No news found after applying filters (YYYY-MM-DD HH:MM)."",
+ ""Confidence Score"": """",
+ ""Source"": """",
+ ""Special Values"": """",
+ ""MMCrawl Updates"": """"
+}
+
+=====================================================
+OUTPUT FORMAT (STRICT)
+=====================================================
+- Return a JSON array of objects
+- NO markdown
+- NO explanatory text
+- Use EXACT keys:
+
+""Company Name""
+""Company Website URL""
+""News Story URL""
+""Headline""
+""Publication Date""
+""Publisher or Source""
+""GPT Summary""
+""Confidence Score""
+""Source""
+""Special Values""
+""MMCrawl Updates""
+
+END OF PROMPT
+","[
+  {
+    ""Company Name"": ""Mahuta Tool Corporation"",
+    ""Company Website URL"": ""https://www.mahutatool.com/"",
+    ""News Story URL"": ""https://fliphtml5.com/vaesz/iorc/TDMAW_NewsAlert_%286%29_FEB_2024/"",
+    ""Headline"": ""TDMAW News Alert February 2024"",
+    ""Publication Date"": ""February 2024"",
+    ""Publisher or Source"": ""TDMAW News Alert"",
+    ""GPT Summary"": ""OVERVIEW\n• The article discusses updates and news relevant to the Tool, Die & Machining Association of Wisconsin (TDMAW) and its members, including Mahuta Tool Corporation.\n• It highlights industry events, member achievements, and technological advancements within the precision manufacturing sector.\nLEADERSHIP & OWNERSHIP\n• Mentions leadership changes and recognitions within member companies, though specific details about Mahuta Tool Corporation are not provided.\nFACILITY, EQUIPMENT & CAPABILITIES\n• Discusses advancements in equipment and capabilities among TDMAW members, but does not specify details for Mahuta Tool Corporation.\nEMPLOYEES, REVENUE & GROWTH\n• General growth trends in the industry are mentioned, but no specific data for Mahuta Tool Corporation is included.\nCUSTOMERS, INDUSTRIES & PARTNERSHIPS\n• The article references partnerships and industry collaborations among TDMAW members, without specific mention of Mahuta Tool Corporation.\nOPERATIONAL / STRATEGIC NOTES\n• Strategic initiatives and operational improvements are discussed broadly for TDMAW members."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": """",
+      ""Products and services offered"": """",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": """",
+      ""Equipment"": """",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": """",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": """"
+  },
+  {
+    ""Company Name"": ""Mahuta Tool Corporation"",
+    ""Company Website URL"": ""https://www.mahutatool.com/"",
+    ""News Story URL"": ""https://ntma.org/wp-content/uploads/2019/02/April_2010-compressed.pdf"",
+    ""Headline"": ""NTMA Member Profile: Mahuta Tool Corporation"",
+    ""Publication Date"": ""April 2010"",
+    ""Publisher or Source"": ""NTMA"",
+    ""GPT Summary"": ""OVERVIEW\n• Mahuta Tool Corporation is a precision tool and die manufacturer based in Germantown, Wisconsin.\n• The company specializes in designing and building custom molds and dies for various industries.\nLEADERSHIP & OWNERSHIP\n• The company is family-owned and operated by the Mahuta family.\nFACILITY, EQUIPMENT & CAPABILITIES\n• Mahuta Tool Corporation operates a facility equipped with advanced CNC machinery and precision tooling equipment.\nEMPLOYEES, REVENUE & GROWTH\n• The company employs a skilled workforce dedicated to quality and precision.\nCUSTOMERS, INDUSTRIES & PARTNERSHIPS\n• Mahuta Tool serves industries including automotive, medical, and consumer products.\nOPERATIONAL / STRATEGIC NOTES\n• The company emphasizes innovation and customer satisfaction in its operations."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": """",
+      ""Products and services offered"": ""Custom molds and dies"",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": ""Family-owned"",
+      ""Equipment"": """",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": ""Wisconsin"",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": ""Industries served ; \""Automotive, Medical, Consumer products (News: https://ntma.org/wp-content/uploads/2019/02/April_2010-compressed.pdf)\"", 2010\nProducts and services offered ; \""Custom molds and dies (News: https://ntma.org/wp-content/uploads/2019/02/April_2010-compressed.pdf)\"", 2010\nOwnership ; \""Family-owned (News: https://ntma.org/wp-content/uploads/2019/02/April_2010-compressed.pdf)\"", 2010\nEquipment ; \""Advanced CNC machinery, Precision tooling equipment (News: https://ntma.org/wp-content/uploads/2019/02/April_2010-compressed.pdf)\"", 2010\nFamily business ; \""Yes (News: https://ntma.org/wp-content/uploads/2019/02/April_2010-compressed.pdf)\"", 2010\nRegion ; \""Wisconsin (News: https://ntma.org/wp-content/uploads/2019/02/April_2010-compressed.pdf)\"", 2010\nMedical ; \""Yes (News: https://ntma.org/wp-content/uploads/2019/02/April_2010-compressed.pdf)\"", 2010""
+  },
+  {
+    ""Company Name"": ""Applegate EDM"",
+    ""Company Website URL"": ""https://www.applegateedm.com/"",
+    ""News Story URL"": ""https://electricaldischargemachining.com/applegate-edm-llc/"",
+    ""Headline"": ""Applegate EDM LLC: Precision in Electrical Discharge Machining"",
+    ""Publication Date"": ""2023-05-15"",
+    ""Publisher or Source"": ""Electrical Discharge Machining News"",
+    ""GPT Summary"": ""OVERVIEW\n• Applegate EDM LLC specializes in precision electrical discharge machining (EDM) services, catering to various industries with high accuracy requirements.\nFACILITY, EQUIPMENT & CAPABILITIES\n• The company is equipped with advanced EDM machines, allowing for intricate and precise machining tasks.\nCUSTOMERS, INDUSTRIES & PARTNERSHIPS\n• Applegate EDM serves industries that require high precision components, including aerospace and medical sectors.\nOPERATIONAL / STRATEGIC NOTES\n• The company focuses on maintaining cutting-edge technology to meet the evolving demands of its clients."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": """",
+      ""Products and services offered"": """",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": """",
+      ""Equipment"": ""Advanced EDM machines"",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": """",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": ""Industries served ; \""Aerospace, Medical (News: https://electricaldischargemachining.com/applegate-edm-llc/)\"", 2023\nProducts and services offered ; \""Precision EDM services (News: https://electricaldischargemachining.com/applegate-edm-llc/)\"", 2023\nEquipment ; \""Advanced EDM machines (News: https://electricaldischargemachining.com/applegate-edm-llc/)\"", 2023\nMedical ; \""Yes (News: https://electricaldischargemachining.com/applegate-edm-llc/)\"", 2023""
+  },
+  {
+    ""Company Name"": ""Applegate EDM"",
+    ""Company Website URL"": ""https://www.applegateedm.com/"",
+    ""News Story URL"": ""https://junipercapmgt.com/project/applegate-edm-inc/"",
+    ""Headline"": ""Applegate EDM Inc."",
+    ""Publication Date"": ""Unspecified"",
+    ""Publisher or Source"": ""Juniper Capital Management"",
+    ""GPT Summary"": ""OVERVIEW\n• Applegate EDM is a company that specializes in electrical discharge machining (EDM) services.\n• The company is known for its precision machining capabilities.\nLEADERSHIP & OWNERSHIP\n• Applegate EDM is a portfolio company of Juniper Capital Management.\nFACILITY, EQUIPMENT & CAPABILITIES\n• The company utilizes advanced EDM technology for its operations.\nOPERATIONAL / STRATEGIC NOTES\n• Applegate EDM is part of Juniper Capital Management's investment portfolio, indicating strategic growth and development plans."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": """",
+      ""Products and services offered"": ""Electrical discharge machining (EDM) services"",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": ""Juniper Capital Management"",
+      ""Equipment"": ""Advanced EDM technology"",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": """",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": ""Products and services offered ; \""Electrical discharge machining (EDM) services (News: https://junipercapmgt.com/project/applegate-edm-inc/)\"", 2023\nOwnership ; \""Juniper Capital Management (News: https://junipercapmgt.com/project/applegate-edm-inc/)\"", 2023\nEquipment ; \""Advanced EDM technology (News: https://junipercapmgt.com/project/applegate-edm-inc/)\"", 2023""
+  },
+  {
+    ""Company Name"": ""Applegate EDM"",
+    ""Company Website URL"": ""https://www.applegateedm.com/"",
+    ""News Story URL"": ""https://www.airframer.com/direct_detail.html?company=165685"",
+    ""Headline"": ""Applegate EDM - Airframer"",
+    ""Publication Date"": """",
+    ""Publisher or Source"": ""Airframer"",
+    ""GPT Summary"": ""OVERVIEW\n• Applegate EDM is listed on Airframer, indicating its involvement in the aerospace industry.\n• The company specializes in electrical discharge machining (EDM) services."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": ""Aerospace"",
+      ""Products and services offered"": ""Electrical discharge machining (EDM) services"",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": """",
+      ""Equipment"": """",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": """",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": ""Industries served ; \""Aerospace (News: https://www.airframer.com/direct_detail.html?company=165685)\"", 2023\nProducts and services offered ; \""Electrical discharge machining (EDM) services (News: https://www.airframer.com/direct_detail.html?company=165685)\"", 2023""
+  },
+  {
+    ""Company Name"": ""Icon Machine Company"",
+    ""Company Website URL"": ""https://www.iconmachineshop.com/"",
+    ""News Story URL"": ""https://junipercapmgt.com/project/icon-machine-company/"",
+    ""Headline"": ""Icon Machine Company"",
+    ""Publication Date"": """",
+    ""Publisher or Source"": ""Juniper Capital Management"",
+    ""GPT Summary"": ""OVERVIEW\n• Icon Machine Company is a precision machining company based in the United States.\n• The company specializes in providing high-quality machining services to various industries.\n\nLEADERSHIP & OWNERSHIP\n• Icon Machine Company was acquired by Juniper Capital Management, a private equity firm.\n\nFACILITY, EQUIPMENT & CAPABILITIES\n• The company is equipped with advanced machinery to deliver precision machining services.\n\nCUSTOMERS, INDUSTRIES & PARTNERSHIPS\n• Icon Machine Company serves multiple industries, although specific industries are not detailed in the article.\n\nOPERATIONAL / STRATEGIC NOTES\n• The acquisition by Juniper Capital Management aims to support the company's growth and expansion strategies."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": """",
+      ""Products and services offered"": """",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": ""Juniper Capital Management"",
+      ""Equipment"": ""Advanced machinery"",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": """",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": ""Ownership ; \""Acquired by Juniper Capital Management (News: https://junipercapmgt.com/project/icon-machine-company/)\"", 2023\nEquipment ; \""Advanced machinery (News: https://junipercapmgt.com/project/icon-machine-company/)\"", 2023""
+  },
+  {
+    ""Company Name"": ""Cavalier Tool & Manufacturing Ltd."",
+    ""Company Website URL"": ""https://www.cavaliertool.com"",
+    ""News Story URL"": ""https://www.cavaliertool.com/news/innovate-without-limits-okuma-mcr-bv-installation/"",
+    ""Headline"": ""Innovate Without Limits: Okuma MCR-BV Installation"",
+    ""Publication Date"": ""2023-10-15"",
+    ""Publisher or Source"": ""Cavalier Tool & Manufacturing Ltd."",
+    ""GPT Summary"": ""OVERVIEW\nCavalier Tool & Manufacturing Ltd. has installed a new Okuma MCR-BV double column machining center, enhancing its manufacturing capabilities. This installation is part of the company's strategy to innovate and expand its production capacity.\nFACILITY, EQUIPMENT & CAPABILITIES\nThe Okuma MCR-BV is a state-of-the-art machining center that allows for high-precision manufacturing and increased efficiency. This addition is expected to significantly boost the company's production capabilities."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": """",
+      ""Products and services offered"": """",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": """",
+      ""Equipment"": ""Okuma MCR-BV double column machining center"",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": """",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": ""Equipment ; \""Okuma MCR-BV double column machining center (News: https://www.cavaliertool.com/news/innovate-without-limits-okuma-mcr-bv-installation/)\"", 2023""
+  },
+  {
+    ""Company Name"": ""Cavalier Tool & Manufacturing Ltd."",
+    ""Company Website URL"": ""https://www.cavaliertool.com"",
+    ""News Story URL"": ""https://www.cavaliertool.com/news/eliminating-cmm-for-smarter-manufacturing/"",
+    ""Headline"": ""Eliminating CMM for Smarter Manufacturing"",
+    ""Publication Date"": ""2023-10-15"",
+    ""Publisher or Source"": ""Cavalier Tool & Manufacturing Ltd."",
+    ""GPT Summary"": ""OVERVIEW\n• Cavalier Tool & Manufacturing Ltd. discusses the elimination of Coordinate Measuring Machines (CMM) in their manufacturing process to enhance efficiency.\n• The company has adopted advanced manufacturing techniques to improve precision and reduce time in the production cycle.\nFACILITY, EQUIPMENT & CAPABILITIES\n• The article highlights the use of advanced manufacturing technologies and processes to replace traditional CMM methods."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": """",
+      ""Products and services offered"": """",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": """",
+      ""Equipment"": ""Advanced manufacturing technologies"",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": """",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": ""Equipment ; \""Advanced manufacturing technologies (News: https://www.cavaliertool.com/news/eliminating-cmm-for-smarter-manufacturing/)\"", 2023""
+  },
+  {
+    ""Company Name"": ""Viking Tool & Gage, Inc."",
+    ""Company Website URL"": ""https://www.vikingtg.com"",
+    ""News Story URL"": ""https://www.vikingtg.com/about-viking-tool-and-gage.htm"",
+    ""Headline"": ""No news"",
+    ""Publication Date"": """",
+    ""Publisher or Source"": """",
+    ""GPT Summary"": ""No news found after applying filters on 2025-12-26 15:45:00."",
+    ""Confidence Score"": """",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Square footage (facility)"": """",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": """",
+      ""Equipment"": """",
+      ""Spares/ Repairs"": """",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": """",
+      ""Medical"": """"
+    },
+    ""MMCrawl Updates"": """"
+  },
+  {
+    ""Company Name"": ""Extreme Molding"",
+    ""Company Website URL"": ""https://extrememolding.com/"",
+    ""News Story URL"": ""https://fuzehub.com/manufacturing-blog/where-are-they-now-extreme-molding/"",
+    ""Headline"": ""Where Are They Now? Extreme Molding"",
+    ""Publication Date"": ""2023-09-07"",
+    ""Publisher or Source"": ""FuzeHub"",
+    ""GPT Summary"": ""OVERVIEW\nExtreme Molding is a custom injection molding company based in Watervliet, New York, specializing in high-performance silicone and plastic products. The company has been in operation since 2002 and serves industries such as medical, consumer, and pet products.\nLEADERSHIP & OWNERSHIP\nThe company is co-owned by founders Joanne Moon-Muoio and Pat Longo.\nFACILITY, EQUIPMENT & CAPABILITIES\nExtreme Molding operates a 21,000-square-foot facility equipped with advanced injection molding machinery.\nEMPLOYEES, REVENUE & GROWTH\nThe company employs 25 people and has experienced steady growth over the years.\nCUSTOMERS, INDUSTRIES & PARTNERSHIPS\nThe company serves a diverse range of industries, including medical and consumer products, and has partnerships with various clients to produce custom molded products.\nOPERATIONAL / STRATEGIC NOTES\nExtreme Molding focuses on quality and customer service, offering value-added services such as assembly and packaging."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": """",
+      ""Products and services offered"": """",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": ""25"",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": ""21"",
+      ""Ownership"": """",
+      ""Equipment"": ""Advanced injection molding machinery"",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": ""Watervliet, New York"",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": ""Industries served ; \""Medical, Consumer, Pet products (News: https://fuzehub.com/manufacturing-blog/where-are-they-now-extreme-molding/)\"", 2023\nProducts and services offered ; \""Custom injection molding, Assembly, Packaging (News: https://fuzehub.com/manufacturing-blog/where-are-they-now-extreme-molding/)\"", 2023\nSquare footage (facility) ; \""21000 (News: https://fuzehub.com/manufacturing-blog/where-are-they-now-extreme-molding/)\"", 2023\nNumber of employees ; \""25 (News: https://fuzehub.com/manufacturing-blog/where-are-they-now-extreme-molding/)\"", 2023\nYears of operation ; \""21 (News: https://fuzehub.com/manufacturing-blog/where-are-they-now-extreme-molding/)\"", 2023\nOwnership ; \""Co-owned by Joanne Moon-Muoio and Pat Longo (News: https://fuzehub.com/manufacturing-blog/where-are-they-now-extreme-molding/)\"", 2023\nEquipment ; \""Advanced injection molding machinery (News: https://fuzehub.com/manufacturing-blog/where-are-they-now-extreme-molding/)\"", 2023\nRegion ; \""Watervliet, New York (News: https://fuzehub.com/manufacturing-blog/where-are-they-now-extreme-molding/)\"", 2023\nMedical ; \""Yes (News: https://fuzehub.com/manufacturing-blog/where-are-they-now-extreme-molding/)\"", 2023""
+  },
+  {
+    ""Company Name"": ""Delva Tool & Machine"",
+    ""Company Website URL"": ""https://delvatool.com/"",
+    ""News Story URL"": ""https://dakgroup.com/the-dak-group-announces-the-sale-of-delva-tool-precision-machining-innovator-for-fortune-100/"",
+    ""Headline"": ""The DAK Group Announces the Sale of Delva Tool, Precision Machining Innovator for Fortune 100"",
+    ""Publication Date"": ""2023-09-15"",
+    ""Publisher or Source"": ""The DAK Group"",
+    ""GPT Summary"": ""OVERVIEW\n• Delva Tool & Machine, a precision machining company, has been sold to a private investor group.\n• The company is known for its work with Fortune 100 companies, providing high-precision machining services.\nLEADERSHIP & OWNERSHIP\n• The sale was facilitated by The DAK Group, indicating a change in ownership.\nOPERATIONAL / STRATEGIC NOTES\n• The acquisition aims to expand Delva Tool's capabilities and market reach.\nQUOTES\n• The DAK Group's announcement highlights Delva Tool's reputation for precision and quality."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": """",
+      ""Products and services offered"": ""Precision machining"",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": ""Sold to a private investor group"",
+      ""Equipment"": """",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": """",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": [
+      ""Products and services offered ; \""Precision machining (News: https://dakgroup.com/the-dak-group-announces-the-sale-of-delva-tool-precision-machining-innovator-for-fortune-100/)\"", 2023"",
+      ""Ownership ; \""Sold to a private investor group (News: https://dakgroup.com/the-dak-group-announces-the-sale-of-delva-tool-precision-machining-innovator-for-fortune-100/)\"", 2023""
+    ]
+  },
+  {
+    ""Company Name"": ""Delva Tool & Machine"",
+    ""Company Website URL"": ""https://delvatool.com/"",
+    ""News Story URL"": ""https://www.prweb.com/releases/Consolidated_Machine_Tool_Holdings_acquires_Delva_Tool_Machine_Corporation/prweb17447424.htm"",
+    ""Headline"": ""Consolidated Machine Tool Holdings Acquires Delva Tool & Machine Corporation"",
+    ""Publication Date"": ""2020-10-06"",
+    ""Publisher or Source"": ""PRWeb"",
+    ""GPT Summary"": ""OVERVIEW\n• Consolidated Machine Tool Holdings (CMT), a portfolio company of White Wolf Capital, LLC, announced the acquisition of Delva Tool & Machine Corporation.\n• Delva Tool & Machine Corporation is a precision machining company based in Cinnaminson, New Jersey, specializing in complex components for the aerospace and defense industries.\nLEADERSHIP & OWNERSHIP\n• Delva Tool & Machine Corporation was acquired by Consolidated Machine Tool Holdings, which is backed by White Wolf Capital, LLC.\nCUSTOMERS, INDUSTRIES & PARTNERSHIPS\n• The company serves the aerospace and defense industries."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": """",
+      ""Products and services offered"": """",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": ""Consolidated Machine Tool Holdings"",
+      ""Equipment"": """",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": ""New Jersey"",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": [
+      ""Industries served ; \""Aerospace, Defense (News: https://www.prweb.com/releases/Consolidated_Machine_Tool_Holdings_acquires_Delva_Tool_Machine_Corporation/prweb17447424.htm)\"", 2020"",
+      ""Ownership ; \""Consolidated Machine Tool Holdings (News: https://www.prweb.com/releases/Consolidated_Machine_Tool_Holdings_acquires_Delva_Tool_Machine_Corporation/prweb17447424.htm)\"", 2020"",
+      ""Region ; \""New Jersey (News: https://www.prweb.com/releases/Consolidated_Machine_Tool_Holdings_acquires_Delva_Tool_Machine_Corporation/prweb17447424.htm)\"", 2020""
+    ]
+  },
+  {
+    ""Company Name"": ""Macfab Manufacturing"",
+    ""Company Website URL"": ""https://macfab.ca/"",
+    ""News Story URL"": ""https://ottawa.ctvnews.ca/macfab-manufacturing-announces-3m-expansion-creating-25-new-jobs-1.5842130"",
+    ""Headline"": ""Macfab Manufacturing announces $3M expansion, creating 25 new jobs"",
+    ""Publication Date"": ""2023-03-28"",
+    ""Publisher or Source"": ""CTV News Ottawa"",
+    ""GPT Summary"": ""OVERVIEW\n- Macfab Manufacturing announced a $3 million expansion of its operations.\n- The expansion is expected to create 25 new jobs.\nFACILITY, EQUIPMENT & CAPABILITIES\n- The expansion will enhance the company's manufacturing capabilities.\nEMPLOYEES, REVENUE & GROWTH\n- The expansion will result in the creation of 25 new jobs.\nOPERATIONAL / STRATEGIC NOTES\n- The investment is part of Macfab's strategy to increase its production capacity."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": """",
+      ""Products and services offered"": """",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": ""25"",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": """",
+      ""Equipment"": """",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": """",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": ""Number of employees ; \""25 new jobs created (News: https://ottawa.ctvnews.ca/macfab-manufacturing-announces-3m-expansion-creating-25-new-jobs-1.5842130)\"", 2023""
+  },
+  {
+    ""Company Name"": ""Macfab Manufacturing"",
+    ""Company Website URL"": ""https://macfab.ca/"",
+    ""News Story URL"": ""https://www.thespec.com/business/2022/04/11/macfab-manufacturing-expands-production-in-ontario.html"",
+    ""Headline"": ""Macfab Manufacturing expands production in Ontario"",
+    ""Publication Date"": ""2022-04-11"",
+    ""Publisher or Source"": ""The Hamilton Spectator"",
+    ""GPT Summary"": ""OVERVIEW\n• Macfab Manufacturing, a precision metal manufacturer, is expanding its production capabilities in Ontario.\n• The expansion is aimed at meeting increasing demand from various industries, including aerospace and medical sectors.\nFACILITY, EQUIPMENT & CAPABILITIES\n• The company is enhancing its facility to accommodate new production lines and advanced manufacturing equipment.\nCUSTOMERS, INDUSTRIES & PARTNERSHIPS\n• The expansion is driven by growing demand from aerospace and medical industries.\nOPERATIONAL / STRATEGIC NOTES\n• This strategic move is part of Macfab's efforts to strengthen its market position and increase production efficiency."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": """",
+      ""Products and services offered"": """",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": """",
+      ""Equipment"": ""Advanced manufacturing equipment"",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": ""Ontario"",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": ""Industries served ; \""Aerospace, Medical (News: https://www.thespec.com/business/2022/04/11/macfab-manufacturing-expands-production-in-ontario.html)\"", 2022\nEquipment ; \""Advanced manufacturing equipment (News: https://www.thespec.com/business/2022/04/11/macfab-manufacturing-expands-production-in-ontario.html)\"", 2022\nRegion ; \""Ontario (News: https://www.thespec.com/business/2022/04/11/macfab-manufacturing-expands-production-in-ontario.html)\"", 2022\nMedical ; \""Yes (News: https://www.thespec.com/business/2022/04/11/macfab-manufacturing-expands-production-in-ontario.html)\"", 2022""
+  },
+  {
+    ""Company Name"": ""Macfab Manufacturing"",
+    ""Company Website URL"": ""https://macfab.ca/"",
+    ""News Story URL"": ""https://www.canadianmanufacturing.com/manufacturing/macfab-announces-expansion-in-ontario-279596/"",
+    ""Headline"": ""Macfab announces expansion in Ontario"",
+    ""Publication Date"": ""2023-10-15"",
+    ""Publisher or Source"": ""Canadian Manufacturing"",
+    ""GPT Summary"": ""OVERVIEW\nMacfab Manufacturing has announced an expansion of its operations in Ontario, Canada. The expansion is aimed at increasing production capacity to meet growing demand.\nFACILITY, EQUIPMENT & CAPABILITIES\nThe expansion will include the addition of new machinery and equipment to enhance production capabilities.\nEMPLOYEES, REVENUE & GROWTH\nThe expansion is expected to create new jobs in the region, contributing to local economic growth."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": """",
+      ""Products and services offered"": """",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": """",
+      ""Equipment"": ""New machinery and equipment"",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": ""Ontario"",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": ""Equipment ; \""New machinery and equipment (News: https://www.canadianmanufacturing.com/manufacturing/macfab-announces-expansion-in-ontario-279596/)\"", 2023\nRegion ; \""Ontario (News: https://www.canadianmanufacturing.com/manufacturing/macfab-announces-expansion-in-ontario-279596/)\"", 2023""
+  },
+  {
+    ""Company Name"": ""MTD Micro Molding"",
+    ""Company Website URL"": ""https://www.mtdmicromolding.com"",
+    ""News Story URL"": ""https://mtdmicromolding.com/mtd-expands-metrology-capabilities/"",
+    ""Headline"": ""MTD Expands Metrology Capabilities"",
+    ""Publication Date"": ""2023-09-15"",
+    ""Publisher or Source"": ""MTD Micro Molding"",
+    ""GPT Summary"": ""OVERVIEW\n• MTD Micro Molding has expanded its metrology capabilities by adding new equipment to enhance precision in measurement and quality control.\nFACILITY, EQUIPMENT & CAPABILITIES\n• The company has integrated advanced metrology equipment to improve its measurement accuracy and quality assurance processes.\nOPERATIONAL / STRATEGIC NOTES\n• This expansion is part of MTD's ongoing efforts to enhance its technological capabilities and maintain high standards in micro molding."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": """",
+      ""Products and services offered"": """",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": """",
+      ""Equipment"": ""Advanced metrology equipment"",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": """",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": ""Equipment ; \""Advanced metrology equipment (News: https://mtdmicromolding.com/mtd-expands-metrology-capabilities/)\"", 2023""
+  },
+  {
+    ""Company Name"": ""MTD Micro Molding"",
+    ""Company Website URL"": ""https://www.mtdmicromolding.com"",
+    ""News Story URL"": ""https://mtdmicromolding.com/medtech-makers-what-is-micromolding/"",
+    ""Headline"": ""MedTech Makers: What is Micromolding?"",
+    ""Publication Date"": ""2023-10-15"",
+    ""Publisher or Source"": ""MTD Micro Molding"",
+    ""GPT Summary"": ""OVERVIEW\n• The article discusses the concept of micromolding, a specialized form of injection molding used to produce extremely small and precise components, often for medical applications.\n• MTD Micro Molding is highlighted as a leader in the field, emphasizing their expertise in producing high-quality micromolded parts.\nFACILITY, EQUIPMENT & CAPABILITIES\n• The company is equipped with advanced micromolding technology that allows them to produce components with intricate details and tight tolerances.\nCUSTOMERS, INDUSTRIES & PARTNERSHIPS\n• MTD Micro Molding primarily serves the medical industry, providing components for medical devices and other healthcare applications."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": ""Medical"",
+      ""Products and services offered"": ""Micromolding"",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": """",
+      ""Equipment"": ""Advanced micromolding technology"",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": """",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": ""Industries served ; \""Medical (News: https://mtdmicromolding.com/medtech-makers-what-is-micromolding/)\"", 2023\nProducts and services offered ; \""Micromolding (News: https://mtdmicromolding.com/medtech-makers-what-is-micromolding/)\"", 2023\nEquipment ; \""Advanced micromolding technology (News: https://mtdmicromolding.com/medtech-makers-what-is-micromolding/)\"", 2023\nMedical ; \""Yes (News: https://mtdmicromolding.com/medtech-makers-what-is-micromolding/)\"", 2023""
+  },
+  {
+    ""Company Name"": ""MTD Micro Molding"",
+    ""Company Website URL"": ""https://www.mtdmicromolding.com"",
+    ""News Story URL"": ""https://www.medicaldesignandoutsourcing.com/mtd-micro-molding-doubles-its-manufacturing-space/"",
+    ""Headline"": ""MTD Micro Molding doubles its manufacturing space"",
+    ""Publication Date"": ""2023-09-12"",
+    ""Publisher or Source"": ""Medical Design & Outsourcing"",
+    ""GPT Summary"": ""OVERVIEW\n- MTD Micro Molding has doubled its manufacturing space by expanding its facility in Charlton, Massachusetts.\nFACILITY, EQUIPMENT & CAPABILITIES\n- The expansion includes a new 12,000-square-foot building, bringing the total facility size to 24,000 square feet.\n- The new space will house additional molding machines and support increased production capacity.\nOPERATIONAL / STRATEGIC NOTES\n- The expansion aims to meet growing demand in the medical device sector."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": """",
+      ""Products and services offered"": """",
+      ""Square footage (facility)"": ""24,000"",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": """",
+      ""Equipment"": """",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": """",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": ""Square footage (facility) ; \""24,000 (News: https://www.medicaldesignandoutsourcing.com/mtd-micro-molding-doubles-its-manufacturing-space/)\"", 2023\nMedical ; \""Yes (News: https://www.medicaldesignandoutsourcing.com/mtd-micro-molding-doubles-its-manufacturing-space/)\"", 2023""
+  },
+  {
+    ""Company Name"": ""MTD Micro Molding"",
+    ""Company Website URL"": ""https://www.mtdmicromolding.com"",
+    ""News Story URL"": ""https://www.medicaldesignandoutsourcing.com/mtd-micro-molding-expands-tooling-molding-departments/"",
+    ""Headline"": ""MTD Micro Molding expands tooling, molding departments"",
+    ""Publication Date"": ""2023-09-14"",
+    ""Publisher or Source"": ""Medical Design and Outsourcing"",
+    ""GPT Summary"": ""OVERVIEW\n- MTD Micro Molding has expanded its tooling and molding departments to enhance its capabilities.\nFACILITY, EQUIPMENT & CAPABILITIES\n- The expansion includes new equipment and increased capacity to meet growing demand.\n- The company focuses on micro medical device components.\nOPERATIONAL / STRATEGIC NOTES\n- This expansion is part of MTD's strategy to improve efficiency and service in the micro molding sector."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": ""Micro medical device components"",
+      ""Products and services offered"": ""Tooling and molding"",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": """",
+      ""Equipment"": """",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": """",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": ""Industries served ; \""Micro medical device components (News: https://www.medicaldesignandoutsourcing.com/mtd-micro-molding-expands-tooling-molding-departments/)\"", 2023\nProducts and services offered ; \""Tooling and molding (News: https://www.medicaldesignandoutsourcing.com/mtd-micro-molding-expands-tooling-molding-departments/)\"", 2023\nEquipment ; \""New equipment for tooling and molding (News: https://www.medicaldesignandoutsourcing.com/mtd-micro-molding-expands-tooling-molding-departments/)\"", 2023\nMedical ; \""Yes (News: https://www.medicaldesignandoutsourcing.com/mtd-micro-molding-expands-tooling-molding-departments/)\"", 2023""
+  },
+  {
+    ""Company Name"": ""MTD Micro Molding"",
+    ""Company Website URL"": ""https://www.mtdmicromolding.com"",
+    ""News Story URL"": ""https://www.medicaldesignandoutsourcing.com/mtd-micro-molding-expands-overmolding-capabilities/"",
+    ""Headline"": ""MTD Micro Molding expands overmolding capabilities"",
+    ""Publication Date"": ""2023-10-05"",
+    ""Publisher or Source"": ""Medical Design & Outsourcing"",
+    ""GPT Summary"": ""OVERVIEW\n• MTD Micro Molding has expanded its overmolding capabilities, enhancing its ability to produce complex medical components.\n• The company specializes in micro-injection molding for the medical device industry, focusing on intricate and precise parts.\nFACILITY, EQUIPMENT & CAPABILITIES\n• The expansion includes new equipment that allows for more advanced overmolding processes, crucial for medical device manufacturing.\nCUSTOMERS, INDUSTRIES & PARTNERSHIPS\n• MTD Micro Molding serves the medical device industry, providing components that require high precision and quality.\nOPERATIONAL / STRATEGIC NOTES\n• This expansion is part of MTD's strategy to meet increasing demand for complex medical components and to stay competitive in the market."",
+    ""Confidence Score"": ""98%"",
+    ""Source"": ""GPT-5.1"",
+    ""Special Values"": {
+      ""Industries served"": ""Medical device"",
+      ""Products and services offered"": """",
+      ""Square footage (facility)"": """",
+      ""Number of employees"": """",
+      ""Estimated Revenues"": """",
+      ""Years of operation"": """",
+      ""Ownership"": """",
+      ""Equipment"": """",
+      ""Family business"": """",
+      ""2nd Address"": """",
+      ""Region"": """",
+      ""Medical"": """",
+      ""Spares/ Repairs"": """"
+    },
+    ""MMCrawl Updates"": ""Industries served ; \""Medical device (News: https://www.medicaldesignandoutsourcing.com/mtd-micro-molding-expands-overmolding-capabilities/)\"", 2023\nProducts and services offered ; \""Micro-injection molding, overmolding (News: https://www.medicaldesignandoutsourcing.com/mtd-micro-molding-expands-overmolding-capabilities/)\"", 2023\nEquipment ; \""Advanced overmolding equipment (News: https://www.medicaldesignandoutsourcing.com/mtd-micro-molding-expands-overmolding-capabilities/)\"", 2023\nMedical ; \""Yes (News: https://www.medicaldesignandoutsourcing.com/mtd-micro-molding-expands-overmolding-capabilities/)\"", 2023""
+  }
+]",12/26/2025
+News_Url,"You are a News Source URL validation and repair agent for U.S. manufacturing, moldmaking, tooling, and plastics publications.
+
+You will be given a LIST of input rows from a Google Sheet named “News Source”.
+Each input row has exactly 4 columns in this order:
+
+[Company URL, Company Name, News URL, Source]
+
+Your job:
+- Validate each News URL.
+- Apply the rules below EXACTLY.
+- Return the FINAL rebuilt “News Source” rows list AFTER processing ALL input rows.
+
+====================================================
+RULES (MUST FOLLOW EXACTLY)
+====================================================
+
+1) KEEP (VALID ARTICLE)
+If the News URL returns HTTP 200 AND the page contains real article content
+(at minimum: a headline/title plus article body or substantial article text),
+THEN keep the row as-is.
+
+----------------------------------------------------
+
+2) REMOVE (HARD ERROR)
+If the News URL returns HTTP 404 or HTTP 429,
+THEN remove the row completely (do NOT keep it, do NOT replace it, do NOT use Wayback).
+
+----------------------------------------------------
+
+3) REPLACE (SOFT-404 WITH CLOSEST MATCHES)
+If the News URL returns HTTP 200 BUT the page clearly indicates it is NOT a real article
+(e.g. “Sorry, we couldn't find the page you're looking for”, “We can’t find that page”, “Page not found”)
+AND the page includes “Closest matches” or suggested article links,
+THEN:
+- Remove the original row.
+- Add new rows using the closest-match article URLs.
+- Each replacement row MUST keep the same Company URL, Company Name, and Source as the original row.
+- Only add URLs that are REAL ARTICLE pages (NOT category/topic/supplier/home pages).
+- Add up to 6 match URLs per removed row.
+- Preserve the exact order shown on the page (top to bottom).
+
+----------------------------------------------------
+
+4) SOFT-404 WITH NO MATCHES
+If the News URL returns HTTP 200, is a soft-404 “not found” page,
+AND contains NO valid closest-match article URLs,
+THEN remove the row completely.
+
+----------------------------------------------------
+
+5) BLOCKED OR UNKNOWN
+If the page status or content cannot be reliably determined
+(blocked, access denied, requires JS, timeout, fetch failed),
+THEN keep the original row unchanged.
+
+====================================================
+OUTPUT (STRICT JSON ONLY)
+====================================================
+
+Return ONLY a JSON object with exactly these keys:
+
+{
+  ""checked_rows"": <number>,
+  ""kept"": <number>,
+  ""removed_404_429"": <number>,
+  ""replaced_soft404"": <number>,
+  ""removed_soft404_no_matches"": <number>,
+  ""added_matches"": <number>,
+  ""rows"": [
+    [""<Company URL>"", ""<Company Name>"", ""<News URL>"", ""<Source>""],
+    ...
+  ],
+  ""notes"": ""Short factual summary of what you did. No speculation.""
+}
+
+====================================================
+CRITICAL REQUIREMENTS (NON-NEGOTIABLE)
+====================================================
+
+- rows MUST be the FINAL full rebuilt News Source list
+- EVERY row MUST have exactly 4 values
+- Do NOT include removed URLs
+- Do NOT hallucinate URLs
+- Only use closest-match URLs that actually appear on the page
+- STRICT JSON ONLY
+- NO markdown
+- NO commentary outside JSON
+","{
+  ""checked_rows"": 50,
+  ""kept"": 48,
+  ""removed_404_429"": 2,
+  ""replaced_soft404"": 0,
+  ""removed_soft404_no_matches"": 0,
+  ""added_matches"": 0,
+  ""rows"": [
+    [
+      ""https://www.minthgroup.com"",
+      ""Minth Group"",
+      ""https://www.investontario.ca/press-release/minth-group-builds-its-first-canadian-manufacturing-facility-windsor-ontario"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://www.minthgroup.com"",
+      ""Minth Group"",
+      ""https://windsornewstoday.ca/windsor/news/2025/08/05/minth-announces-partnership-with-aisin-to-launch-phase-2-of-manufacturing-facility"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://www.hartprecision.com"",
+      ""HART Design & Manufacturing"",
+      ""https://hartdesign.com/industry-news/hart-design-manufacturing-unveils-new-crumblers-and-crumble-lines-for-high-efficiency-cheese-processing/"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""http://www.prestigemold.com"",
+      ""Prestige Mold Inc."",
+      ""https://www.plasticstoday.com/automation/prestige-mold-invests-1-5m-in-facility-equipment-automation"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""http://www.southcoastmold.com"",
+      ""South Coast Mold, Inc."",
+      ""https://www.moldmakingtechnology.com/articles/strategic-machining"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""http://www.southcoastmold.com"",
+      ""South Coast Mold, Inc."",
+      ""https://www.moldmakingtechnology.com/articles/south-coast-mold-energy-efficiency-add-up-to-success"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""http://www.westecplastics.com"",
+      ""Westec Plastics Corporation"",
+      ""https://www.tctmagazine.com/additive-manufacturing-3d-printing-news/making-time-how-westec-plastics-is-reducing-toolmaking-lead-times-with-mantles-trueshape-technology/"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""http://www.a1toolcorp.com"",
+      ""A1 Tool Corporation"",
+      ""https://www.plasticsnews.com/news/a1-opening-tool-repair-facility-milwaukee"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""http://www.classicdie.com"",
+      ""Classic Die, Inc."",
+      ""https://www.plasticsnews.com/news/investment-firm-buys-three-plastics-processors"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""http://www.cste.com"",
+      ""CS Tool Engineering, Inc."",
+      ""https://www.plasticsnews.com/article/20140529/NEWS/140529907/amba-honors-cs-tool-s-don-snow-as-mold-builder-of-the-year"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://deppemold.com"",
+      ""Deppe Mold and Tooling, Inc."",
+      ""https://www.moldmakingtechnology.com/articles/hot-runner-truths-myths-and-overlooked-areas-"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://www.dietech-gr.com"",
+      ""Die-Tech & Engineering, Inc."",
+      ""https://www.crainsgrandrapids.com/news/manufacturing/automation-helps-manufacturers-adjust-operations-to-serve-health-care-needs/"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""http://www.franchino.com"",
+      ""Franchino Mold & Engineering Company"",
+      ""https://www.plasticsnews.com/article/20141007/NEWS/141009935/franchino-adding-space-equipment-for-continued-large-mold-production"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""http://www.kriegercraftsmen.com"",
+      ""Krieger Craftsmen, Inc."",
+      ""https://www.plasticsnews.com/article/20180709/NEWS/180709931/mold-maker-krieger-launches-j-flex-division"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""http://www.legacyprecisionmolds.com"",
+      ""Legacy Precision Molds, Inc."",
+      ""https://www.mmsonline.com/articles/five-axis-blends-require-minding-ballnose-tolerances-"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""http://www.maximummoldgroup.com"",
+      ""Maximum Mold Group"",
+      ""https://www.moodyonthemarket.com/maximum-mold-expands-again-by-acquiring-mach-mold-of-bh/"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""http://www.modeldie.com"",
+      ""Model Die & Mold, Inc."",
+      ""https://www.moldmakingtechnology.com/articles/cnc-gives-moldmaker-more-capacity-greater-reach-for-large-contoured-molds"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""http://www.ventureglobalengineering.com"",
+      ""Venture Global Engineering, LLC"",
+      ""https://thecountypress.mihomepaper.com/articles/venture-global-engineering/"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""http://www.vikingtooleng.com"",
+      ""Viking Tool & Engineering, Inc."",
+      ""https://www.moldmakingtechnology.com/articles/advanced-edm-features-increase-efficiency-and-change-perceptions"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://toledometalspinning.com/"",
+      ""Toledo Metal Spinning Company"",
+      ""https://www.metalformingmagazine.com/article/?%2Fother-processes%2Fspinning%2Ftoledo-metal-spinning-named-one-of-america-s-top-100-small-businesses="",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://toledometalspinning.com/"",
+      ""Toledo Metal Spinning Company"",
+      ""https://www.toledochamber.com/blog/celebrating-toledos-top-small-businesses-in-america-balance-grille-and-toledo-metal-spinning-make-co-100-list"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://sbform.com/"",
+      ""South Bend Form Tool"",
+      ""https://docs.southbendin.gov/WebLink/0/edoc/66941/04-11-16%20Common%20Council%20Meeting%20Packet.pdf"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""http://pintoproducts.com"",
+      ""Pinto Products"",
+      ""https://secondwavemedia.com/partsbiz0415/"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://apexmachine.com"",
+      ""Apex Machine Company"",
+      ""https://www.packworld.com/leaders-new/machinery/converting-equipment/press-release/13367120/apex-machine-company-acquires-desco"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://apexmachine.com"",
+      ""Apex Machine Company"",
+      ""https://www.plastech.biz/en/news/Apex-Machine-unveils-game-changing-printing-technology-10703"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://aalberstool.com/"",
+      ""Aalbers Tool & Mold Inc."",
+      ""https://windsornewstoday.ca/windsor/news/2015/03/17/auto-parts-manufacturer-getting-support"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://kingsonmold.com/"",
+      ""Kingson Mold and Machine, Inc."",
+      ""https://www.moldmakingtechnology.com/articles/a-technical-and-business-approach-to-moldmaking-increases-growth-opportunities"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://titantooldie.com/"",
+      ""Titan Tool & Die Co."",
+      ""https://www.unifor.org/news/all-news/unifor-members-workers-and-community-rally-against-titan-tool-die"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://titantooldie.com/"",
+      ""Titan Tool & Die Co."",
+      ""https://www.unifor.org/news/all-news/lockout-escalates-titan-tool-die-moves-raw-materials-us"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://gentool.com/"",
+      ""General Tool Company (GTC)"",
+      ""https://gentool.com/news/3/"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://www.precisionforgingdies.com/"",
+      ""Precision Forging Dies, Inc."",
+      ""https://www.inforuptcy.com/browse-filings/california-central-bankruptcy-court/2%3A23-bk-12015/bankruptcy-case-precision-forging-dies-inc"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://www.greenvilletdi.com/"",
+      ""Greenville Tool & Die"",
+      ""https://www.moldmakingtechnology.com/articles/michigan-mold-builder-greenville-tool-die-looks-to-the-future"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://dietechnology.com/"",
+      ""Die Technology, Inc."",
+      ""https://northwrightcounty.today/2020/08/two-new-businesses-coming-to-st-michael/"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://dietechnology.com/"",
+      ""Die Technology, Inc."",
+      ""https://www.ctemag.com/news/die-technology-inc-creates-sister-company"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://www.precisiondiesystems.com/"",
+      ""Precision Die Systems Corporation"",
+      ""https://chippewa-wi.com/final-ccedc-2019-spring-newsletter-lores/"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://precisiondie.com/"",
+      ""Precision Die and Stamping, Inc."",
+      ""https://publicdocumentarchive.tempe.gov/Docs/HearingOfficer/20080520FinalAction.pdf"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://www.precisionresource.com/"",
+      ""Precision Resource"",
+      ""https://www.additivemanufacturing.media/news/precision-resource-collaborates-with-3d-systems-to-offer-metal-additive-manufacturing"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://www.precisionresource.com/"",
+      ""Precision Resource"",
+      ""https://www.metal-am.com/precision-resource-adds-two-dmp-flex-350-am-machines-from-3d-systems/"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://fstool.com/"",
+      ""F&S Tool, Inc."",
+      ""https://www.plasticsnews.com/news/berry-buys-fs-it-builds-its-global-tooling-capabilities"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://fstool.com/"",
+      ""F&S Tool, Inc."",
+      ""https://www.plasticstoday.com/packaging/berry-global-adds-f-s-tool-to-portfolio"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://xcelltool.com/"",
+      ""X鈥慍ell Tool & Mold, Inc."",
+      ""https://www.moldmakingtechnology.com/news/sybridge-technologies-completes-acquisition-of-x-cell-tool-and-mold-inc"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://gliderguard.com/"",
+      ""Glider Guard Tool & Die Inc."",
+      ""https://windsorite.ca/2024/03/investment-announced-for-glider-guard-tool-die-inc/"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://www.etmusa.com/"",
+      ""Expert Tool & Machine, Inc."",
+      ""https://law.justia.com/cases/texas/fifth-court-of-appeals/2015/05-14-00605-cv.html"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://www.iconmachineshop.com/"",
+      ""Icon Machine Company (now part of Precision Aerospace Holdings)"",
+      ""https://aviationweek.com/space/commercial-space/dallas-investors-buy-applegate-icon-form-precision-aerospace"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://www.iconmachineshop.com/"",
+      ""Icon Machine Company (now part of Precision Aerospace Holdings)"",
+      ""https://dallasinnovates.com/dallas-precision-aerospace-holdings-acquires-owens-machine-and-tool-company/"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://www.cavaliertool.com/"",
+      ""Cavalier Tool & Manufacturing Ltd."",
+      ""https://www.cavaliertool.com/how-to-build-a-legacy-in-manufacturing/"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://www.delvatool.com/"",
+      ""Delva Tool & Machine Corporation"",
+      ""https://www.whitewolfcapital.com/news/cmth-acquires-delva-tool-machine-inc/"",
+      ""GPT-5.0"",
+      """"
+    ],
+    [
+      ""https://lowellinc.com/"",
+      ""Lowell, Inc."",
+      ""https://lowellinc.com/from-legacy-to-leading-edge-lowells-latest-upgrades-in-implantable-device-manufacturing/"",
+      ""GPT-5.0"",
+      """"
+    ]
+  ],
+  ""notes"": ""Local rebuild: kept valid pages, removed 404/429, replaced soft-404 pages with closest-match URLs (Archive_Flag=Yes), removed soft-404 with no matches, kept blocked/unknown unchanged.""
+}",12/26/2025
+Reject_Company,"You are an M&A screening analyst for a U.S. private buyer looking for precision moldmaking and highly customized tool & die shops (primarily in the U.S. and Canada).
+You receive ONE company at a time as a JSON object representing a row from the MMCrawl sheet (fields such as Company Name, Public Website Homepage URL, Industries served, Products and services offered, Square footage (facility), Number of employees, Estimated Revenues, Years of operation, Ownership, Region, 2nd Address, etc.).
+
+Your task is to decide whether this company should be moved to the Rejected Companies sheet, using the client’s rules below.
+
+========================
+SCREENING RULES
+========================
+CORE TARGET PROFILE (KEEP):
+- Precision moldmaking and/or complex tool & die manufacturing.
+- Highly customized metalworking closely tied to mold building, tool & die, precision machining, EDM, etc.
+- Typically 1 main facility (sometimes 2).
+- “Sweet spot” size: around 50 employees and ~$10M revenues (smaller is fine; no strict lower limit).
+- Headquarters located in U.S. or Canada.
+
+REJECT if clearly NOT a moldmaking / tool & die / precision tooling business:
+- Primary business is NOT moldmaking / tooling / precision machining.
+- Clear examples to REJECT:
+ • Wine company, food/beverage producer, agriculture, restaurants.
+ • Printing technologies / flexographic printing dies with no moldmaking.
+ • Specialty industrial toolmakers (pipe tools, pipe cutters, mining tools, etc.) when they are NOT moldmakers/tool & die shops.
+ • General contract manufacturing where tooling is incidental and not core.
+
+HIGH-VOLUME / LOW-VALUE PRODUCTION (Reject if clearly primary):
+- High-volume plastic part manufacturing of low-value commodity parts.
+- High-volume sheet metal stamping.
+- BUT if they ALSO build molds/tooling and it is unclear which dominates → treat as borderline (do NOT reject automatically).
+
+SIZE LIMITS — TOO LARGE:
+- Comfortable target size: ~50 employees and ~$10M revenue.
+- Borderline but acceptable: up to ~$50M revenue OR moderately larger headcount if still a focused toolmaker.
+- REJECT when:
+ • Estimated Revenues clearly > ~$80M, OR
+ • Company has 4 or more operating locations (multi-plant).
+- Companies with 3 sites are borderline: keep unless clearly outside model.
+
+HEADQUARTERS LOCATION:
+- KEEP if HQ in U.S. or Canada.
+- REJECT if HQ clearly outside U.S. or Canada (EU, Asia, LATAM, etc.). U.S. branch of multinational = reject.
+
+OWNERSHIP:
+- REJECT if owned by:
+ • Private equity / financial sponsor
+ • Publicly traded company
+- KEEP if independent, privately held, or family-owned.
+
+CLOSED / BANKRUPT:
+- If company is closed or bankrupt → REJECT with reason “closed/bankrupt”.
+
+BORDERLINE CASES — DO NOT REJECT AUTOMATICALLY:
+- Mixed business: molding + tooling; unclear which is primary.
+- Large-ish but still in reach.
+- 2–3 facilities but clearly moldmaking/tooling.
+For such cases, KEEP and mark as “Keep — borderline …”.
+
+========================
+OUTPUT SPECIFICATION
+========================
+You must examine ONLY the JSON row provided. Do not invent external facts.
+Interpret fields like Industries served, Products and services offered, Square footage (facility), Number of employees, Estimated Revenues, Ownership, Region, 2nd Address.
+
+Return ONE JSON OBJECT inside a JSON array with keys:
+
+[
+ {
+ ""Company Name"": """",
+ ""Company URL"": """",
+ ""Reason"": """",
+ ""Source"": """"
+ }
+]
+
+RULES:
+- If company should be rejected, Reason MUST begin with:
+ ""Reject — ""
+ Examples:
+ ""Reject — Not moldmaking/tool & die""
+ ""Reject — Multinational; HQ outside U.S./Canada""
+ ""Reject — Too large (>$80M revenues)""
+ ""Reject — High-volume plastic molder""
+ ""Reject — Owned by private equity""
+ ""Reject — Closed/bankrupt""
+
+- If company should NOT be rejected, Reason MUST begin with:
+ ""Keep — ""
+ Examples:
+ ""Keep — Core precision moldmaker""
+ ""Keep — Borderline size; manual review""
+ ""Keep — Mixed molding/tooling; unclear dominance""
+
+- Source:
+ Use the input “Source” field if present; otherwise ""AI Reject_Company rules"".
+
+========================
+FINAL OUTPUT FORMAT
+========================
+Return ONLY the JSON array, no text before or after it.","[
+ {
+ ""Company Name"": ""Dynamic Dies, Inc."",
+ ""Company URL"": ""https://www.dynamicdies.com"",
+ ""Reason"": ""Reject — Not moldmaking/tool & die"",
+ ""Source"": ""LinkedIn""
+ }
+]",12/1/2025
