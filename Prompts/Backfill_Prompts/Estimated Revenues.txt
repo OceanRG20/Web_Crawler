@@ -11,109 +11,77 @@ Your job is to return the FINAL value that should be written into the
 "Estimated Revenues" cell for THIS row.
 
 ====================================================
-CORE RULE: NEVER REMOVE EXISTING VALUES
+MANDATORY PRIORITY ORDER FOR FINAL OUTPUT
 ====================================================
-- If the Estimated Revenues cell already contains any values (site/news/calc/public),
-  you MUST KEEP them.
-- You may only:
-  (a) add missing tags if needed, and/or
-  (b) append a missing calculated value (only if allowed by the rules), and/or
-  (c) append a missing public estimate (only if you have a strong signal).
-- Do NOT overwrite the cell with a single new value if it already has content.
+1) Site-based revenue (highest credibility)
+2) Calculated revenue (medium credibility)
+3) Public / third-party estimates (lowest credibility)
+
+Values must ALWAYS appear in this exact order in the final cell.
 
 ====================================================
-ANTI-CIRCULAR / ONE-CALC RULE (NON-NEGOTIABLE)
+CRITICAL SKIP RULE — SITE REVENUE
 ====================================================
-Only ONE calculation type is allowed in the final revenue cell:
-- Either "(calc from employees)" OR "(calc from sqft)" — NEVER both.
-If either calc already exists in the cell, DO NOT add another calc type.
-
-Also:
-- If employees appear to be derived from revenue (e.g., employees cell says "(calc from revenue_site)"),
-  then DO NOT add "(calc from employees)" revenue. Prefer sqft calc if allowed, otherwise skip calc.
+- If the Estimated Revenues cell ALREADY contains a site-based value
+  (tagged "(site)" or clearly sourced from the company website):
+  → DO NOT add any calculated revenue.
+  → DO NOT add employee-based or sqft-based estimates.
+  → Preserve the site value as-is and return the cell.
 
 ====================================================
-FINAL OUTPUT ORDER (MANDATORY)
+STEP 1 — START WITH EXISTING DATA
 ====================================================
-Values must appear in this order in the final cell:
-1) News-based revenue (news YYYY)
-2) Site-based revenue (site)
-3) ONE calculated revenue (either calc from employees OR calc from sqft)
-4) Public estimates (public: ZI/BF/etc.)
-
-Separate each value with "; "
+- Preserve any valid site-based value and tag it as "(site)" if missing.
+- If multiple site values exist, keep them first in the output.
 
 ====================================================
-STEP 1 — PARSE & PRESERVE EXISTING REVENUE CELL CONTENT
+STEP 2 — NEWS-BASED VALUES (IF ANY)
 ====================================================
-- Keep every existing revenue entry already present in the cell.
-- If an existing entry is clearly site-based but missing the "(site)" tag, add it.
-- If an existing entry is clearly news-based but missing "(news YYYY)", add it if year is known.
-- Do NOT change numbers unless they are obviously malformed.
+- If confident revenue appears in news/press:
+  - Treat as equivalent to site accuracy.
+  - Tag as "(news YYYY)".
+  - Place BEFORE site values.
+
+FINAL ORDER SO FAR:
+1) News
+2) Site
 
 ====================================================
-STEP 2 — ADD NEWS-BASED REVENUE (IF FOUND AND NOT ALREADY PRESENT)
+STEP 3 — CALCULATED REVENUE (EMPLOYEES → REVENUE)
 ====================================================
-- If confident revenue is stated in news/press releases, add it (if missing).
-- Tag as "(news YYYY)".
-- Insert it at the very beginning (before site).
+- Use ONLY if:
+  - NO site-based revenue exists, AND
+  - NO news-based revenue exists.
+- Formula:
+    revenue ≈ employees × 200,000
+- Round to clean values (e.g., "$12M").
+- Tag: "(calc from employees)"
+- Must appear AFTER news/site and BEFORE public estimates.
 
 ====================================================
-STEP 3 — ADD SITE-BASED REVENUE (IF FOUND AND NOT ALREADY PRESENT)
+STEP 4 — CALCULATED REVENUE (SQFT → REVENUE)
 ====================================================
-- If revenue is found on the company site and not already in the cell, add it.
-- Tag as "(site)".
-- Place after news, before calc/public.
+- Use ONLY if:
+  - NO site-based revenue exists, AND
+  - NO news-based revenue exists, AND
+  - no usable employee count exists, AND
+  - square footage is available.
+- Formula:
+    revenue ≈ sqft × 350
+- Tag: "(calc from sqft)"
+- Must appear BEFORE public estimates.
 
 ====================================================
-STEP 4 — ADD ONE CALCULATED REVENUE (ONLY IF ALLOWED AND USEFUL)
+STEP 5 — PUBLIC DIRECTORY ESTIMATES
 ====================================================
-You may append ONE calc revenue ONLY if:
-- A calc revenue is NOT already present in the existing cell, AND
-- Adding it provides useful clarity (e.g., no strong site/news revenue), AND
-- It does not violate the anti-circular rule above.
-
-4A) EMPLOYEES → REVENUE (PRIMARY CALC)
-Use ONLY if:
-- Employee count exists, AND
-- Employee count is not derived from revenue (not tagged "(calc from revenue_site)"), AND
-- No calc revenue already exists in the revenue cell.
-
-Formula:
-revenue ≈ employees × 200,000
-- Round to clean values (e.g., "$12M")
-- Tag EXACTLY: "(calc from employees)"
-
-4B) SQFT → REVENUE (LAST RESORT CALC)
-Use ONLY if ALL are true:
-- No usable employee data exists, AND
-- No calc revenue already exists in the revenue cell, AND
-- Square footage exists.
-
-Formula:
-revenue ≈ sqft × 600
-- Tag EXACTLY: "(calc from sqft)"
+- ZoomInfo / D&B / similar directories.
+- Tag: "(public: ZI 2023)" or "(public: BF 2024)"
+- These ALWAYS appear LAST.
 
 ====================================================
-STEP 5 — PUBLIC ESTIMATES (ALWAYS LAST, PRESERVE EXISTING)
+IF ABSOLUTELY NO REVENUE INFORMATION EXISTS
 ====================================================
-- Keep any existing public estimate entries.
-- Add a public estimate only if you have a plausible signal.
-- Tag examples:
-  "(public: ZI 2023)"
-  "(public: BF 2024)"
-- Public entries must always be last.
-
-====================================================
-DE-DUPLICATION RULE
-====================================================
-- Do not add duplicates of the same value+tag already present.
-- If the same number exists with different tags, keep both but maintain ordering rules.
-
-====================================================
-IF THE CELL IS BLANK
-====================================================
-- If absolutely no revenue information can be inferred at all, return exactly:
+Return exactly:
 NI
 
 ====================================================

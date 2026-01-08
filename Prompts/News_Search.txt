@@ -128,9 +128,58 @@ Allowed sections (include ONLY when applicable):
 9) DUPLICATION NOTE (only if duplicates removed)
 
 =====================================================
+CRITICAL YEAR / “AS OF” RULE (MANDATORY FOR ALL DATA POINTS)
+=====================================================
+Any time you output a data point in:
+- Special Values, OR
+- MMCrawl Updates bullets,
+you MUST apply this dating logic:
+
+A) If the sentence explicitly references a specific year (e.g., 2009, 2016, 2020):
+   - Treat that year as the effective year for that data point.
+   - The MMCrawl Updates trailing year must be the earlier of:
+       (Publication Year) vs. (Year mentioned in the relevant sentence)
+
+B) If the sentence uses “now / currently / today / has since / currently employs” WITHOUT a specific year:
+   - Treat the effective year as the article’s Publication Year.
+   - In the bullet text, add clarity such as “as of <Publication Year>” when appropriate.
+
+C) If the sentence describes a historical event with before/after values:
+   - Summarize the event concisely and include the before/after values if stated.
+   - Use the event year if stated; otherwise default to Publication Year.
+
+D) NEVER import “current” values from other sources.
+   - Only quote what is in THIS article.
+   - Site data is handled elsewhere; here you only output news-article-derived data.
+
+-----------------------------------------------------
+EXAMPLES (YOU MUST FOLLOW THIS STYLE)
+-----------------------------------------------------
+Example 1 (publication 2021; sentence references 2009):
+Sentence: “The Great Recession of 2009 compelled layoffs … from 35 employees to 26 employees.”
+Correct MMCrawl Update:
+Number of employees ; "2009: reduced from 35 to 26 due to recession (News: <URL>)", 2009
+
+Example 2 (publication 2021; sentence uses “now”):
+Sentence: “We have now recovered and have 42 employees.”
+Correct MMCrawl Update:
+Number of employees ; "42 employees as of 2021 (News: <URL>)", 2021
+
+Example 3 (publication 2024; sentence references 2018 acquisition):
+Sentence: “In 2018, the company was acquired by XYZ Holdings.”
+Correct MMCrawl Update:
+Ownership ; "2018: acquired by XYZ Holdings (News: <URL>)", 2018
+
+=====================================================
 SPECIAL VALUES (REQUIRED)
 =====================================================
-Populate ONLY when explicitly stated in the article; otherwise leave empty (""):
+Populate ONLY when explicitly stated in the article; otherwise leave empty ("").
+
+When a value is time-specific, include the year context in the value itself so it is not mistaken for current.
+Examples:
+- "Number of employees": "26 (2009)" OR "42 (as of 2021)"
+- "Estimated Revenues": "$10M (as of 2021)" if the article implies “now” and publication is 2021
+- "Square footage (facility)": "40,000 sq ft (2016 expansion)" if year is given
 
 "Special Values": {
   "Industries served": "",
@@ -153,7 +202,7 @@ Rules:
 - “Medical” = “Yes” only if medical devices, cleanroom, healthcare, or pharma manufacturing is mentioned
 
 =====================================================
-MMCrawl UPDATE EXTRACTION (UPDATED — MANDATORY)
+MMCrawl UPDATE EXTRACTION (MANDATORY)
 =====================================================
 For each article, extract all MMCrawl-updatable factual data from the list below.
 
@@ -172,12 +221,10 @@ Supported MMCrawl fields:
 - Medical
 
 Rules:
-1) For each update, output:
-   <Field Name> ; "<Data Bullet> (News: <URL>)", <Year>
+1) For each update, output EXACTLY:
+   <Field Name> ; "<Concise, factual bullet> (News: <URL>)", <Effective Year>
 
-2) Ownership examples:
-   Ownership ; "Sold to private equity firm XYZ (News: <URL>)", 2023
-   Family business ; "Yes (News: <URL>)", 2024
+2) The <Effective Year> MUST follow the CRITICAL YEAR / “AS OF” RULE above.
 
 3) If information is implied but uncertain:
    Unsure about MMCrawl update: <data> (News: <URL>)
@@ -186,6 +233,23 @@ Rules:
    Notes ; "Searched news for <name1>, <name2>."
 
 5) DO NOT perform CNC detection of any kind.
+
+=====================================================
+HEADCOUNT / EMPLOYEE DATA (CONDITIONAL)
+=====================================================
+When the article contains any headcount references (e.g., employee(s), workforce, staff, headcount, people)
+AND it provides an explicit numeric value (including historical figures),
+then you must do BOTH:
+1) Include it in GPT Summary under:
+   EMPLOYEES, REVENUE & GROWTH
+2) Add at least one MMCrawl Updates line for:
+   Number of employees
+
+If the article provides before/after headcount tied to an event (recession, expansion, acquisition, relocation),
+summarize the event concisely and include the before/after numbers (or the resulting number if only one is given).
+
+Example (publication 2021; sentence references 2009):
+Number of employees ; "2009: reduced from 35 to 26 due to recession (News: <URL>)", 2009
 
 =====================================================
 NO NEWS CASE
