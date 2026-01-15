@@ -1157,10 +1157,31 @@ function BF_simplifyNewsValue_(rawValue, pubYear, label) {
   return v + " (News)";
 }
 
-/** ===== Replace your existing BF_applyNewsValueToCell_() with this version ===== */
+/********************************************************************
+ * PATCH: Backfill from News — preserve existing hyperlinks + add ALL
+ *        new hyperlinks (multi-link support)
+ *
+ * What this fixes:
+ * - Your current BF_applyNewsValueToCell_() overwrites the whole cell’s
+ *   RichText, but only re-links the NEW segment → older segments lose links.
+ * - This patch preserves existing RichText link runs, then adds links for:
+ *    (A) any "(News: https://...)" tokens (links to that URL)
+ *    (B) any "(News: 2024)" / "(News)" tokens in the NEW segment (links to storyUrl)
+ *
+ * HOW TO APPLY:
+ * 1) Replace your existing BF_applyNewsValueToCell_() with the version below.
+ * 2) Add the NEW helper functions below anywhere in Backfill_Agent.gs
+ ********************************************************************/
+
+
+/** ===== REPLACE your existing BF_applyNewsValueToCell_() with this version ===== */
 function BF_applyNewsValueToCell_(sheet, row, col, cleanedValue, storyUrl, label) {
   const cell = sheet.getRange(row, col);
-  const currentRaw = (cell.getDisplayValue() || "").toString().trim(); // display value helps with rich text
+
+  const existingRich = cell.getRichTextValue();
+  const currentText = existingRich ? String(existingRich.getText() || "") : String(cell.getDisplayValue() || "");
+  const currentRaw = (currentText || "").toString().trim();
+
   const currNorm = BF_normalizeYesNI_(currentRaw);
   const incomingNorm = BF_normalizeYesNI_(cleanedValue);
 
@@ -1192,7 +1213,7 @@ function BF_applyNewsValueToCell_(sheet, row, col, cleanedValue, storyUrl, label
     return false;
   }
 
-  // NON-BOOLEAN: existing behavior (append with " ; " + hyperlink "News" word in the new segment)
+  // NON-BOOLEAN: append behavior
   const isReferToSite = /^"?refer to site"?$/i.test(currentRaw);
   const isEmpty = !currentRaw || isReferToSite;
 
@@ -1203,26 +1224,120 @@ function BF_applyNewsValueToCell_(sheet, row, col, cleanedValue, storyUrl, label
 
   const textChanged = newValue !== currentRaw;
 
-  if (!storyUrl) {
+  // If no story URL and no embedded "(News: https://...)" tokens, just set the value
+  const hasEmbeddedNewsUrls = BF_textHasEmbeddedNewsUrl_(newValue);
+  if (!storyUrl && !hasEmbeddedNewsUrls) {
     if (textChanged) cell.setValue(newValue);
     return textChanged;
   }
 
+  // Build RichText while preserving existing link runs
   const builder = SpreadsheetApp.newRichTextValue().setText(newValue);
 
-  const segStart = newValue.length - cleanedValue.length;
-  const segEnd = newValue.length;
+  // 1) Preserve previous hyperlinks (only safe if old text is prefix of new text)
+  if (existingRich && currentText && newValue.indexOf(currentText) === 0) {
+    BF_copyRichTextLinks_(builder, existingRich);
+  }
 
-  let searchPos = segStart;
-  while (true) {
-    const idx = newValue.indexOf("News", searchPos);
-    if (idx === -1 || idx >= segEnd) break;
-    builder.setLinkUrl(idx, idx + 4, storyUrl);
-    searchPos = idx + 4;
+  // 2) Apply links for NEW segment
+  //    NEW segment = (isEmpty ? whole cell : trailing cleanedValue part)
+  let segStart = 0;
+  if (!isEmpty) segStart = newValue.length - String(cleanedValue || "").length;
+  if (segStart < 0) segStart = 0;
+
+  // 2A) Link embedded "(News: https://...)" tokens anywhere (these are precise)
+  BF_applyEmbeddedNewsUrlLinks_(builder, newValue);
+
+  // 2B) Link "(News: YEAR)" or "(News)" tokens in the NEW segment to storyUrl (if provided)
+  if (storyUrl) {
+    BF_applyNewsTokenLinksToStory_(builder, newValue, segStart, newValue.length, storyUrl);
   }
 
   cell.setRichTextValue(builder.build());
   return textChanged;
+}
+
+
+/** =========================
+ * NEW helper functions
+ * Add these anywhere in Backfill_Agent.gs
+ * ========================= */
+
+/** Returns true if text contains "(News: http...)" token(s). */
+function BF_textHasEmbeddedNewsUrl_(text) {
+  const t = String(text || "");
+  return /\(News:\s*https?:\/\/[^\s\)"]+\)/i.test(t);
+}
+
+/**
+ * Copy all existing link runs from a RichTextValue into a RichTextValueBuilder.
+ * Assumes the builder text begins with the old text (prefix mapping).
+ */
+function BF_copyRichTextLinks_(builder, oldRich) {
+  try {
+    const runs = oldRich.getRuns();
+    if (!runs || !runs.length) return;
+
+    runs.forEach(function (run) {
+      const url = run.getLinkUrl();
+      if (!url) return;
+
+      const start = run.getStartIndex();
+      const end = run.getEndIndex();
+      if (start == null || end == null) return;
+
+      builder.setLinkUrl(start, end, url);
+    });
+  } catch (e) {
+    // If getRuns() is unavailable in this runtime, we fail gracefully (no preservation).
+  }
+}
+
+/**
+ * Apply hyperlinks for embedded "(News: https://...)" tokens.
+ * Links the entire token "(News: ...)" to the URL inside.
+ */
+function BF_applyEmbeddedNewsUrlLinks_(builder, text) {
+  const t = String(text || "");
+  const re = /\(News:\s*(https?:\/\/[^\s\)"]+)\)/gi;
+  let m;
+  while ((m = re.exec(t)) !== null) {
+    const url = m[1];
+    const start = m.index;
+    const end = m.index + m[0].length;
+    builder.setLinkUrl(start, end, url);
+  }
+}
+
+/**
+ * Apply hyperlinks to "(News: YYYY)" and "(News)" tokens within [start,end)
+ * using the provided storyUrl (used for your "(News: 2024)" suffix segments).
+ */
+function BF_applyNewsTokenLinksToStory_(builder, text, start, end, storyUrl) {
+  const t = String(text || "");
+  const s = Math.max(0, parseInt(start || 0, 10));
+  const e = Math.min(t.length, parseInt(end || t.length, 10));
+  if (!storyUrl || s >= e) return;
+
+  const seg = t.slice(s, e);
+
+  // Match "(News: 2024)" OR "(News)"
+  const re = /\(News(?::\s*(?:19|20)\d{2})?\)/gi;
+  let m;
+  while ((m = re.exec(seg)) !== null) {
+    const tokenStart = s + m.index;
+    const tokenEnd = tokenStart + m[0].length;
+    builder.setLinkUrl(tokenStart, tokenEnd, storyUrl);
+  }
+
+  // Backward compatibility: also link the word "News" itself if someone uses "... News ..."
+  // only inside the new segment.
+  const reWord = /\bNews\b/g;
+  while ((m = reWord.exec(seg)) !== null) {
+    const ws = s + m.index;
+    const we = ws + 4;
+    builder.setLinkUrl(ws, we, storyUrl);
+  }
 }
 
 

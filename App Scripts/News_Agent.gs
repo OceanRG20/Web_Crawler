@@ -20,7 +20,7 @@ function onOpen_News(ui) {
     .addToUi();
 }
 
-/** ===== Special Values defaults (expanded) ===== */
+/** ===== Special Values defaults ===== */
 const NS_DEFAULT_SPECIAL_VALUES = {
   "Square footage (facility)": "",
   "Number of employees": "",
@@ -35,8 +35,7 @@ const NS_DEFAULT_SPECIAL_VALUES = {
   "Medical": ""
 };
 
-/** ===== Main runner (kept as your current logic) ===== */
-/** ===== Main runner (UPDATED: do NOT skip any News Source rows) ===== */
+/** ===== Main runner ===== */
 function NS_runNewsSearch() {
   const ss = SpreadsheetApp.getActive();
   const ui = SpreadsheetApp.getUi();
@@ -109,16 +108,12 @@ function NS_runNewsSearch() {
       5
     );
 
-    // IMPORTANT CHANGE:
-    // - Do NOT pre-fetch / soft-404 repair / 404/429 logic here.
-    // - Always call News_Search for every row as provided in News Source.
-
     try {
       const fullPrompt = NS_buildPromptForRow_(basePrompt, row);
+
       const rawAnswer = NS_callOpenAIForNews_(fullPrompt);
       const articles = NS_extractJsonArray_(rawAnswer);
 
-      // Guarantee at least 1 output row per News Source input row
       const finalArticles = (articles && articles.length)
         ? articles
         : [makeFallbackNoNewsObject_(row, "Model returned empty/invalid JSON array for this input.")];
@@ -126,11 +121,13 @@ function NS_runNewsSearch() {
       const enriched = finalArticles.map((obj) => {
         let copy = Object.assign({}, obj);
 
+        // Ensure key fields are present
         if (!copy["Source"]) copy["Source"] = row.source || "";
         if (!copy["Company Name"]) copy["Company Name"] = row.companyName || "";
         if (!copy["Company Website URL"]) copy["Company Website URL"] = row.companyUrl || "";
         if (!copy["News Story URL"]) copy["News Story URL"] = row.newsUrl || "";
 
+        // Ensure Special Values is an object with expected keys
         if (!copy.hasOwnProperty("Special Values")) {
           copy["Special Values"] = JSON.parse(JSON.stringify(NS_DEFAULT_SPECIAL_VALUES));
         } else if (!copy["Special Values"] || typeof copy["Special Values"] !== "object") {
@@ -143,14 +140,16 @@ function NS_runNewsSearch() {
 
         if (!copy.hasOwnProperty("MMCrawl Updates")) copy["MMCrawl Updates"] = "";
 
+        // Enforce your pipeline rules
         copy = NS_enforceSpecialValuesFromSummary_(copy);
+        copy = NS_adjustMmcrawlUpdateYears_(copy);
+
         return copy;
       });
 
       allArticles.push.apply(allArticles, enriched);
 
     } catch (err) {
-      // Guarantee at least 1 output for hard failures too
       allArticles.push(makeFallbackNoNewsObject_(row, "Error while running News_Search: " + String(err)));
     }
 
@@ -169,7 +168,6 @@ function NS_runNewsSearch() {
     8
   );
 }
-
 
 /** ===== Prompt row locator in AI Integration ===== */
 function NS_findPromptRow_(id) {
@@ -221,7 +219,7 @@ function NS_getRowsFromNewsSource_() {
   return out;
 }
 
-/** ===== Build per-row prompt ===== */
+/** ===== Build per-row prompt (UPDATED: inject fetched article text in direct-URL mode) ===== */
 function NS_buildPromptForRow_(basePrompt, row) {
   const now = new Date();
   const isoDate = now.toISOString().slice(0, 10);
@@ -255,7 +253,26 @@ function NS_buildPromptForRow_(basePrompt, row) {
     "- Always populate 'Special Values' and 'MMCrawl Updates' as specified in the main prompt.\n" +
     "- Special Values are SUMMARY-LOCKED: only output a Special Value when that exact value also appears in GPT Summary.\n";
 
-  return basePrompt + summaryTemplate + noNewsNote + scenarioBlock;
+  // NEW: Fetch article text for direct-URL mode, inject it so the model can extract facts.
+  let articleBlock = "";
+  if (newsUrl) {
+    const articleText = NS_fetchArticleText_(newsUrl, 12000);
+    if (articleText) {
+      articleBlock =
+        "\n\n### Article text (fetched by system)\n" +
+        "You MUST base all extraction ONLY on the text below.\n" +
+        "If a data point is not explicitly stated in this text, do NOT output it.\n\n" +
+        articleText +
+        "\n";
+    } else {
+      articleBlock =
+        "\n\n### Article text (fetched by system)\n" +
+        "The system could not fetch readable text from the URL (blocked/paywall/format).\n" +
+        "In this case, do NOT guess numbers. Only output what you can confirm.\n";
+    }
+  }
+
+  return basePrompt + summaryTemplate + noNewsNote + scenarioBlock + articleBlock;
 }
 
 /** ===== OpenAI call for News_Search ===== */
@@ -351,7 +368,137 @@ function NS_enforceSpecialValuesFromSummary_(obj) {
   return obj;
 }
 
-/** ===== Append JSON objects to "News Raw" (UPDATED: normalize Specific Value formatting) ===== */
+/**
+ * Enforce year logic on MMCrawl Updates lines:
+ * - Trailing year must be earlier of:
+ *     publication year vs. year(s) mentioned in the bullet text
+ * - If no mentioned year in bullet text, default trailing year to publication year (if available)
+ *
+ * Expected MMCrawl Updates line format:
+ *   Field ; "Bullet text (News: <URL>)", 2021
+ */
+function NS_adjustMmcrawlUpdateYears_(obj) {
+  const updatesRaw = obj["MMCrawl Updates"];
+  if (!updatesRaw) return obj;
+
+  const pub = String(obj["Publication Date"] || "").trim();
+  const pubYearMatch = pub.match(/\b(19|20)\d{2}\b/);
+  const pubYear = pubYearMatch ? parseInt(pubYearMatch[0], 10) : null;
+
+  let lines = [];
+  if (Array.isArray(updatesRaw)) {
+    lines = updatesRaw.map(x => String(x || "")).filter(Boolean);
+  } else {
+    lines = String(updatesRaw || "").split("\n").map(s => s.trim()).filter(Boolean);
+  }
+  if (!lines.length) return obj;
+
+  const fixed = lines.map((line) => {
+    const original = String(line || "").trim();
+    if (!original) return "";
+
+    const m = original.match(/^([\s\S]*?;\s*")([\s\S]*?)("\s*,\s*)(\d{4})\s*$/);
+    if (!m) return original;
+
+    const prefix = m[1];
+    const bulletText = m[2];
+    const mid = m[3];
+    const trailingYear = parseInt(m[4], 10);
+
+    const yearsInText = [];
+    const re = /\b(19|20)\d{2}\b/g;
+    let ym;
+    while ((ym = re.exec(bulletText)) !== null) {
+      yearsInText.push(parseInt(ym[0], 10));
+    }
+
+    let effectiveYear = trailingYear;
+
+    if (pubYear) {
+      if (yearsInText.length) {
+        const minMentioned = Math.min.apply(null, yearsInText);
+        effectiveYear = Math.min(pubYear, minMentioned);
+      } else {
+        effectiveYear = pubYear;
+      }
+    } else {
+      if (yearsInText.length) {
+        effectiveYear = Math.min.apply(null, yearsInText);
+      }
+    }
+
+    return prefix + bulletText + mid + String(effectiveYear);
+  }).filter(Boolean);
+
+  obj["MMCrawl Updates"] = fixed.join("\n");
+  return obj;
+}
+
+/** ===== HTML fetch + extract article text (NEW) ===== */
+
+/** Fetch HTML (best-effort). Returns { ok, code, html }. */
+function NS_fetchHtml_(url) {
+  try {
+    const resp = UrlFetchApp.fetch(url, {
+      method: "get",
+      followRedirects: true,
+      muteHttpExceptions: true,
+      validateHttpsCertificates: true,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9"
+      }
+    });
+    const code = resp.getResponseCode();
+    const html = String(resp.getContentText() || "");
+    return { ok: true, code: code, html: html };
+  } catch (e) {
+    return { ok: false, code: 0, html: "" };
+  }
+}
+
+/** Basic HTML -> readable text (best-effort). */
+function NS_htmlToText_(html) {
+  if (!html) return "";
+  let t = String(html);
+
+  t = t.replace(/<script[\s\S]*?<\/script>/gi, " ");
+  t = t.replace(/<style[\s\S]*?<\/style>/gi, " ");
+  t = t.replace(/<br\s*\/?>/gi, "\n");
+  t = t.replace(/<\/p\s*>/gi, "\n");
+  t = t.replace(/<[^>]+>/g, " ");
+
+  t = t.replace(/&nbsp;/g, " ");
+  t = t.replace(/&amp;/g, "&");
+  t = t.replace(/&quot;/g, "\"");
+  t = t.replace(/&#39;/g, "'");
+  t = t.replace(/&lt;/g, "<");
+  t = t.replace(/&gt;/g, ">");
+
+  t = t.replace(/[ \t\r\f\v]+/g, " ");
+  t = t.replace(/\n\s+/g, "\n");
+  t = t.replace(/\n{3,}/g, "\n\n");
+
+  return t.trim();
+}
+
+/** Fetch and extract article text (size-limited). */
+function NS_fetchArticleText_(url, maxChars) {
+  const u = String(url || "").trim();
+  if (!u) return "";
+
+  const r = NS_fetchHtml_(u);
+  if (!r || !r.ok || !r.html) return "";
+
+  const txt = NS_htmlToText_(r.html);
+  if (!txt) return "";
+
+  const limit = (maxChars && maxChars > 0) ? maxChars : 12000;
+  return txt.length > limit ? txt.slice(0, limit) : txt;
+}
+
+/** ===== Append JSON objects to "News Raw" ===== */
 function NS_writeResultsToNewsRaw_(jsonArr) {
   const ss = SpreadsheetApp.getActive();
   const sheet = ss.getSheetByName("News Raw");
@@ -362,43 +509,34 @@ function NS_writeResultsToNewsRaw_(jsonArr) {
   const lastRow = sheet.getLastRow();
   let row = (lastRow < 1 ? 2 : lastRow + 1);
 
-  // Convert MMCrawl Updates into human-readable text (no [] brackets)
   function normalizeSpecificValue_(mv) {
     if (mv === null || mv === undefined) return "";
 
-    // If already a string, try to parse JSON-looking strings safely
     if (typeof mv === "string") {
       const s = mv.trim();
       if (!s) return "";
-
-      // Try parse JSON arrays/objects that were returned as strings
       if ((s.startsWith("[") && s.endsWith("]")) || (s.startsWith("{") && s.endsWith("}"))) {
         try {
           const parsed = JSON.parse(s);
           return normalizeSpecificValue_(parsed);
         } catch (_) {
-          // Not valid JSON; keep raw string
           return s;
         }
       }
-
-      return s; // plain text already
+      return s;
     }
 
-    // If array: join each item on new line (no brackets)
     if (Array.isArray(mv)) {
       return mv
         .map((x) => {
           if (x === null || x === undefined) return "";
           if (typeof x === "string") return x.trim();
-          // if array contains objects/arrays, stringify each element minimally
           try { return JSON.stringify(x); } catch (_) { return String(x); }
         })
         .filter(Boolean)
         .join("\n");
     }
 
-    // If object: render as lines: Key ; "Value"
     if (typeof mv === "object") {
       const lines = [];
       Object.keys(mv).forEach((k) => {
@@ -408,12 +546,8 @@ function NS_writeResultsToNewsRaw_(jsonArr) {
         let v = mv[k];
         if (v === null || v === undefined) return;
 
-        // Flatten arrays/objects in values
         if (Array.isArray(v)) {
-          v = v
-            .map((z) => (z === null || z === undefined) ? "" : String(z).trim())
-            .filter(Boolean)
-            .join(", ");
+          v = v.map((z) => (z === null || z === undefined) ? "" : String(z).trim()).filter(Boolean).join(", ");
         } else if (typeof v === "object") {
           try { v = JSON.stringify(v); } catch (_) { v = String(v); }
         } else {
@@ -427,7 +561,6 @@ function NS_writeResultsToNewsRaw_(jsonArr) {
       return lines.join("\n");
     }
 
-    // Fallback
     return String(mv);
   }
 
@@ -451,58 +584,7 @@ function NS_writeResultsToNewsRaw_(jsonArr) {
   });
 }
 
-/** ===== URL helpers ===== */
-
-/** Actionable URL check: ONLY 404 and 429. */
-function NS_checkUrlActionable404_429_(url) {
-  const headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9"
-  };
-
-  try {
-    const resp = UrlFetchApp.fetch(url, {
-      method: "get",
-      followRedirects: true,
-      muteHttpExceptions: true,
-      validateHttpsCertificates: true,
-      headers
-    });
-
-    const code = resp.getResponseCode();
-    if (code === 404 || code === 429) return { actionable: true, code: code, reason: "HTTP " + code };
-    return { actionable: false, code: code, reason: "" };
-  } catch (e) {
-    return { actionable: false, code: 0, reason: String(e && e.message ? e.message : e) };
-  }
-}
-
-/** Fetch HTML (best-effort). Returns { ok, code, html }. */
-function NS_fetchHtml_(url) {
-  try {
-    const resp = UrlFetchApp.fetch(url, {
-      method: "get",
-      followRedirects: true,
-      muteHttpExceptions: true,
-      validateHttpsCertificates: true,
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9"
-      }
-    });
-    const code = resp.getResponseCode();
-    const html = String(resp.getContentText() || "");
-    return { ok: true, code: code, html: html };
-  } catch (e) {
-    return { ok: false, code: 0, html: "" };
-  }
-}
-/**
- * Soft-404 detector (PRE-VERSION style: simple, reliable string checks).
- * Returns true when the HTML content indicates "not found" even if HTTP 200.
- */
+/** ===== Soft-404 detector (simple string checks) ===== */
 function NS_isSoft404_(url, html) {
   if (!html) return false;
   const h = String(html).toLowerCase();
@@ -551,7 +633,6 @@ function NS_extractCandidateUrlsFromHtml_(html, baseUrl) {
     if (/^https?:\/\//i.test(u)) return u;
     if (u.indexOf("//") === 0) return "https:" + u;
 
-    // relative -> origin + path
     const m = base.match(/^(https?:\/\/[^\/]+)(\/.*)?$/i);
     const origin = m ? m[1] : "";
     if (!origin) return "";
@@ -559,7 +640,6 @@ function NS_extractCandidateUrlsFromHtml_(html, baseUrl) {
     return origin + u;
   }
 
-  // Pull hrefs
   const re = /href\s*=\s*["']([^"']+)["']/gi;
   let m;
   while ((m = re.exec(html)) !== null) {
@@ -568,7 +648,6 @@ function NS_extractCandidateUrlsFromHtml_(html, baseUrl) {
 
     const ul = abs.toLowerCase();
 
-    // Article-like patterns (tune as needed)
     const isArticleLike =
       ul.indexOf("/articles/") >= 0 ||
       ul.indexOf("/article/") >= 0 ||
@@ -576,7 +655,6 @@ function NS_extractCandidateUrlsFromHtml_(html, baseUrl) {
 
     if (!isArticleLike) continue;
 
-    // Exclusions (avoid directories / taxonomies)
     if (ul.indexOf("/suppliers/") >= 0) continue;
     if (ul.indexOf("/topics/") >= 0) continue;
     if (ul.indexOf("/topic/") >= 0) continue;
@@ -587,7 +665,6 @@ function NS_extractCandidateUrlsFromHtml_(html, baseUrl) {
     out.push(abs);
   }
 
-  // Dedupe, preserve order
   const uniq = [];
   const seen = {};
   out.forEach((u) => {
@@ -625,12 +702,10 @@ function NS_rebuildNewsSourceSheetFromRows_(rows) {
 
     if (!a && !b && !c && !d && !e) return;
 
-    // Only allow "Yes" or blank
     const flag = (e === "Yes") ? "Yes" : "";
     out.push([a, b, c, d, flag]);
   });
 
-  // Clear old data area (row 2 down)
   const last = sh.getLastRow();
   if (last >= 2) {
     sh.getRange(2, 1, last - 1, sh.getMaxColumns()).clearContent().clearNote();
@@ -644,7 +719,7 @@ function NS_rebuildNewsSourceSheetFromRows_(rows) {
 /**
  * ✅ CHECK NEWS SOURCE URLS (LOCAL REBUILD + SAVE RESULT)
  *
- * Rules implemented exactly as you described:
+ * Rules:
  * - HTTP 200 with real content -> keep
  * - HTTP 404 / 429 -> remove
  * - HTTP 200 soft-404:
@@ -652,7 +727,7 @@ function NS_rebuildNewsSourceSheetFromRows_(rows) {
  *      - if no matches -> remove
  * - blocked / fetch failed -> keep as-is
  *
- * Also saves the FINAL rebuilt rows list into AI Integration -> Result for Prompt ID "News_Url",
+ * Saves final JSON into AI Integration -> Result for Prompt ID "News_Url",
  * then rebuilds News Source from that JSON.
  */
 function NS_checkNewsSourceUrls() {
@@ -683,8 +758,6 @@ function NS_checkNewsSourceUrls() {
     return;
   }
 
-  // News Source columns:
-  // A: Company URL, B: Company Name, C: News URL, D: Source, E: Archive_Flag
   const vals = sh.getRange(2, 1, lastRow - 1, 5).getDisplayValues();
 
   const inputRows = vals
@@ -702,7 +775,6 @@ function NS_checkNewsSourceUrls() {
     return;
   }
 
-  // Output + counters
   let checked_rows = 0;
   let kept = 0;
   let removed_404_429 = 0;
@@ -711,9 +783,8 @@ function NS_checkNewsSourceUrls() {
   let added_matches = 0;
 
   const outRows = [];
-  const seenNewsUrls = {}; // dedupe by news URL lower
+  const seenNewsUrls = {};
 
-  // Fetch headers
   const headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -741,10 +812,8 @@ function NS_checkNewsSourceUrls() {
     const companyName = row[1];
     const newsUrl = row[2];
     const source = row[3];
-    // const existingFlag = row[4]; // we will recompute
 
     if (!newsUrl) {
-      // If no News URL, keep row as-is (rare, but safe)
       addRow_(companyUrl, companyName, newsUrl, source, "");
       continue;
     }
@@ -764,45 +833,37 @@ function NS_checkNewsSourceUrls() {
       code = resp.getResponseCode();
       html = String(resp.getContentText() || "");
     } catch (e) {
-      // BLOCKED/UNKNOWN -> keep original
       kept++;
       addRow_(companyUrl, companyName, newsUrl, source, "");
       continue;
     }
 
-    // HARD REMOVE
     if (code === 404 || code === 429) {
       removed_404_429++;
       continue;
     }
 
-    // If not a normal HTML success, treat as unknown -> keep
-    // (e.g., 403, 406, 500, etc.)
     if (!(code >= 200 && code < 400)) {
       kept++;
       addRow_(companyUrl, companyName, newsUrl, source, "");
       continue;
     }
 
-    // SOFT-404 detection (HTTP 200 but "can't find" content)
     if (NS_isSoft404_(newsUrl, html)) {
       const candidates = NS_extractCandidateUrlsFromHtml_(html, newsUrl).slice(0, 6);
 
       if (candidates.length) {
         replaced_soft404++;
         candidates.forEach((u) => {
-          add_matches:
           addRow_(companyUrl, companyName, u, source, "Yes");
         });
         added_matches += candidates.length;
       } else {
-        // Soft-404 but no matches -> remove
         removed_soft404_no_matches++;
       }
       continue;
     }
 
-    // Otherwise keep (assume valid article)
     kept++;
     addRow_(companyUrl, companyName, newsUrl, source, "");
   }
@@ -818,11 +879,9 @@ function NS_checkNewsSourceUrls() {
     notes: "Local rebuild: kept valid pages, removed 404/429, replaced soft-404 pages with closest-match URLs (Archive_Flag=Yes), removed soft-404 with no matches, kept blocked/unknown unchanged."
   };
 
-  // Save JSON into AI Integration Result/Date for News_Url
   aiSheet.getRange(promptRow, 3).setValue(JSON.stringify(resultObj, null, 2));
   aiSheet.getRange(promptRow, 4).setValue(new Date());
 
-  // Rebuild News Source from result rows
   NS_rebuildNewsSourceSheetFromRows_(outRows);
 
   ui.alert(
@@ -839,7 +898,6 @@ function NS_checkNewsSourceUrls() {
 
   ss.toast("News Source rebuilt. AI Integration (News_Url) Result updated.", "News", 8);
 }
-
 
 /** ===== OpenAI call for News_Url (URL validation + rebuild) ===== */
 function NS_callOpenAIForUrlRepair_(userPrompt) {
@@ -881,5 +939,3 @@ function NS_callOpenAIForUrlRepair_(userPrompt) {
 
   return String(answer).trim();
 }
-
-

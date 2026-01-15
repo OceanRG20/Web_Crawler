@@ -112,7 +112,7 @@ If there is:
 
 then return exactly:
 
-""
+"NI"
 
 ====================================================
 Return ONLY the final Number of employees cell value.
