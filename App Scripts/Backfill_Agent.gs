@@ -27,10 +27,11 @@ function onOpen_Backfill(ui) {
   // --- Columns Backfill (Manual) submenu ---
   const manualSubMenu = ui.createMenu("▶ Columns Backfill (Manual)")
     .addItem("Equipment + CNC 3 & 5-axis", "BF_runBackfill_EquipmentCNCCombo")
+     .addItem("Estimated Revenues + Employees + Sqft", "BF_runBackfill_RevenueEmployeesSqftCombo")
     .addItem("Ownership + Family business", "BF_runBackfill_OwnershipFamilyCombo")
-    .addItem("Estimated Revenues", "BF_runBackfill_EstimatedRevenues")
-    .addItem("Number of employees", "BF_runBackfill_NumberOfEmployees")
-    .addItem("Square footage (facility)", "BF_runBackfill_SquareFootage")
+    // .addItem("Estimated Revenues", "BF_runBackfill_EstimatedRevenues")
+    // .addItem("Number of employees", "BF_runBackfill_NumberOfEmployees")
+    // .addItem("Square footage (facility)", "BF_runBackfill_SquareFootage")
     .addItem("Years of operation", "BF_runBackfill_YearsOfOperation")
     .addSeparator()
     .addItem("Equipment", "BF_runBackfill_Equipment")
@@ -261,7 +262,15 @@ function BF_runBackfill_OwnershipFamilyCombo() {
  *      Label ; "Value ...", 2020
  **************************************************/
 
-/** ===== Replace your existing BF_runBackfill_FromNews() with this version ===== */
+
+/**
+ * UPDATED: BF_runBackfill_FromNews()
+ * Change: after News backfill completes, automatically run the 3-column manual combo
+ * for the SAME row range.
+ *
+ * NOTE: This is your existing function with only the final part updated.
+ * Replace your current BF_runBackfill_FromNews() entirely with this version.
+ */
 function BF_runBackfill_FromNews() {
   const ss = SpreadsheetApp.getActive();
   const ui = SpreadsheetApp.getUi();
@@ -430,8 +439,22 @@ function BF_runBackfill_FromNews() {
 
   ui.alert(
     "Backfill from News complete.\n" +
-    "MMCrawl rows processed: " + startRow + "-" + endRow + "\n" +
-    "Values applied to MMCrawl cells: " + appliedCount
+      "MMCrawl rows processed: " + startRow + "-" + endRow + "\n" +
+      "Values applied to MMCrawl cells: " + appliedCount + "\n\n" +
+      "Next: auto-running manual backfill (Sqft → Employees → Revenues) for NI cells only."
+  );
+
+  // NEW: Auto-run the 3-column combined manual backfill using the same row range
+  BF_runBackfill_RevenueEmployeesSqftCombo_Range_(startRow, endRow);
+
+  ui.alert(
+    "All done.\n" +
+      "1) News backfill completed.\n" +
+      "2) Manual backfill combo completed (NI-only) for:\n" +
+      "   • Square footage (facility)\n" +
+      "   • Number of employees\n" +
+      "   • Estimated Revenues\n\n" +
+      "News values/links were preserved."
   );
 }
 
@@ -829,6 +852,7 @@ function BF_runBackfillForColumnId_(columnId, startRow, endRow) {
   if (cfgRow < 2) {
     throw new Error('Column_ID "' + columnId + '" not found in Backfill sheet.');
   }
+
   const promptTemplate = backfillSheet.getRange(cfgRow, 2).getValue().toString();
   if (!promptTemplate) {
     throw new Error('GPT_Prompt is blank in Backfill for Column_ID "' + columnId + '".');
@@ -862,7 +886,15 @@ function BF_runBackfillForColumnId_(columnId, startRow, endRow) {
   if (numRows <= 0) return { rowsProcessed: 0 };
 
   const rowsValues = mmSheet.getRange(startRow, 1, numRows, lastCol).getValues();
-  const resultValues = [];
+
+  // IMPORTANT: only write changed cells to preserve RichText hyperlinks (News links).
+  const pendingWrites = []; // { rowNumber, value }
+
+  function queueWrite_(rowNumber, existingStr, newValue) {
+    const ex = (existingStr === null || existingStr === undefined) ? "" : String(existingStr);
+    const nv = (newValue === null || newValue === undefined) ? "" : String(newValue);
+    if (nv !== ex) pendingWrites.push({ rowNumber: rowNumber, value: newValue });
+  }
 
   // Find URL column once for better toasts
   const urlColIndex = BF_findHeaderIndex_(headerRow, [
@@ -882,38 +914,37 @@ function BF_runBackfillForColumnId_(columnId, startRow, endRow) {
     const existing = rowData[targetColIndex - 1];
     const existingStr = (existing === null || existing === undefined) ? "" : existing.toString();
 
+    // === CLIENT RULE: For these 3 columns, only run GPT if the cell is exactly NI.
+    // Otherwise skip entirely (do not rewrite cell -> preserves News hyperlinks).
+    if (BF_isNIOnlyManualColumn_(columnId)) {
+      if (!BF_isExactNI_(existingStr)) {
+        continue; // DO NOT write anything
+      }
+    }
+
     // SPECIAL CASE: Years of operation — if already filled, keep and skip GPT
     if (columnId === "Years of operation" && existingStr !== "") {
-      resultValues.push([existingStr]);
-      continue;
+      continue; // no write
     }
 
-      // === SPECIAL CASE: 2nd Address (client rule) ===
-  if (columnId === "2nd Address") {
-    const trimmed = existingStr.trim();
-    const lower   = trimmed.toLowerCase();
+    // === SPECIAL CASE: 2nd Address (client rule) ===
+    if (columnId === "2nd Address") {
+      const trimmed = existingStr.trim();
+      const lower = trimmed.toLowerCase();
 
-    // Treat these as "no usable 2nd address":
-    //  - empty
-    //  - "NI" / "ni" / "Refer to Site" variants
-    //  - literal "" (two quote characters)
-    const isEmptyLike =
-      !trimmed ||
-      lower === "ni" ||
-      lower === '"ni"' ||
-      lower === "refer to site" ||
-      lower === '"refer to site"' ||
-      trimmed === '""';
+      const isEmptyLike =
+        !trimmed ||
+        lower === "ni" ||
+        lower === '"ni"' ||
+        lower === "refer to site" ||
+        lower === '"refer to site"' ||
+        trimmed === '""';
 
-    if (isEmptyLike) {
-      // Force a true blank cell
-      resultValues.push([""]);
-    } else {
-      // Real 2nd address already present → keep it
-      resultValues.push([existingStr]);
+      if (isEmptyLike) {
+        queueWrite_(sheetRowNumber, existingStr, ""); // force true blank
+      }
+      continue; // skip GPT for this column
     }
-    continue; // skip GPT for this column
-  }
 
     // SPECIAL CASE: Equipment — only re-fill when empty / NI / refer to site
     if (columnId === "Equipment") {
@@ -925,9 +956,7 @@ function BF_runBackfillForColumnId_(columnId, startRow, endRow) {
         lower !== "refer to site" &&
         lower !== '"refer to site"'
       ) {
-        // keep existing rich list; do not overwrite
-        resultValues.push([existingStr]);
-        continue;
+        continue; // keep existing; no write
       }
     }
 
@@ -940,20 +969,18 @@ function BF_runBackfillForColumnId_(columnId, startRow, endRow) {
       const eqLower = eqVal.toLowerCase();
 
       if (!eqVal) {
-        // no equipment info at all
-        resultValues.push(["NI"]);
+        queueWrite_(sheetRowNumber, existingStr, "NI");
         continue;
       }
       if (eqLower === "refer to site" || eqLower === '"refer to site"') {
-        resultValues.push(["refer to site"]);
+        queueWrite_(sheetRowNumber, existingStr, "refer to site");
         continue;
       }
       if (eqLower === "ni" || eqLower === '"ni"') {
-        resultValues.push(["NI"]);
+        queueWrite_(sheetRowNumber, existingStr, "NI");
         continue;
       }
-      // else: we DO send the row to GPT to interpret the normalized Equipment line
-      // and decide Yes/NI/refer to site.
+      // else: send row to GPT
     }
 
     // Toast with URL
@@ -980,30 +1007,34 @@ function BF_runBackfillForColumnId_(columnId, startRow, endRow) {
     // Call OpenAI to get new cell value
     let cellValue = BF_callOpenAI_Backfill_(systemPrompt, columnId);
 
-    // Re-order multi-part answers for specific columns:
-    // Best = (site), then (calc ...), then (public: ...)
+    // Re-order multi-part answers for specific columns
     if (columnId === "Number of employees") {
       cellValue = BF_normalizeEmployeesOrder_(cellValue);
     } else if (columnId === "Estimated Revenues") {
       cellValue = BF_normalizeRevenueOrder_(cellValue);
     }
 
-    // IMPORTANT: protect any client "by hand" notes in existing cell
+    // Preserve any client "by hand" notes in existing cell
     cellValue = BF_mergeByHand_(existingStr, cellValue);
 
-    resultValues.push([cellValue]);
+    // Only write if changed (preserves hyperlinks for unchanged cells)
+    queueWrite_(sheetRowNumber, existingStr, cellValue);
   }
 
-  // Write results back
-  mmSheet.getRange(startRow, targetColIndex, numRows, 1).setValues(resultValues);
+  // Apply only changed writes. This avoids wiping RichText hyperlinks in untouched cells.
+  pendingWrites.forEach(function (w) {
+    mmSheet.getRange(w.rowNumber, targetColIndex).setValue(w.value);
+  });
+
   SpreadsheetApp.getActive().toast(
-    'Backfill "' + columnId + '" finished.',
+    'Backfill "' + columnId + '" finished. Updated cells: ' + pendingWrites.length,
     "Backfill progress",
     3
   );
 
   return { rowsProcessed: numRows };
 }
+
 
 /**
  * Find config row in Backfill sheet for a given Column_ID.
@@ -1213,14 +1244,19 @@ function BF_applyNewsValueToCell_(sheet, row, col, cleanedValue, storyUrl, label
     return false;
   }
 
-  // NON-BOOLEAN: append behavior
-  const isReferToSite = /^"?refer to site"?$/i.test(currentRaw);
-  const isEmpty = !currentRaw || isReferToSite;
+  // NON-BOOLEAN: replace when current is blank / NI / refer-to-site
+  const isEmptyLike = BF_isEmptyLikeForNewsReplace_(currentRaw);
 
   let newValue;
-  if (isEmpty) newValue = cleanedValue;
-  else if (currentRaw.indexOf(cleanedValue) !== -1) newValue = currentRaw;
-  else newValue = currentRaw + " ; " + cleanedValue;
+  if (isEmptyLike) {
+    // Replace NI / refer-to-site / blank with the news value (your required behavior)
+    newValue = cleanedValue;
+  } else if (currentRaw.indexOf(cleanedValue) !== -1) {
+    newValue = currentRaw;
+  } else {
+    newValue = currentRaw + " ; " + cleanedValue;
+  }
+
 
   const textChanged = newValue !== currentRaw;
 
@@ -1242,7 +1278,8 @@ function BF_applyNewsValueToCell_(sheet, row, col, cleanedValue, storyUrl, label
   // 2) Apply links for NEW segment
   //    NEW segment = (isEmpty ? whole cell : trailing cleanedValue part)
   let segStart = 0;
-  if (!isEmpty) segStart = newValue.length - String(cleanedValue || "").length;
+  if (!isEmptyLike) segStart = newValue.length - String(cleanedValue || "").length;
+
   if (segStart < 0) segStart = 0;
 
   // 2A) Link embedded "(News: https://...)" tokens anywhere (these are precise)
@@ -1500,3 +1537,112 @@ function BF_normalizeYesNI_(value) {
 
   return (value || "").toString().trim();
 }
+
+function BF_isEmptyLikeForNewsReplace_(currentRaw) {
+  const s = (currentRaw || "").toString().trim();
+  const lower = s.toLowerCase();
+
+  if (!s) return true;
+
+  // Treat NI / "NI" as empty-like
+  if (lower === "ni" || lower === '"ni"' || lower === "'ni'") return true;
+
+  // Treat refer-to-site variants as empty-like
+  if (lower === "refer to site" || lower === '"refer to site"' || lower === "'refer to site'") return true;
+
+  return false;
+}
+
+/**
+ * Combined backfill runner:
+ * 1) Estimated Revenues
+ * 2) Number of employees
+ * 3) Square footage (facility)
+ */
+function BF_runBackfill_RevenueEmployeesSqftCombo() {
+  const ui = SpreadsheetApp.getUi();
+  const rangeInfo = BF_promptForRowRange_(ui);
+  if (!rangeInfo) return;
+
+  BF_runBackfill_RevenueEmployeesSqftCombo_Range_(rangeInfo.startRow, rangeInfo.endRow);
+
+  ui.alert(
+    "Combined Manual Backfill Complete.\n" +
+      "Processed rows: " +
+      rangeInfo.startRow +
+      " - " +
+      rangeInfo.endRow +
+      "\n" +
+      "Steps completed:\n" +
+      " • Square footage (facility)\n" +
+      " • Number of employees\n" +
+      " • Estimated Revenues"
+  );
+}
+
+
+
+function BF_isNIOnlyManualColumn_(columnId) {
+  const s = (columnId || "").toString().trim();
+  return (
+    s === "Square footage (facility)" ||
+    s === "Number of employees" ||
+    s === "Estimated Revenues"
+  );
+}
+
+function BF_isExactNI_(value) {
+  const s = (value === null || value === undefined) ? "" : String(value).trim().toLowerCase();
+  return (s === "ni" || s === '"ni"' || s === "'ni'");
+}
+
+/**
+ * NEW: Combined MANUAL backfill (no prompt) for a provided row range:
+ * 1) Square footage (facility)
+ * 2) Number of employees
+ * 3) Estimated Revenues
+ *
+ * Relies on BF_runBackfillForColumnId_() being patched to:
+ * - preserve RichText by writing ONLY changed cells
+ * - NI-only rule for these 3 columns
+ */
+function BF_runBackfill_RevenueEmployeesSqftCombo_Range_(startRow, endRow) {
+  const ss = SpreadsheetApp.getActive();
+  const ui = SpreadsheetApp.getUi();
+
+  startRow = parseInt(startRow, 10);
+  endRow = parseInt(endRow, 10);
+  if (!startRow || !endRow) throw new Error("Invalid row range.");
+
+  try {
+    ss.toast(
+      "Auto-running manual backfill (NI-only):\nSqft → Employees → Revenues\n(rows " +
+        startRow +
+        "-" +
+        endRow +
+        ")",
+      "Backfill progress",
+      6
+    );
+
+    // 1) Square footage (facility)
+    ss.toast("Manual backfill: Square footage (facility)…", "Backfill progress", 5);
+    BF_runBackfillForColumnId_("Square footage (facility)", startRow, endRow);
+
+    // 2) Number of employees
+    ss.toast("Manual backfill: Number of employees…", "Backfill progress", 5);
+    BF_runBackfillForColumnId_("Number of employees", startRow, endRow);
+
+    // 3) Estimated Revenues
+    ss.toast("Manual backfill: Estimated Revenues…", "Backfill progress", 5);
+    BF_runBackfillForColumnId_("Estimated Revenues", startRow, endRow);
+
+    ss.toast("Auto manual backfill finished (Sqft/Employees/Revenues).", "Backfill progress", 5);
+  } catch (e) {
+    ui.alert("Error during auto manual backfill (Sqft/Employees/Revenues):\n" + e);
+    throw e;
+  }
+}
+
+
+
