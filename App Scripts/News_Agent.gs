@@ -11,6 +11,9 @@
  *   - "News_Url"     (URL validation + repair; stores FINAL rebuilt rows list)
  **************************************************/
 
+// News Search safety limit
+const NS_MAX_ROWS_PER_RUN = 20;
+
 /** ===== Menu hook (called from AI_Agent.onOpen) ===== */
 function onOpen_News(ui) {
   ui = ui || SpreadsheetApp.getUi();
@@ -64,6 +67,23 @@ function NS_runNewsSearch() {
     aiSheet.getRange(promptRow, 3).setValue("[]");
     aiSheet.getRange(promptRow, 4).setValue(new Date());
     return;
+  }
+
+  // ===========================
+  // NEW: Hard stop if > 20 rows
+  // ===========================
+  const maxRows = Number(typeof NS_MAX_ROWS_PER_RUN !== "undefined" ? NS_MAX_ROWS_PER_RUN : 20);
+  if (newsRows.length > maxRows) {
+    const msg =
+      "For performance and accuracy, News Search is limited to 20 rows or fewer per run. " +
+      "Please reduce the number of rows in the News Source sheet and try again.";
+
+    // Log a visible STOP marker to AI Integration (News_Search row)
+    aiSheet.getRange(promptRow, 3).setValue("STOPPED: " + msg);
+    aiSheet.getRange(promptRow, 4).setValue(new Date());
+
+    ui.alert("News Search limit exceeded", msg, ui.ButtonSet.OK);
+    return; // STOP workflow
   }
 
   ui.alert(
@@ -770,6 +790,24 @@ function NS_checkNewsSourceUrls() {
     ])
     .filter(r => r.some(x => String(x || "").trim() !== ""));
 
+  // ===========================
+  // NEW: Hard stop if > 20 rows
+  // ===========================
+  const maxRows = Number(typeof NS_MAX_ROWS_PER_RUN !== "undefined" ? NS_MAX_ROWS_PER_RUN : 20);
+
+  if (inputRows.length > maxRows) {
+    const msg =
+      "For performance and accuracy, Check News Source URLs is limited to 20 rows or fewer per run. " +
+      "Please reduce the number of rows in the News Source sheet and try again.";
+
+    // Log STOP marker to AI Integration → News_Url
+    aiSheet.getRange(promptRow, 3).setValue("STOPPED: " + msg);
+    aiSheet.getRange(promptRow, 4).setValue(new Date());
+
+    ui.alert("News URL check limit exceeded", msg, ui.ButtonSet.OK);
+    return; // STOP workflow completely
+  }
+
   if (!inputRows.length) {
     ui.alert("News Source is empty (no rows to check).");
     return;
@@ -939,3 +977,5 @@ function NS_callOpenAIForUrlRepair_(userPrompt) {
 
   return String(answer).trim();
 }
+
+

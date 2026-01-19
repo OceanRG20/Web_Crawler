@@ -110,6 +110,10 @@ var AIA = {
   DEBUG_SHOW_PROMPT: false,
   PREVIEW_MAX_CHARS: 18000,
   PREVIEW_ONLY_FIRST_IN_LOOP: true,
+
+  // Candidate run safety limit
+  MAX_CANDIDATES_PER_RUN: 5,
+
 };
 
 /* ========= AUTO FILTER MENU INJECTION ========= */
@@ -215,12 +219,29 @@ function AI_runRawTextData() {
     return;
   }
 
+  // ===========================
+  // NEW: Hard stop if > 5 URLs
+  // ===========================
+  const maxN = Number(AIA.MAX_CANDIDATES_PER_RUN || 5);
+  if (candidates.length > maxN) {
+    const msg =
+      'Limit exceeded: Please keep 5 or fewer URLs in the Candidate sheet, then try again.';
+
+    // Write a visible “processed/stopped” marker into the Raw_Data result cell
+    sheet.getRange(row, AIA.RESULT_COL).setValue("STOPPED: " + msg);
+    sheet.getRange(row, AIA.WHEN_COL).setValue(new Date());
+
+    if (ui) ui.alert(msg);
+    return; // absolutely stop MMCrawl workflow here
+  }
+
   let outputs = [];
   for (let i = 0; i < candidates.length; i++) {
     const obj = candidates[i];
     const no = obj.no;
     const url = obj.url;
     const source = obj.source;
+
     if (ui) {
       ss.toast(
         "Raw_Data " + (i + 1) + "/" + candidates.length + ": " + url,
@@ -284,6 +305,7 @@ function AI_runRawTextData() {
     );
   }
 }
+
 
 /* Build a single-company Raw_Data prompt (FORCES Source echo) */
 function AIA_buildSingleRawPrompt_(

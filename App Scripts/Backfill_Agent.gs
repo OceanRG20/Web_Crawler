@@ -20,6 +20,10 @@
  *   OPENAI_API_KEY  – your OpenAI key
  **************************************************/
 
+// Backfill safety limit
+var BF_MAX_ROWS_PER_RUN = 20;
+
+
 /** ===== Menu hook (called from main onOpen) ===== */
 function onOpen_Backfill(ui) {
   ui = ui || SpreadsheetApp.getUi();
@@ -799,12 +803,13 @@ function BF_promptForRowRange_(ui) {
   }
 
   const lastDataRow = mmSheet.getLastRow();
-  const exampleEnd = Math.max(lastDataRow, 10);
+  // const exampleEnd = Math.max(lastDataRow, 10);
 
   const resp = ui.prompt(
     "Backfill row range",
     "Enter MMCrawl row range in the form From-To.\n" +
-      "Example: 2-" + exampleEnd + "\n\n" +
+      "Example: 2-" + 20 + "\n\n" +
+      "Limit: 20 rows or fewer per run.\n" +
       "Header row is 1, so first data row is 2.",
     ui.ButtonSet.OK_CANCEL
   );
@@ -828,6 +833,23 @@ function BF_promptForRowRange_(ui) {
   }
   if (startRow < 2) startRow = 2;
   if (endRow < 2) endRow = 2;
+
+    // ===========================
+  // NEW: Hard stop if > 20 rows
+  // ===========================
+  const maxRows = Number(typeof BF_MAX_ROWS_PER_RUN !== "undefined" ? BF_MAX_ROWS_PER_RUN : 20);
+  const count = (endRow - startRow + 1);
+
+  if (count > maxRows) {
+    ui.alert(
+      "Row range too large",
+      "For performance and accuracy, Backfill is limited to " + maxRows + " rows per run.\n\n" +
+        "You selected: " + startRow + "-" + endRow + " (" + count + " rows).\n" +
+        "Please reduce the range and try again.",
+      ui.ButtonSet.OK
+    );
+    return null; // STOP workflow
+  }
 
   return { startRow, endRow };
 }
