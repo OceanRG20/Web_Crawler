@@ -88,22 +88,8 @@ Valid examples:
 
 ------------------------------------------------
 
-5) REFER-TO-SITE FALLBACK
-------------------------------------------------
-If NO employee value can be determined from:
-- site employees, AND
-- revenue-based calculation, AND
-- public estimate,
 
-BUT the Estimated Revenues cell contains ANY revenue value,
-
-THEN return exactly:
-
-"refer to site"
-
-------------------------------------------------
-
-6) WHEN NOTHING CAN BE DETERMINED
+5) WHEN NOTHING CAN BE DETERMINED
 ------------------------------------------------
 If there is:
 - no site employee data,

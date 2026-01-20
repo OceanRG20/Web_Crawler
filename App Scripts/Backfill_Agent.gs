@@ -21,7 +21,7 @@
  **************************************************/
 
 // Backfill safety limit
-var BF_MAX_ROWS_PER_RUN = 20;
+var BF_MAX_ROWS_PER_RUN = 50;
 
 
 /** ===== Menu hook (called from main onOpen) ===== */
@@ -33,9 +33,9 @@ function onOpen_Backfill(ui) {
     .addItem("Equipment + CNC 3 & 5-axis", "BF_runBackfill_EquipmentCNCCombo")
      .addItem("Estimated Revenues + Employees + Sqft", "BF_runBackfill_RevenueEmployeesSqftCombo")
     .addItem("Ownership + Family business", "BF_runBackfill_OwnershipFamilyCombo")
-    // .addItem("Estimated Revenues", "BF_runBackfill_EstimatedRevenues")
-    // .addItem("Number of employees", "BF_runBackfill_NumberOfEmployees")
-    // .addItem("Square footage (facility)", "BF_runBackfill_SquareFootage")
+    .addItem("Estimated Revenues", "BF_runBackfill_EstimatedRevenues")
+    .addItem("Number of employees", "BF_runBackfill_NumberOfEmployees")
+    .addItem("Square footage (facility)", "BF_runBackfill_SquareFootage")
     .addItem("Years of operation", "BF_runBackfill_YearsOfOperation")
     .addSeparator()
     .addItem("Equipment", "BF_runBackfill_Equipment")
@@ -1646,18 +1646,19 @@ function BF_runBackfill_RevenueEmployeesSqftCombo_Range_(startRow, endRow) {
       "Backfill progress",
       6
     );
+   // 3) Estimated Revenues
+    ss.toast("Manual backfill: Estimated Revenues…", "Backfill progress", 5);
+    BF_runBackfillForColumnId_("Estimated Revenues", startRow, endRow);
 
-    // 1) Square footage (facility)
-    ss.toast("Manual backfill: Square footage (facility)…", "Backfill progress", 5);
-    BF_runBackfillForColumnId_("Square footage (facility)", startRow, endRow);
 
     // 2) Number of employees
     ss.toast("Manual backfill: Number of employees…", "Backfill progress", 5);
     BF_runBackfillForColumnId_("Number of employees", startRow, endRow);
 
-    // 3) Estimated Revenues
-    ss.toast("Manual backfill: Estimated Revenues…", "Backfill progress", 5);
-    BF_runBackfillForColumnId_("Estimated Revenues", startRow, endRow);
+     // 1) Square footage (facility)
+    ss.toast("Manual backfill: Square footage (facility)…", "Backfill progress", 5);
+    BF_runBackfillForColumnId_("Square footage (facility)", startRow, endRow);
+
 
     ss.toast("Auto manual backfill finished (Sqft/Employees/Revenues).", "Backfill progress", 5);
   } catch (e) {

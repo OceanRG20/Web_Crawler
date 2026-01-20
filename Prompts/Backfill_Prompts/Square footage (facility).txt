@@ -103,9 +103,6 @@ Then:
 After applying all steps:
 
 • If you still have ZERO numeric items and there is NO convincing evidence anywhere in the row that the facility size exists or is discussed → return "NI".
-
-• If you still have ZERO numeric items but the row clearly talks about the plant / facility in a way that suggests a size is known but not stated (e.g., “our large multi-building facility”, “multi-plant campus”) → return "refer to site".
-
 • If you have one or two numeric items → return those items only (no "NI" or "refer to site" in combination with numbers).
 
 =====================================================
